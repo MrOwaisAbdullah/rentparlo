@@ -6,10 +6,11 @@ import { FilterSidebar } from "@/components/search/filter-sidebar"
 import { FeaturedListings } from "@/components/sections/featured-listings"
 import { ProductGrid } from "@/components/sections/product-grid"
 import { AdBanner } from "@/components/ads/ad-banner"
-import { getAllListings } from "@/lib/listings"
+import { getFilteredListings } from "@/lib/listings"
 import { ChevronRight, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Listing } from "@/types"
 
 export function SearchPageContent() {
   const searchParams = useSearchParams()
@@ -17,52 +18,24 @@ export function SearchPageContent() {
   const query = searchParams.get("q") || ""
   const location = searchParams.get("location") || ""
 
-  const [listings, setListings] = useState(getAllListings())
-  const [filteredListings, setFilteredListings] = useState(listings)
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([])
   const [filters, setFilters] = useState({
-    priceRange: [0, 100000],
+    priceRange: [0, 100000] as [number, number],
     condition: "all",
-    dateRange: "all",
   })
 
   // Filter listings based on search params and filters
   useEffect(() => {
-    let filtered = listings
-
-    // Filter by category
-    if (category !== "all") {
-      filtered = filtered.filter((listing) => listing.category.toLowerCase() === category.toLowerCase())
+    const searchFilters = {
+      category: category,
+      query: query,
+      location: location,
+      priceRange: filters.priceRange,
+      condition: filters.condition,
     }
-
-    // Filter by search query
-    if (query) {
-      filtered = filtered.filter(
-        (listing) =>
-          listing.title.toLowerCase().includes(query.toLowerCase()) ||
-          listing.description.toLowerCase().includes(query.toLowerCase()),
-      )
-    }
-
-    // Filter by location
-    if (location) {
-      filtered = filtered.filter(
-        (listing) =>
-          listing.location.city.toLowerCase().includes(location.toLowerCase()) ||
-          listing.location.area.toLowerCase().includes(location.toLowerCase()),
-      )
-    }
-
-    // Apply filters
-    filtered = filtered.filter((listing) => {
-      const price = listing.price
-      const inPriceRange = price >= filters.priceRange[0] && price <= filters.priceRange[1]
-      const matchesCondition = filters.condition === "all" || listing.condition === filters.condition
-
-      return inPriceRange && matchesCondition
-    })
-
-    setFilteredListings(filtered)
-  }, [listings, category, query, location, filters])
+    const listings = getFilteredListings(searchFilters)
+    setFilteredListings(listings)
+  }, [category, query, location, filters])
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },

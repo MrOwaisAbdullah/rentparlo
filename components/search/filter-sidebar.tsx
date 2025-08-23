@@ -15,7 +15,11 @@ interface FilterSidebarProps {
     condition: string
     dateRange: string
   }
-  onFiltersChange: (filters: any) => void
+  onFiltersChange: (filters: {
+    priceRange: [number, number]
+    condition: string
+    dateRange: string
+  }) => void
   className?: string
 }
 
@@ -121,7 +125,7 @@ export function FilterSidebar({ filters, onFiltersChange, className }: FilterSid
       <AdBanner size="medium-rectangle" className="w-full" fallbackText="Advertisement - 300x250" />
 
       {/* Sidebar Ad - Wide Skyscraper */}
-      <AdBanner size="wide-skyscraper" className="w-full hidden xl:block" fallbackText="Advertisement - 160x600" />
+      <AdBanner size="half-page" className="w-full hidden xl:block" fallbackText="Advertisement - 160x600" />
     </div>
   )
 }

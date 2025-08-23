@@ -53,7 +53,7 @@ export default function Testimonials() {
     <section className="py-16 bg-muted/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Here's what some of our users think</h2>
+          <h2 className="text-3xl font-bold mb-4">Here&apos;s what some of our users think</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">Real experiences from real users across Pakistan</p>
         </div>
 

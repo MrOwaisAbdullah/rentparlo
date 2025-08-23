@@ -1,818 +1,3604 @@
-// Mock data and functions for listings
-export interface Listing {
-  id: string
-  _id: string
-  title: string
-  slug: string
-  price: number
-  pricePerHour?: number
-  category: string
-  categoryTitle: string
-  images: string[]
-  location: {
-    city: string
-    area?: string
-  }
-  description: string
-  specifications: Record<string, string>
-  rentalRules?: string[]
-  availability?: {
-    isAvailable: boolean
-  }
-  owner: {
-    name: string
-    avatar: string
-    rating: number
-    reviewCount: number
-    tier: "basic" | "bronze" | "silver" | "gold" | "platinum" | "diamond"
-    verified: boolean
-    responseTime: string
-    joinedDate: string
-  }
-  ownerInfo?: {
-    name: string
-    avatar?: string
-    tier: string
-  }
-  featured?: boolean
-  condition: string
-  rating: number
-  reviewCount: number
-}
+import { Listing } from '@/types'
 
-// Mock listings data
+// Mock data and functions for listings
+
 const MOCK_LISTINGS: Listing[] = [
+  // Camera listings
   {
-    id: "1",
     _id: "1",
+    _type: "listing",
     title: "Canon EOS R5 Professional Camera with 24-70mm Lens",
-    slug: "canon-eos-r5-professional-camera",
+    slug: {
+      current: "canon-eos-r5-professional-camera"
+    },
+    description: [{children: [{text: "Professional grade camera perfect for photography and videography projects. High resolution sensor with excellent low light performance."}], _type: "block"}],
     price: 8000,
     pricePerHour: 500,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/camera-rental-banner.png"],
+    priceWeekly: 50000, // 7 days at 8000 = 56000, so 10% discount
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (1).jpg"}}],
     location: { city: "Karachi", area: "DHA" },
-    description:
-      "Professional grade camera perfect for photography and videography projects. High resolution sensor with excellent low light performance.",
-    specifications: {
-      Brand: "Canon",
-      Resolution: "45MP",
-      Video: "8K RAW",
-      "Lens Mount": "RF Mount",
-      "ISO Range": "100-51200",
-    },
-    owner: {
-      name: "Ahmed Photography",
-      avatar: "/placeholder.svg",
-      rating: 4.8,
-      reviewCount: 127,
-      tier: "gold",
-      verified: true,
-      responseTime: "2 hours",
-      joinedDate: "2022",
-    },
-    ownerInfo: {
-      name: "Ahmed Photography",
-      tier: "gold",
-    },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Canon" },
+      { key: "Resolution", value: "45MP" },
+      { key: "Video", value: "8K RAW" },
+      { key: "Lens Mount", value: "RF Mount" },
+      { key: "ISO Range", value: "100-51200" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user1",
     featured: true,
-    condition: "excellent",
-    rating: 4.8,
-    reviewCount: 127,
+    views: 150,
+    contactClicks: 25,
+    badges: ["hot", "featured", "verified"],
+    created_at: new Date().toISOString(),
+    seller: {
+      id: "user1",
+      email: "ahmed@photography.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest1",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user1",
+        username: "Ahmed Photography",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
   },
   {
-    id: "2",
     _id: "2",
-    title: "BMW 3 Series 2022 - Luxury Sedan for Events",
-    slug: "bmw-3-series-luxury-sedan",
-    price: 15000,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Lahore", area: "Gulberg" },
-    description: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features.",
-    specifications: {
-      Engine: "2.0L Turbo",
-      "Fuel Type": "Petrol",
-      Transmission: "Automatic",
-      Seating: "5 Persons",
-      Year: "2022",
-    },
-    owner: {
-      name: "Elite Car Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      reviewCount: 89,
-      tier: "platinum",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Elite Car Rentals",
-      tier: "platinum",
-    },
-    featured: true,
-    condition: "new",
-    rating: 4.9,
-    reviewCount: 89,
-  },
-  {
-    id: "3",
-    _id: "3",
-    title: "MacBook Pro M3 16-inch for Creative Work",
-    slug: "macbook-pro-m3-creative-work",
-    price: 3500,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Islamabad", area: "F-7" },
-    description:
-      "High-performance laptop ideal for creative professionals. Fast processing with excellent display quality.",
-    specifications: {
-      Processor: "Apple M3",
-      RAM: "32GB",
-      Storage: "1TB SSD",
-      Display: "16-inch Retina",
-      Year: "2024",
-    },
-    owner: {
-      name: "Tech Rentals Hub",
-      avatar: "/placeholder.svg",
-      rating: 4.6,
-      reviewCount: 45,
-      tier: "silver",
-      verified: true,
-      responseTime: "3 hours",
-      joinedDate: "2023",
-    },
-    ownerInfo: {
-      name: "Tech Rentals Hub",
-      tier: "silver",
-    },
-    condition: "excellent",
-    rating: 4.6,
-    reviewCount: 45,
-  },
-  {
-    id: "4",
-    _id: "4",
+    _type: "listing",
     title: "Sony A7IV Camera with 70-200mm Lens",
-    slug: "sony-a7iv-camera-telephoto",
+    slug: {
+      current: "sony-a7iv-camera-telephoto"
+    },
+    description: [{children: [{text: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization."}], _type: "block"}],
     price: 6500,
     pricePerHour: 400,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (2).jpg"}}],
     location: { city: "Karachi", area: "Clifton" },
-    description: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization.",
-    specifications: {
-      Brand: "Sony",
-      Resolution: "33MP",
-      Lens: "70-200mm f/2.8",
-      Stabilization: "5-axis IBIS",
-      Video: "4K 60p",
-    },
-    owner: {
-      name: "Pro Camera Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.7,
-      reviewCount: 156,
-      tier: "gold",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Pro Camera Rentals",
-      tier: "gold",
-    },
-    featured: true,
     condition: "good",
-    rating: 4.7,
-    reviewCount: 156,
-  },
-  {
-    id: "5",
-    _id: "5",
-    title: "Honda Civic 2023 - Reliable Daily Rental",
-    slug: "honda-civic-daily-rental",
-    price: 8000,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Lahore", area: "Model Town" },
-    description: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features.",
-    specifications: {
-      Engine: "1.5L Turbo",
-      Mileage: "15 km/l",
-      Seating: "5 Persons",
-      Transmission: "CVT",
-      Year: "2023",
-    },
-    owner: {
-      name: "City Car Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.4,
-      reviewCount: 78,
-      tier: "bronze",
-      verified: true,
-      responseTime: "4 hours",
-      joinedDate: "2023",
-    },
-    ownerInfo: {
-      name: "City Car Rentals",
-      tier: "bronze",
-    },
-    condition: "good",
-    rating: 4.4,
-    reviewCount: 78,
-  },
-  {
-    id: "6",
-    _id: "6",
-    title: "iPad Pro 12.9 with Apple Pencil for Design",
-    slug: "ipad-pro-design-tablet",
-    price: 2500,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Karachi", area: "Gulshan" },
-    description: "Professional tablet perfect for digital art and design work. Includes Apple Pencil and keyboard.",
-    specifications: {
-      Screen: "12.9 inch",
-      Storage: "256GB",
-      Accessories: "Apple Pencil",
-      Processor: "M2 Chip",
-      Year: "2023",
-    },
-    owner: {
-      name: "Digital Design Hub",
-      avatar: "/placeholder.svg",
-      rating: 4.8,
-      reviewCount: 92,
-      tier: "gold",
-      verified: true,
-      responseTime: "2 hours",
-      joinedDate: "2022",
-    },
-    ownerInfo: {
-      name: "Digital Design Hub",
-      tier: "gold",
-    },
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Sony" },
+      { key: "Resolution", value: "33MP" },
+      { key: "Lens", value: "70-200mm f/2.8" },
+      { key: "Stabilization", value: "5-axis IBIS" },
+      { key: "Video", value: "4K 60p" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user2",
     featured: true,
-    condition: "excellent",
-    rating: 4.8,
-    reviewCount: 92,
+    views: 85,
+    contactClicks: 15,
+    badges: ["hot"],
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user2",
+      email: "pro@camera.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest2",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user2",
+        username: "Pro Camera Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "platinum",
+        tier_points: 2500,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
   },
   {
-    id: "7",
-    _id: "7",
-    title: "Gaming PC RTX 4080 - High Performance Setup",
-    slug: "gaming-pc-rtx-4080",
-    price: 5000,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Lahore", area: "Johar Town" },
-    description: "High-end gaming PC for streaming and content creation. Latest graphics card with RGB lighting.",
-    specifications: {
-      GPU: "RTX 4080",
-      CPU: "Intel i7-13700K",
-      RAM: "32GB DDR5",
-      Storage: "1TB SSD",
-      Year: "2023",
-    },
-    owner: {
-      name: "Gaming Gear Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.5,
-      reviewCount: 112,
-      tier: "platinum",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Gaming Gear Rentals",
-      tier: "platinum",
-    },
-    featured: true,
-    condition: "excellent",
-    rating: 4.5,
-    reviewCount: 112,
-  },
-  {
-    id: "8",
-    _id: "8",
-    title: "DJI Mavic 3 Pro Drone with 4K Camera",
-    slug: "dji-mavic-3-pro-drone",
-    price: 4500,
-    pricePerHour: 300,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Islamabad", area: "Blue Area" },
-    description: "Professional drone for aerial photography and videography. Advanced obstacle avoidance system.",
-    specifications: {
-      Camera: "4K 60fps",
-      "Flight Time": "43 minutes",
-      Range: "15 km",
-      Year: "2023",
-    },
-    owner: {
-      name: "Sky Vision Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.7,
-      reviewCount: 134,
-      tier: "gold",
-      verified: true,
-      responseTime: "2 hours",
-      joinedDate: "2022",
-    },
-    ownerInfo: {
-      name: "Sky Vision Rentals",
-      tier: "gold",
-    },
-    featured: true,
-    condition: "good",
-    rating: 4.7,
-    reviewCount: 134,
-  },
-  {
-    id: "9",
-    _id: "9",
-    title: "Sony PlayStation 5 with VR Headset",
-    slug: "ps5-vr-gaming-console",
-    price: 3000,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Karachi", area: "North Nazimabad" },
-    description: "Latest gaming console with VR capabilities for entertainment.",
-    specifications: {
-      Console: "Sony PlayStation 5",
-      "VR Headset": "Included",
-      Year: "2022",
-    },
-    owner: {
-      name: "Game Zone Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.6,
-      reviewCount: 99,
-      tier: "silver",
-      verified: true,
-      responseTime: "3 hours",
-      joinedDate: "2023",
-    },
-    ownerInfo: {
-      name: "Game Zone Rentals",
-      tier: "silver",
-    },
-    featured: true,
-    condition: "excellent",
-    rating: 4.6,
-    reviewCount: 99,
-  },
-  {
-    id: "10",
-    _id: "10",
-    title: "Professional Audio Recording Setup",
-    slug: "audio-recording-studio-setup",
-    price: 6000,
-    category: "Electronics",
-    categoryTitle: "Electronics",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Lahore", area: "DHA" },
-    description: "Complete audio recording setup for podcasts and music production.",
-    specifications: {
-      Microphone: "Rode NT-USB",
-      "Audio Interface": "Focusrite Scarlett 2i2",
-      Year: "2023",
-    },
-    owner: {
-      name: "Sound Studio Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      reviewCount: 101,
-      tier: "platinum",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Sound Studio Rentals",
-      tier: "platinum",
-    },
-    featured: true,
-    condition: "new",
-    rating: 4.9,
-    reviewCount: 101,
-  },
-  {
-    id: "11",
-    _id: "11",
-    title: "Toyota Corolla 2023 - Economy Car",
-    slug: "toyota-corolla-economy-rental",
-    price: 6000,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Karachi", area: "Saddar" },
-    description: "Fuel-efficient and reliable car for city driving.",
-    specifications: {
-      Engine: "1.5L",
-      "Fuel Type": "Petrol",
-      Transmission: "Manual",
-      Seating: "5 Persons",
-      Year: "2023",
-    },
-    owner: {
-      name: "Budget Car Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.3,
-      reviewCount: 67,
-      tier: "bronze",
-      verified: true,
-      responseTime: "5 hours",
-      joinedDate: "2023",
-    },
-    ownerInfo: {
-      name: "Budget Car Rentals",
-      tier: "bronze",
-    },
-    condition: "excellent",
-    rating: 4.3,
-    reviewCount: 67,
-  },
-  {
-    id: "12",
-    _id: "12",
-    title: "Mercedes C-Class 2022 - Luxury Sedan",
-    slug: "mercedes-c-class-luxury",
-    price: 18000,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Islamabad", area: "F-6" },
-    description: "Premium luxury sedan for special occasions and business meetings.",
-    specifications: {
-      Engine: "3.0L V6",
-      "Fuel Type": "Petrol",
-      Transmission: "Automatic",
-      Seating: "5 Persons",
-      Year: "2022",
-    },
-    owner: {
-      name: "Luxury Motors",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      reviewCount: 120,
-      tier: "diamond",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Luxury Motors",
-      tier: "diamond",
-    },
-    featured: true,
-    condition: "excellent",
-    rating: 4.9,
-    reviewCount: 120,
-  },
-  {
-    id: "13",
-    _id: "13",
-    title: "Suzuki Alto 2023 - Compact City Car",
-    slug: "suzuki-alto-compact-car",
-    price: 4500,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Lahore", area: "Faisal Town" },
-    description: "Perfect compact car for navigating busy city streets.",
-    specifications: {
-      Engine: "1.2L",
-      "Fuel Type": "Petrol",
-      Transmission: "Manual",
-      Seating: "5 Persons",
-      Year: "2023",
-    },
-    owner: {
-      name: "City Drive Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.4,
-      reviewCount: 88,
-      tier: "bronze",
-      verified: true,
-      responseTime: "4 hours",
-      joinedDate: "2023",
-    },
-    ownerInfo: {
-      name: "City Drive Rentals",
-      tier: "bronze",
-    },
-    condition: "excellent",
-    rating: 4.4,
-    reviewCount: 88,
-  },
-  {
-    id: "14",
     _id: "14",
-    title: "Audi A4 2023 - Premium Business Car",
-    slug: "audi-a4-premium-business",
-    price: 16000,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Karachi", area: "Defence" },
-    description: "Sophisticated sedan perfect for business professionals.",
-    specifications: {
-      Engine: "2.0L Turbo",
-      "Fuel Type": "Petrol",
-      Transmission: "Automatic",
-      Seating: "5 Persons",
-      Year: "2023",
+    _type: "listing",
+    title: "Nikon Z7 II Mirrorless Camera",
+    slug: {
+      current: "nikon-z7-ii-mirrorless-camera"
     },
-    owner: {
-      name: "Executive Car Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.7,
-      reviewCount: 105,
-      tier: "platinum",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Executive Car Rentals",
-      tier: "platinum",
-    },
-    featured: true,
-    condition: "excellent",
-    rating: 4.7,
-    reviewCount: 105,
-  },
-  {
-    id: "15",
-    _id: "15",
-    title: "Toyota Hiace Van - Group Transportation",
-    slug: "toyota-hiace-group-van",
-    price: 12000,
-    category: "Vehicles",
-    categoryTitle: "Vehicles",
-    images: ["/placeholder-8i3ps.png"],
-    location: { city: "Lahore", area: "Liberty" },
-    description: "Spacious van perfect for group travel and family trips.",
-    specifications: {
-      Capacity: "7 Seats",
-      Length: "4.8 meters",
-      Transmission: "Automatic",
-      Year: "2023",
-    },
-    owner: {
-      name: "Family Travel Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.8,
-      reviewCount: 110,
-      tier: "gold",
-      verified: true,
-      responseTime: "2 hours",
-      joinedDate: "2022",
-    },
-    ownerInfo: {
-      name: "Family Travel Rentals",
-      tier: "gold",
-    },
-    featured: true,
-    condition: "excellent",
-    rating: 4.8,
-    reviewCount: 110,
-  },
-  {
-    id: "16",
-    _id: "16",
-    title: "Nikon Z9 Professional Camera Body",
-    slug: "nikon-z9-professional-camera",
-    price: 9000,
-    pricePerHour: 600,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
-    location: { city: "Islamabad", area: "G-9" },
-    description: "Top-tier professional camera for commercial photography.",
-    specifications: {
-      Brand: "Nikon",
-      Resolution: "50MP",
-      Video: "8K RAW",
-      "Lens Mount": "Z Mount",
-      Year: "2023",
-    },
-    owner: {
-      name: "Capital Camera Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      reviewCount: 130,
-      tier: "platinum",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Capital Camera Rentals",
-      tier: "platinum",
-    },
-    featured: true,
-    condition: "new",
-    rating: 4.9,
-    reviewCount: 130,
-  },
-  {
-    id: "17",
-    _id: "17",
-    title: "Canon 5D Mark IV with 85mm Portrait Lens",
-    slug: "canon-5d-mark-iv-portrait",
+    description: [{children: [{text: "High-resolution mirrorless camera with exceptional image quality and advanced autofocus system."}], _type: "block"}],
     price: 7000,
     pricePerHour: 450,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
-    location: { city: "Karachi", area: "Bahadurabad" },
-    description: "Perfect setup for portrait and wedding photography.",
-    specifications: {
-      Brand: "Canon",
-      Resolution: "20MP",
-      Lens: "85mm f/1.2",
-      Year: "2023",
+    category: {
+      _ref: "camera",
+      title: "Camera"
     },
-    owner: {
-      name: "Wedding Photo Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.8,
-      reviewCount: 125,
-      tier: "gold",
-      verified: true,
-      responseTime: "2 hours",
-      joinedDate: "2022",
-    },
-    ownerInfo: {
-      name: "Wedding Photo Rentals",
-      tier: "gold",
-    },
+    images: [{asset: {url: "/samples/camera (1).png"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Nikon" },
+      { key: "Resolution", value: "45.7MP" },
+      { key: "ISO Range", value: "64-25600" },
+      { key: "Video", value: "4K UHD" },
+      { key: "Lens Mount", value: "Z Mount" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user14",
     featured: true,
-    condition: "excellent",
-    rating: 4.8,
-    reviewCount: 125,
+    views: 95,
+    contactClicks: 20,
+    badges: ["verified"],
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user14",
+      email: "nikon@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest14",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user14",
+        username: "Nikon Gear Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1100,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
   },
   {
-    id: "18",
-    _id: "18",
-    title: "Sony FX3 Cinema Camera for Video Production",
-    slug: "sony-fx3-cinema-camera",
-    price: 12000,
-    pricePerHour: 800,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
-    location: { city: "Lahore", area: "MM Alam Road" },
-    description: "Professional cinema camera for film and video production.",
-    specifications: {
-      Brand: "Sony",
-      Resolution: "8K",
-      Features: "4K/8K RAW recording",
-      Year: "2023",
+    _id: "15",
+    _type: "listing",
+    title: "Fujifilm X-T4 Mirrorless Camera",
+    slug: {
+      current: "fujifilm-xt4-mirrorless-camera"
     },
-    owner: {
-      name: "Film Production Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      reviewCount: 140,
-      tier: "diamond",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
-    },
-    ownerInfo: {
-      name: "Film Production Rentals",
-      tier: "diamond",
-    },
-    featured: true,
-    condition: "excellent",
-    rating: 4.9,
-    reviewCount: 140,
-  },
-  {
-    id: "19",
-    _id: "19",
-    title: "Fujifilm X-T5 with 16-80mm Lens Kit",
-    slug: "fujifilm-xt5-lens-kit",
+    description: [{children: [{text: "Compact mirrorless camera with in-body stabilization and excellent color reproduction."}], _type: "block"}],
     price: 5500,
     pricePerHour: 350,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
-    location: { city: "Karachi", area: "Korangi" },
-    description: "Versatile mirrorless camera perfect for travel photography.",
-    specifications: {
-      Brand: "Fujifilm",
-      Resolution: "26MP",
-      Lens: "16-80mm f/2.8",
-      Year: "2023",
+    category: {
+      _ref: "camera",
+      title: "Camera"
     },
-    owner: {
-      name: "Travel Photo Gear",
-      avatar: "/placeholder.svg",
-      rating: 4.7,
-      reviewCount: 115,
-      tier: "silver",
-      verified: true,
-      responseTime: "3 hours",
-      joinedDate: "2023",
-    },
-    ownerInfo: {
-      name: "Travel Photo Gear",
-      tier: "silver",
-    },
+    images: [{asset: {url: "/samples/camera (1).webp"}}],
+    location: { city: "Islamabad", area: "F-7" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Fujifilm" },
+      { key: "Resolution", value: "26.1MP" },
+      { key: "ISO Range", value: "160-12800" },
+      { key: "Video", value: "4K 60p" },
+      { key: "Stabilization", value: "5-axis IBIS" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user15",
     featured: true,
-    condition: "excellent",
-    rating: 4.7,
-    reviewCount: 115,
+    views: 75,
+    contactClicks: 12,
+    badges: ["new"],
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user15",
+      email: "fujifilm@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest15",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user15",
+        username: "Fujifilm Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
   },
   {
-    id: "20",
+    _id: "16",
+    _type: "listing",
+    title: "Panasonic GH5 II Mirrorless Camera",
+    slug: {
+      current: "panasonic-gh5-ii-mirrorless-camera"
+    },
+    description: [{children: [{text: "Professional video camera with excellent low-light performance and advanced video features."}], _type: "block"}],
+    price: 6000,
+    pricePerHour: 375,
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (2).jpg"}}],
+    location: { city: "Karachi", area: "Defence" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Panasonic" },
+      { key: "Resolution", value: "20.3MP" },
+      { key: "ISO Range", value: "200-25600" },
+      { key: "Video", value: "4K 60p" },
+      { key: "Stabilization", value: "5-axis IBIS" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user16",
+    featured: true,
+    views: 88,
+    contactClicks: 18,
+    badges: ["featured"],
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user16",
+      email: "panasonic@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest16",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user16",
+        username: "Panasonic Gear",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 950,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Automobile listings
+  {
+    _id: "3",
+    _type: "listing",
+    title: "BMW 3 Series 2022 - Luxury Sedan for Events",
+    slug: {
+      current: "bmw-3-series-luxury-sedan"
+    },
+    description: [{children: [{text: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features."}], _type: "block"}],
+    price: 15000,
+    priceWeekly: 90000, // 7 days at 15000 = 105000, so 14% discount
+    priceMonthly: 350000, // 30 days at 15000 = 450000, so 22% discount
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (1).jpg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "2.0L Turbo" },
+      { key: "Fuel Type", value: "Petrol" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Year", value: "2022" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user3",
+    featured: true,
+    views: 200,
+    contactClicks: 40,
+    badges: ["hot", "featured", "top_seller"],
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user3",
+      email: "elite@cars.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest3",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user3",
+        username: "Elite Car Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "platinum",
+        tier_points: 3200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "4",
+    _type: "listing",
+    title: "Honda Civic 2023 - Reliable Daily Rental",
+    slug: {
+      current: "honda-civic-daily-rental"
+    },
+    description: [{children: [{text: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features."}], _type: "block"}],
+    price: 8000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (2).jpg"}}],
+    location: { city: "Lahore", area: "Model Town" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "1.5L Turbo" },
+      { key: "Mileage", value: "15 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "CVT" },
+      { key: "Year", value: "2023" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user4",
+    featured: true,
+    views: 120,
+    contactClicks: 18,
+    badges: ["local"],
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user4",
+      email: "city@cars.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest4",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user4",
+        username: "City Car Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1800,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "17",
+    _type: "listing",
+    title: "Toyota Corolla 2023 - Fuel Efficient Sedan",
+    slug: {
+      current: "toyota-corolla-fuel-efficient"
+    },
+    description: [{children: [{text: "Economical and reliable sedan perfect for daily commuting and family trips."}], _type: "block"}],
+    price: 7500,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (3).jpg"}}],
+    location: { city: "Karachi", area: "North Nazimabad" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "1.3L" },
+      { key: "Mileage", value: "18 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Year", value: "2023" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user17",
+    featured: true,
+    views: 95,
+    contactClicks: 15,
+    badges: ["eco_friendly"],
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user17",
+      email: "toyota@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest17",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user17",
+        username: "Toyota Rentals PK",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 750,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "18",
+    _type: "listing",
+    title: "Suzuki Swift 2022 - Compact City Car",
+    slug: {
+      current: "suzuki-swift-compact-city-car"
+    },
+    description: [{children: [{text: "Compact and maneuverable car perfect for city driving and parking in tight spaces."}], _type: "block"}],
+    price: 6000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (4).jpg"}}],
+    location: { city: "Islamabad", area: "Blue Area" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "1.2L" },
+      { key: "Mileage", value: "20 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Manual" },
+      { key: "Year", value: "2022" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user18",
+    featured: true,
+    views: 80,
+    contactClicks: 12,
+    badges: ["new", "eco_friendly"],
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user18",
+      email: "suzuki@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest18",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user18",
+        username: "Suzuki Car Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "bronze",
+        tier_points: 300,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "19",
+    _type: "listing",
+    title: "Hyundai Tucson 2023 - Compact SUV",
+    slug: {
+      current: "hyundai-tucson-compact-suv"
+    },
+    description: [{children: [{text: "Spacious SUV with modern features, perfect for family trips and weekend adventures."}], _type: "block"}],
+    price: 12000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (5).jpg"}}],
+    location: { city: "Lahore", area: "Johar Town" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "2.0L" },
+      { key: "Mileage", value: "14 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Year", value: "2023" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user19",
+    featured: true,
+    views: 110,
+    contactClicks: 22,
+    badges: ["hot"],
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user19",
+      email: "hyundai@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest19",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user19",
+        username: "Hyundai Rentals PK",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
     _id: "20",
-    title: "GoPro Hero 12 Action Camera Bundle",
-    slug: "gopro-hero-12-action-bundle",
-    price: 2500,
-    pricePerHour: 200,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
-    location: { city: "Islamabad", area: "I-8" },
-    description: "Complete action camera setup for adventure and sports filming.",
-    specifications: {
-      Camera: "GoPro Hero 12",
-      Features: "4K recording, waterproof",
-      Year: "2023",
+    _type: "listing",
+    title: "Kia Sportage 2022 - Midsize SUV",
+    slug: {
+      current: "kia-sportage-midsize-suv"
     },
-    owner: {
-      name: "Adventure Gear Rentals",
-      avatar: "/placeholder.svg",
-      rating: 4.6,
-      reviewCount: 95,
-      tier: "bronze",
-      verified: true,
-      responseTime: "4 hours",
-      joinedDate: "2023",
+    description: [{children: [{text: "Comfortable midsize SUV with advanced safety features and spacious interior."}], _type: "block"}],
+    price: 13000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
     },
-    ownerInfo: {
-      name: "Adventure Gear Rentals",
-      tier: "bronze",
-    },
+    images: [{asset: {url: "/samples/car (6).jpg"}}],
+    location: { city: "Karachi", area: "Clifton" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "2.4L" },
+      { key: "Mileage", value: "12 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Year", value: "2022" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user20",
     featured: true,
-    condition: "excellent",
-    rating: 4.6,
-    reviewCount: 95,
+    views: 95,
+    contactClicks: 18,
+    badges: ["verified"],
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user20",
+      email: "kia@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest20",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user20",
+        username: "Kia SUV Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Medical Equipment listings
+  {
+    _id: "5",
+    _type: "listing",
+    title: "Omron Blood Pressure Monitor - Automatic Cuff",
+    slug: {
+      current: "omron-blood-pressure-monitor"
+    },
+    description: [{children: [{text: "Accurate and easy-to-use blood pressure monitor with automatic cuff inflation. Perfect for home health monitoring."}], _type: "block"}],
+    price: 500,
+    pricePerHour: 50,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (1).jpg"}}],
+    location: { city: "Karachi", area: "Gulshan" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Omron" },
+      { key: "Type", value: "Automatic" },
+      { key: "Cuff Size", value: "Universal" },
+      { key: "Memory", value: "2-user, 14 readings each" },
+      { key: "Power", value: "Battery/AC Adapter" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user5",
+    featured: true,
+    views: 95,
+    contactClicks: 22,
+    badges: ["verified"],
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user5",
+      email: "health@first.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest5",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user5",
+        username: "HealthFirst Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
   },
   {
-    id: "21",
-    _id: "21",
-    title: "Blackmagic Pocket Cinema Camera 6K Pro",
-    slug: "blackmagic-pocket-6k-pro",
-    price: 10000,
-    pricePerHour: 650,
-    category: "Cameras",
-    categoryTitle: "Cameras",
-    images: ["/camera-rental-banner.png"],
-    location: { city: "Lahore", area: "Cavalry Ground" },
-    description: "Professional cinema camera with 6K recording capabilities.",
-    specifications: {
-      Brand: "Blackmagic Design",
-      Resolution: "6K",
-      Features: "4K recording, external monitor",
-      Year: "2023",
+    _id: "6",
+    _type: "listing",
+    title: "Digital Thermometer - Fast Reading",
+    slug: {
+      current: "digital-thermometer-fast-reading"
     },
-    owner: {
-      name: "Pro Video Solutions",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      reviewCount: 135,
-      tier: "platinum",
-      verified: true,
-      responseTime: "1 hour",
-      joinedDate: "2021",
+    description: [{children: [{text: "Fast and accurate digital thermometer with dual mode readings (oral/underarm). Essential for home health care."}], _type: "block"}],
+    price: 200,
+    pricePerHour: 20,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
     },
-    ownerInfo: {
-      name: "Pro Video Solutions",
-      tier: "platinum",
-    },
+    images: [{asset: {url: "/samples/medical (2).jpg"}}],
+    location: { city: "Islamabad", area: "F-7" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Reading Time", value: "< 10 seconds" },
+      { key: "Accuracy", value: "±0.1°C" },
+      { key: "Memory", value: "32 readings" },
+      { key: "Power", value: "Battery" },
+      { key: "Features", value: "Backlight display" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user6",
     featured: true,
-    condition: "excellent",
-    rating: 4.9,
-    reviewCount: 135,
+    views: 65,
+    contactClicks: 12,
+    badges: ["new"],
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user6",
+      email: "medi@care.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest6",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user6",
+        username: "MediCare Pakistan",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "bronze",
+        tier_points: 200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "21",
+    _type: "listing",
+    title: "Pulse Oximeter - Blood Oxygen Monitor",
+    slug: {
+      current: "pulse-oximeter-blood-oxygen-monitor"
+    },
+    description: [{children: [{text: "Accurate pulse oximeter for measuring blood oxygen saturation and pulse rate. Essential for respiratory monitoring."}], _type: "block"}],
+    price: 800,
+    pricePerHour: 80,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (3).jpg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Contec" },
+      { key: "Measurement Range", value: "0-100%" },
+      { key: "Accuracy", value: "±2%" },
+      { key: "Display", value: "LCD with backlight" },
+      { key: "Power", value: "2 x AAA batteries" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user21",
+    featured: true,
+    views: 75,
+    contactClicks: 15,
+    badges: ["featured"],
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user21",
+      email: "oxygen@health.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest21",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user21",
+        username: "Oxygen Health",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 550,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "22",
+    _type: "listing",
+    title: "Digital Weight Scale - Precision Measurement",
+    slug: {
+      current: "digital-weight-scale-precision"
+    },
+    description: [{children: [{text: "High-precision digital weight scale with BMI calculation and wireless connectivity."}], _type: "block"}],
+    price: 600,
+    pricePerHour: 60,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (4).jpg"}}],
+    location: { city: "Karachi", area: "Defence" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Beurer" },
+      { key: "Capacity", value: "180 kg" },
+      { key: "Precision", value: "100g" },
+      { key: "Features", value: "BMI calculation, wireless" },
+      { key: "Display", value: "LCD with large digits" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user22",
+    featured: true,
+    views: 68,
+    contactClicks: 13,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user22",
+      email: "weight@scale.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest22",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user22",
+        username: "Weight Scale Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "bronze",
+        tier_points: 250,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "23",
+    _type: "listing",
+    title: "Infrared Thermometer - Non-Contact",
+    slug: {
+      current: "infrared-thermometer-non-contact"
+    },
+    description: [{children: [{text: "Fast and hygienic non-contact infrared thermometer for forehead temperature measurement."}], _type: "block"}],
+    price: 1200,
+    pricePerHour: 120,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (5).jpg"}}],
+    location: { city: "Islamabad", area: "Blue Area" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Braun" },
+      { key: "Measurement Range", value: "32-42.9°C" },
+      { key: "Accuracy", value: "±0.2°C" },
+      { key: "Response Time", value: "< 1 second" },
+      { key: "Memory", value: "32 readings" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user23",
+    featured: true,
+    views: 110,
+    contactClicks: 25,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user23",
+      email: "infrared@thermo.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest23",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user23",
+        username: "Infrared Health",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 950,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "24",
+    _type: "listing",
+    title: "Nebulizer Machine - Respiratory Treatment",
+    slug: {
+      current: "nebulizer-machine-respiratory"
+    },
+    description: [{children: [{text: "Compact and efficient nebulizer machine for respiratory medication delivery. Perfect for asthma and COPD patients."}], _type: "block"}],
+    price: 1500,
+    pricePerHour: 150,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (6).jpg"}}],
+    location: { city: "Lahore", area: "Model Town" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Omron" },
+      { key: "Particle Size", value: "0.5-5.0 μm" },
+      { key: "Noise Level", value: "< 50 dB" },
+      { key: "Treatment Time", value: "5-15 minutes" },
+      { key: "Power", value: "AC Adapter/Batteries" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required",
+      "Prescription may be required"
+    ],
+    status: "active",
+    supabaseId: "user24",
+    featured: true,
+    views: 85,
+    contactClicks: 18,
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user24",
+      email: "nebulizer@health.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest24",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user24",
+        username: "Respiratory Care",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 700,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Generators listings
+  {
+    _id: "7",
+    _type: "listing",
+    title: "Honda EU20i 2000W Inverter Generator",
+    slug: {
+      current: "honda-eu20i-inverter-generator"
+    },
+    description: [{children: [{text: "Quiet and reliable inverter generator perfect for camping, events, and home backup. Clean power for sensitive electronics."}], _type: "block"}],
+    price: 3000,
+    pricePerHour: 200,
+    priceWeekly: 18000, // 7 days at 3000 = 21000, so ~14% discount
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (1).jpg"}}],
+    location: { city: "Karachi", area: "North Nazimabad" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "2000W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "8.1 hours" },
+      { key: "Noise Level", value: "52 dB" },
+      { key: "Weight", value: "34 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user7",
+    featured: true,
+    views: 180,
+    contactClicks: 35,
+    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
+    seller: {
+      id: "user7",
+      email: "power@solutions.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest7",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user7",
+        username: "Power Solutions",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1500,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "8",
+    _type: "listing",
+    title: "Yamaha EF2000iSv2 Portable Inverter Generator",
+    slug: {
+      current: "yamaha-ef2000isv2-generator"
+    },
+    description: [{children: [{text: "Ultra-quiet portable generator with excellent fuel efficiency. Perfect for outdoor events and camping trips."}], _type: "block"}],
+    price: 2800,
+    pricePerHour: 180,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (2).jpg"}}],
+    location: { city: "Lahore", area: "Johar Town" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "1600W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "10.4 hours" },
+      { key: "Noise Level", value: "51.5 dB" },
+      { key: "Weight", value: "30.9 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user8",
+    featured: true,
+    views: 140,
+    contactClicks: 28,
+    badges: ["hot", "verified"],
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user8",
+      email: "generator@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest8",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user8",
+        username: "Generator Rentals PK",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 750,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "25",
+    _type: "listing",
+    title: "Generac GP3000i Portable Inverter Generator",
+    slug: {
+      current: "generac-gp3000i-portable-generator"
+    },
+    description: [{children: [{text: "Powerful and reliable portable inverter generator with clean power output for sensitive electronics."}], _type: "block"}],
+    price: 3200,
+    pricePerHour: 220,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (3).jpg"}}],
+    location: { city: "Karachi", area: "Clifton" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "3000W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "9.5 hours" },
+      { key: "Noise Level", value: "53 dB" },
+      { key: "Weight", value: "45 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user25",
+    featured: true,
+    views: 165,
+    contactClicks: 32,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user25",
+      email: "generac@power.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest25",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user25",
+        username: "Generac Power",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1400,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "26",
+    _type: "listing",
+    title: "Champion 3400-Watt Dual Fuel Generator",
+    slug: {
+      current: "champion-3400-watt-dual-fuel"
+    },
+    description: [{children: [{text: "Versatile dual fuel generator that runs on gasoline or propane. Perfect for home backup and job sites."}], _type: "block"}],
+    price: 3500,
+    pricePerHour: 250,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (4).jpg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "3400W" },
+      { key: "Fuel Type", value: "Gasoline/Propane" },
+      { key: "Run Time", value: "12 hours (gasoline)" },
+      { key: "Noise Level", value: "68 dB" },
+      { key: "Weight", value: "184 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user26",
+    featured: true,
+    views: 155,
+    contactClicks: 28,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user26",
+      email: "champion@generator.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest26",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user26",
+        username: "Champion Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 800,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "27",
+    _type: "listing",
+    title: "Westinghouse WGen3600v Portable Generator",
+    slug: {
+      current: "westinghouse-wgen3600v-portable"
+    },
+    description: [{children: [{text: "Reliable portable generator with electric start and 120V/240V outlets. Perfect for home backup power."}], _type: "block"}],
+    price: 3800,
+    pricePerHour: 270,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (5).jpg"}}],
+    location: { city: "Islamabad", area: "F-7" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "3600W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "9 hours" },
+      { key: "Noise Level", value: "68 dB" },
+      { key: "Weight", value: "132 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user27",
+    featured: true,
+    views: 135,
+    contactClicks: 25,
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user27",
+      email: "westinghouse@power.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest27",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user27",
+        username: "Westinghouse Power",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1250,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "2",
+    _type: "listing",
+    title: "Sony A7IV Camera with 70-200mm Lens",
+    slug: {
+      current: "sony-a7iv-camera-telephoto"
+    },
+    description: [{children: [{text: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization."}], _type: "block"}],
+    price: 6500,
+    pricePerHour: 400,
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (2).jpg"}}],
+    location: { city: "Karachi", area: "Clifton" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Sony" },
+      { key: "Resolution", value: "33MP" },
+      { key: "Lens", value: "70-200mm f/2.8" },
+      { key: "Stabilization", value: "5-axis IBIS" },
+      { key: "Video", value: "4K 60p" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user2",
+    featured: true,
+    views: 85,
+    contactClicks: 15,
+    badges: ["hot"],
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user2",
+      email: "pro@camera.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest2",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user2",
+        username: "Pro Camera Rentals",
+        is_verified: true,
+        tier: "platinum",
+        tier_points: 2500,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Automobile listings
+  {
+    _id: "3",
+    _type: "listing",
+    title: "BMW 3 Series 2022 - Luxury Sedan for Events",
+    slug: {
+      current: "bmw-3-series-luxury-sedan"
+    },
+    description: [{children: [{text: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features."}], _type: "block"}],
+    price: 15000,
+    priceWeekly: 90000, // 7 days at 15000 = 105000, so 14% discount
+    priceMonthly: 350000, // 30 days at 15000 = 450000, so 22% discount
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (1).jpg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "2.0L Turbo" },
+      { key: "Fuel Type", value: "Petrol" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Year", value: "2022" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user3",
+    featured: true,
+    views: 200,
+    contactClicks: 40,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user3",
+      email: "elite@cars.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest3",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user3",
+        username: "Elite Car Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "platinum",
+        tier_points: 3200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "4",
+    _type: "listing",
+    title: "Honda Civic 2023 - Reliable Daily Rental",
+    slug: {
+      current: "honda-civic-daily-rental"
+    },
+    description: [{children: [{text: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features."}], _type: "block"}],
+    price: 8000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (2).jpg"}}],
+    location: { city: "Lahore", area: "Model Town" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "1.5L Turbo" },
+      { key: "Mileage", value: "15 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "CVT" },
+      { key: "Year", value: "2023" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user4",
+    featured: true,
+    views: 120,
+    contactClicks: 18,
+    badges: [ "local"],
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user4",
+      email: "city@cars.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest4",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user4",
+        username: "City Car Rentals",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1800,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Medical Equipment listings
+  {
+    _id: "5",
+    _type: "listing",
+    title: "Omron Blood Pressure Monitor - Automatic Cuff",
+    slug: {
+      current: "omron-blood-pressure-monitor"
+    },
+    description: [{children: [{text: "Accurate and easy-to-use blood pressure monitor with automatic cuff inflation. Perfect for home health monitoring."}], _type: "block"}],
+    price: 500,
+    pricePerHour: 50,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (1).jpg"}}],
+    location: { city: "Karachi", area: "Gulshan" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Omron" },
+      { key: "Type", value: "Automatic" },
+      { key: "Cuff Size", value: "Universal" },
+      { key: "Memory", value: "2-user, 14 readings each" },
+      { key: "Power", value: "Battery/AC Adapter" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user5",
+    featured: true,
+    views: 95,
+    contactClicks: 22,
+    badges: ["verified"],
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user5",
+      email: "health@first.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest5",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user5",
+        username: "HealthFirst Rentals",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "6",
+    _type: "listing",
+    title: "Digital Thermometer - Fast Reading",
+    slug: {
+      current: "digital-thermometer-fast-reading"
+    },
+    description: [{children: [{text: "Fast and accurate digital thermometer with dual mode readings (oral/underarm). Essential for home health care."}], _type: "block"}],
+    price: 200,
+    pricePerHour: 20,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (2).jpg"}}],
+    location: { city: "Islamabad", area: "F-7" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Reading Time", value: "< 10 seconds" },
+      { key: "Accuracy", value: "±0.1°C" },
+      { key: "Memory", value: "32 readings" },
+      { key: "Power", value: "Battery" },
+      { key: "Features", value: "Backlight display" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user6",
+    featured: true,
+    views: 65,
+    contactClicks: 12,
+    badges: ["new"],
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user6",
+      email: "medi@care.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest6",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user6",
+        username: "MediCare Pakistan",
+        is_verified: true,
+        tier: "bronze",
+        tier_points: 200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Generators listings
+  {
+    _id: "7",
+    _type: "listing",
+    title: "Honda EU20i 2000W Inverter Generator",
+    slug: {
+      current: "honda-eu20i-inverter-generator"
+    },
+    description: [{children: [{text: "Quiet and reliable inverter generator perfect for camping, events, and home backup. Clean power for sensitive electronics."}], _type: "block"}],
+    price: 3000,
+    pricePerHour: 200,
+    priceWeekly: 18000, // 7 days at 3000 = 21000, so ~14% discount
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (1).jpg"}}],
+    location: { city: "Karachi", area: "North Nazimabad" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "2000W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "8.1 hours" },
+      { key: "Noise Level", value: "52 dB" },
+      { key: "Weight", value: "34 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user7",
+    featured: true,
+    views: 180,
+    contactClicks: 35,
+    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
+    seller: {
+      id: "user7",
+      email: "power@solutions.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest7",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user7",
+        username: "Power Solutions",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1500,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "8",
+    _type: "listing",
+    title: "Yamaha EF2000iSv2 Portable Inverter Generator",
+    slug: {
+      current: "yamaha-ef2000isv2-generator"
+    },
+    description: [{children: [{text: "Ultra-quiet portable generator with excellent fuel efficiency. Perfect for outdoor events and camping trips."}], _type: "block"}],
+    price: 2800,
+    pricePerHour: 180,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (2).jpg"}}],
+    location: { city: "Lahore", area: "Johar Town" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "1600W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "10.4 hours" },
+      { key: "Noise Level", value: "51.5 dB" },
+      { key: "Weight", value: "30.9 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user8",
+    featured: true,
+    views: 140,
+    contactClicks: 28,
+    badges: ["hot", "verified"],
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user8",
+      email: "generator@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest8",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user8",
+        username: "Generator Rentals PK",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 750,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Additional listings for other categories
+  {
+    _id: "9",
+    _type: "listing",
+    title: "Bridal Lehenga - Traditional Red & Gold",
+    slug: {
+      current: "bridal-lehenga-traditional-red-gold"
+    },
+    description: [{children: [{text: "Beautiful traditional bridal lehenga with intricate embroidery. Perfect for Pakistani weddings and special occasions."}], _type: "block"}],
+    price: 5000,
+    category: {
+      _ref: "wedding-couture",
+      title: "Wedding Couture"
+    },
+    images: [{asset: {url: "/placeholder.svg"}}],
+    location: { city: "Karachi", area: "Defence" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Fabric", value: "Silk" },
+      { key: "Color", value: "Red & Gold" },
+      { key: "Style", value: "Traditional" },
+      { key: "Work", value: "Zardozi & Resham" },
+      { key: "Size", value: "Customizable" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 3 days",
+      "Professional dry cleaning required"
+    ],
+    status: "active",
+    supabaseId: "user9",
+    featured: true,
+    views: 90,
+    contactClicks: 18,
+    badges: ["featured", "verified"],
+    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago
+    seller: {
+      id: "user9",
+      email: "bridal@couture.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest9",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user9",
+        username: "Bridal Couture PK",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1300,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "10",
+    _type: "listing",
+    title: "Sound System - Professional PA Setup",
+    slug: {
+      current: "sound-system-professional-pa-setup"
+    },
+    description: [{children: [{text: "Complete professional sound system for events, weddings, and concerts. High quality speakers with mixer."}], _type: "block"}],
+    price: 10000,
+    category: {
+      _ref: "events",
+      title: "Events"
+    },
+    images: [{asset: {url: "/placeholder.svg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Speakers", value: "2 x 15" },
+      { key: "Amplifier", value: "1200W" },
+      { key: "Mixer", value: "16 Channel" },
+      { key: "Microphones", value: "4 Wireless" },
+      { key: "Range", value: "Up to 500 people" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Professional setup included"
+    ],
+    status: "active",
+    supabaseId: "user10",
+    featured: true,
+    views: 160,
+    contactClicks: 32,
+    badges: ["hot", "featured", "verified"],
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+    seller: {
+      id: "user10",
+      email: "sound@events.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest10",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user10",
+        username: "Event Sound Systems",
+        is_verified: true,
+        tier: "platinum",
+        tier_points: 2800,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "11",
+    _type: "listing",
+    title: "Concrete Mixer - Heavy Duty 5HP",
+    slug: {
+      current: "concrete-mixer-heavy-duty-5hp"
+    },
+    description: [{children: [{text: "Heavy duty concrete mixer perfect for construction projects. Reliable and efficient with large capacity drum."}], _type: "block"}],
+    price: 4000,
+    category: {
+      _ref: "construction-equipment",
+      title: "Construction Equipment"
+    },
+    images: [{asset: {url: "/placeholder.svg"}}],
+    location: { city: "Islamabad", area: "Blue Area" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "5 HP" },
+      { key: "Capacity", value: "5 cu ft" },
+      { key: "Drum", value: "Steel" },
+      { key: "Mixing Time", value: "3-4 minutes" },
+      { key: "Weight", value: "220 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Operator training provided"
+    ],
+    status: "active",
+    supabaseId: "user11",
+    featured: true,
+    views: 75,
+    contactClicks: 15,
+    badges: ["verified"],
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+    seller: {
+      id: "user11",
+      email: "construction@tools.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest11",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user11",
+        username: "Construction Tools PK",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 600,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "12",
+    _type: "listing",
+    title: "Studio Lighting Kit - Professional Setup",
+    slug: {
+      current: "studio-lighting-kit-professional-setup"
+    },
+    description: [{children: [{text: "Complete professional studio lighting kit with softboxes, strobes, and stands. Perfect for photography and videography."}], _type: "block"}],
+    price: 3500,
+    category: {
+      _ref: "studio",
+      title: "Studio"
+    },
+    images: [{asset: {url: "/placeholder.svg"}}],
+    location: { city: "Karachi", area: "Clifton" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Strobes", value: "2 x 500W" },
+      { key: "Softboxes", value: "3 x 24" },
+      { key: "Stands", value: "2 x 9ft" },
+      { key: "Modifiers", value: "Reflectors, Grids" },
+      { key: "Accessories", value: "Triggers, Cables" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper handling required"
+    ],
+    status: "active",
+    supabaseId: "user12",
+    featured: true,
+    views: 110,
+    contactClicks: 22,
+    badges: ["hot", "verified"],
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user12",
+      email: "studio@gear.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest12",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user12",
+        username: "Studio Gear Rentals",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1400,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "13",
+    _type: "listing",
+    title: "LED Display Banner - 10ft x 5ft",
+    slug: {
+      current: "led-display-banner-10ft-x-5ft"
+    },
+    description: [{children: [{text: "Large LED display banner perfect for advertising and events. Eye-catching with high brightness and resolution."}], _type: "block"}],
+    price: 8000,
+    category: {
+      _ref: "advertisements",
+      title: "Advertisements"
+    },
+    images: [{asset: {url: "/placeholder.svg"}}],
+    location: { city: "Lahore", area: "Commercial Area" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Size", value: "10ft x 5ft" },
+      { key: "Resolution", value: "3840 x 1920" },
+      { key: "Brightness", value: "5000 nits" },
+      { key: "Power", value: "800W" },
+      { key: "Control", value: "WiFi/USB/SD" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Professional setup available"
+    ],
+    status: "active",
+    supabaseId: "user13",
+    featured: true,
+    views: 130,
+    contactClicks: 25,
+    badges: ["hot"],
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user13",
+      email: "advertise@pro.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest13",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user13",
+        username: "AdvertisePro",
+        is_verified: true,
+        tier: "platinum",
+        tier_points: 3100,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Additional camera listings
+  {
+    _id: "29",
+    _type: "listing",
+    title: "Nikon Z7 II Mirrorless Camera",
+    slug: {
+      current: "nikon-z7-ii-mirrorless-camera"
+    },
+    description: [{children: [{text: "High-resolution mirrorless camera with exceptional image quality and advanced autofocus system."}], _type: "block"}],
+    price: 7000,
+    pricePerHour: 450,
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (1).png"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Nikon" },
+      { key: "Resolution", value: "45.7MP" },
+      { key: "ISO Range", value: "64-25600" },
+      { key: "Video", value: "4K UHD" },
+      { key: "Lens Mount", value: "Z Mount" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user29",
+    featured: true,
+    views: 95,
+    contactClicks: 20,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user29",
+      email: "nikon@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest29",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user29",
+        username: "Nikon Gear Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1100,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "15-new",
+    _type: "listing",
+    title: "Fujifilm X-T4 Mirrorless Camera",
+    slug: {
+      current: "fujifilm-xt4-mirrorless-camera"
+    },
+    description: [{children: [{text: "Compact mirrorless camera with in-body stabilization and excellent color reproduction."}], _type: "block"}],
+    price: 5500,
+    pricePerHour: 350,
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (1).webp"}}],
+    location: { city: "Islamabad", area: "F-7" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Fujifilm" },
+      { key: "Resolution", value: "26.1MP" },
+      { key: "ISO Range", value: "160-12800" },
+      { key: "Video", value: "4K 60p" },
+      { key: "Stabilization", value: "5-axis IBIS" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user15-new",
+    featured: true,
+    views: 75,
+    contactClicks: 12,
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user15-new",
+      email: "fujifilm@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest15-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user15-new",
+        username: "Fujifilm Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "16-new",
+    _type: "listing",
+    title: "Panasonic GH5 II Mirrorless Camera",
+    slug: {
+      current: "panasonic-gh5-ii-mirrorless-camera"
+    },
+    description: [{children: [{text: "Professional video camera with excellent low-light performance and advanced video features."}], _type: "block"}],
+    price: 6000,
+    pricePerHour: 375,
+    category: {
+      _ref: "camera",
+      title: "Camera"
+    },
+    images: [{asset: {url: "/samples/camera (2).jpg"}}],
+    location: { city: "Karachi", area: "Defence" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Panasonic" },
+      { key: "Resolution", value: "20.3MP" },
+      { key: "ISO Range", value: "200-25600" },
+      { key: "Video", value: "4K 60p" },
+      { key: "Stabilization", value: "5-axis IBIS" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day"
+    ],
+    status: "active",
+    supabaseId: "user16-new",
+    featured: true,
+    views: 88,
+    contactClicks: 18,
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user16-new",
+      email: "panasonic@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest16-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user16-new",
+        username: "Panasonic Gear",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 950,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Additional automobile listings
+  {
+    _id: "17-new",
+    _type: "listing",
+    title: "Toyota Corolla 2023 - Fuel Efficient Sedan",
+    slug: {
+      current: "toyota-corolla-fuel-efficient"
+    },
+    description: [{children: [{text: "Economical and reliable sedan perfect for daily commuting and family trips."}], _type: "block"}],
+    price: 7500,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (3).jpg"}}],
+    location: { city: "Karachi", area: "North Nazimabad" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "1.3L" },
+      { key: "Mileage", value: "18 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Year", value: "2023" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user17-new",
+    featured: true,
+    views: 95,
+    contactClicks: 15,
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user17-new",
+      email: "toyota@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest17-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user17-new",
+        username: "Toyota Rentals PK",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 750,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "18-new",
+    _type: "listing",
+    title: "Suzuki Swift 2022 - Compact City Car",
+    slug: {
+      current: "suzuki-swift-compact-city-car"
+    },
+    description: [{children: [{text: "Compact and maneuverable car perfect for city driving and parking in tight spaces."}], _type: "block"}],
+    price: 6000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (4).jpg"}}],
+    location: { city: "Islamabad", area: "Blue Area" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "1.2L" },
+      { key: "Mileage", value: "20 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Manual" },
+      { key: "Year", value: "2022" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user18-new",
+    featured: true,
+    views: 80,
+    contactClicks: 12,
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user18-new",
+      email: "suzuki@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest18-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user18-new",
+        username: "Suzuki Car Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "bronze",
+        tier_points: 300,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "19-new",
+    _type: "listing",
+    title: "Hyundai Tucson 2023 - Compact SUV",
+    slug: {
+      current: "hyundai-tucson-compact-suv"
+    },
+    description: [{children: [{text: "Spacious SUV with modern features, perfect for family trips and weekend adventures."}], _type: "block"}],
+    price: 12000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (5).jpg"}}],
+    location: { city: "Lahore", area: "Johar Town" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "2.0L" },
+      { key: "Mileage", value: "14 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Year", value: "2023" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user19-new",
+    featured: true,
+    views: 110,
+    contactClicks: 22,
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user19-new",
+      email: "hyundai@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest19-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user19-new",
+        username: "Hyundai Rentals PK",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1200,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "20-new",
+    _type: "listing",
+    title: "Kia Sportage 2022 - Midsize SUV",
+    slug: {
+      current: "kia-sportage-midsize-suv"
+    },
+    description: [{children: [{text: "Comfortable midsize SUV with advanced safety features and spacious interior."}], _type: "block"}],
+    price: 13000,
+    category: {
+      _ref: "automobiles",
+      title: "Automobiles"
+    },
+    images: [{asset: {url: "/samples/car (6).jpg"}}],
+    location: { city: "Karachi", area: "Clifton" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Engine", value: "2.4L" },
+      { key: "Mileage", value: "12 km/l" },
+      { key: "Seating", value: "5 Persons" },
+      { key: "Transmission", value: "Automatic" },
+      { key: "Year", value: "2022" }
+    ],
+    rentalRules: [
+      "Valid CNIC and driving license required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel policy: Full to full"
+    ],
+    status: "active",
+    supabaseId: "user20-new",
+    featured: true,
+    views: 95,
+    contactClicks: 18,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user20-new",
+      email: "kia@rentals.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest20-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user20-new",
+        username: "Kia SUV Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Additional medical equipment listings
+  {
+    _id: "21-new",
+    _type: "listing",
+    title: "Pulse Oximeter - Blood Oxygen Monitor",
+    slug: {
+      current: "pulse-oximeter-blood-oxygen-monitor"
+    },
+    description: [{children: [{text: "Accurate pulse oximeter for measuring blood oxygen saturation and pulse rate. Essential for respiratory monitoring."}], _type: "block"}],
+    price: 800,
+    pricePerHour: 80,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (3).jpg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Contec" },
+      { key: "Measurement Range", value: "0-100%" },
+      { key: "Accuracy", value: "±2%" },
+      { key: "Display", value: "LCD with backlight" },
+      { key: "Power", value: "2 x AAA batteries" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user21-new",
+    featured: true,
+    views: 75,
+    contactClicks: 15,
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user21-new",
+      email: "oxygen@health.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest21-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user21-new",
+        username: "Oxygen Health",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 550,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "22-new",
+    _type: "listing",
+    title: "Digital Weight Scale - Precision Measurement",
+    slug: {
+      current: "digital-weight-scale-precision"
+    },
+    description: [{children: [{text: "High-precision digital weight scale with BMI calculation and wireless connectivity."}], _type: "block"}],
+    price: 600,
+    pricePerHour: 60,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (4).jpg"}}],
+    location: { city: "Karachi", area: "Defence" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Beurer" },
+      { key: "Capacity", value: "180 kg" },
+      { key: "Precision", value: "100g" },
+      { key: "Features", value: "BMI calculation, wireless" },
+      { key: "Display", value: "LCD with large digits" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user22-new",
+    featured: true,
+    views: 68,
+    contactClicks: 13,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user22-new",
+      email: "weight@scale.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest22-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user22-new",
+        username: "Weight Scale Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "bronze",
+        tier_points: 250,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "23-new",
+    _type: "listing",
+    title: "Infrared Thermometer - Non-Contact",
+    slug: {
+      current: "infrared-thermometer-non-contact"
+    },
+    description: [{children: [{text: "Fast and hygienic non-contact infrared thermometer for forehead temperature measurement."}], _type: "block"}],
+    price: 1200,
+    pricePerHour: 120,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (5).jpg"}}],
+    location: { city: "Islamabad", area: "Blue Area" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Braun" },
+      { key: "Measurement Range", value: "32-42.9°C" },
+      { key: "Accuracy", value: "±0.2°C" },
+      { key: "Response Time", value: "< 1 second" },
+      { key: "Memory", value: "32 readings" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required"
+    ],
+    status: "active",
+    supabaseId: "user23-new",
+    featured: true,
+    views: 110,
+    contactClicks: 25,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user23-new",
+      email: "infrared@thermo.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest23-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user23-new",
+        username: "Infrared Health",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 950,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "24-new",
+    _type: "listing",
+    title: "Nebulizer Machine - Respiratory Treatment",
+    slug: {
+      current: "nebulizer-machine-respiratory"
+    },
+    description: [{children: [{text: "Compact and efficient nebulizer machine for respiratory medication delivery. Perfect for asthma and COPD patients."}], _type: "block"}],
+    price: 1500,
+    pricePerHour: 150,
+    category: {
+      _ref: "medical-equipment",
+      title: "Medical Equipment"
+    },
+    images: [{asset: {url: "/samples/medical (6).jpg"}}],
+    location: { city: "Lahore", area: "Model Town" },
+    condition: "new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Brand", value: "Omron" },
+      { key: "Particle Size", value: "0.5-5.0 μm" },
+      { key: "Noise Level", value: "< 50 dB" },
+      { key: "Treatment Time", value: "5-15 minutes" },
+      { key: "Power", value: "AC Adapter/Batteries" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Proper sanitization required",
+      "Prescription may be required"
+    ],
+    status: "active",
+    supabaseId: "user24-new",
+    featured: true,
+    views: 85,
+    contactClicks: 18,
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    seller: {
+      id: "user24-new",
+      email: "nebulizer@health.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest24-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user24-new",
+        username: "Respiratory Care",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 700,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  
+  // Additional generator listings
+  {
+    _id: "25-new",
+    _type: "listing",
+    title: "Generac GP3000i Portable Inverter Generator",
+    slug: {
+      current: "generac-gp3000i-portable-generator"
+    },
+    description: [{children: [{text: "Powerful and reliable portable inverter generator with clean power output for sensitive electronics."}], _type: "block"}],
+    price: 3200,
+    pricePerHour: 220,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (3).jpg"}}],
+    location: { city: "Karachi", area: "Clifton" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "3000W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "9.5 hours" },
+      { key: "Noise Level", value: "53 dB" },
+      { key: "Weight", value: "45 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user25-new",
+    featured: true,
+    views: 165,
+    contactClicks: 32,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    seller: {
+      id: "user25-new",
+      email: "generac@power.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest25-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user25-new",
+        username: "Generac Power",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1400,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "26-new",
+    _type: "listing",
+    title: "Champion 3400-Watt Dual Fuel Generator",
+    slug: {
+      current: "champion-3400-watt-dual-fuel"
+    },
+    description: [{children: [{text: "Versatile dual fuel generator that runs on gasoline or propane. Perfect for home backup and job sites."}], _type: "block"}],
+    price: 3500,
+    pricePerHour: 250,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (4).jpg"}}],
+    location: { city: "Lahore", area: "Gulberg" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "3400W" },
+      { key: "Fuel Type", value: "Gasoline/Propane" },
+      { key: "Run Time", value: "12 hours (gasoline)" },
+      { key: "Noise Level", value: "68 dB" },
+      { key: "Weight", value: "184 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user26-new",
+    featured: true,
+    views: 155,
+    contactClicks: 28,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    seller: {
+      id: "user26-new",
+      email: "champion@generator.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest26-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user26-new",
+        username: "Champion Rentals",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 800,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "27-new",
+    _type: "listing",
+    title: "Westinghouse WGen3600v Portable Generator",
+    slug: {
+      current: "westinghouse-wgen3600v-portable"
+    },
+    description: [{children: [{text: "Reliable portable generator with electric start and 120V/240V outlets. Perfect for home backup power."}], _type: "block"}],
+    price: 3800,
+    pricePerHour: 270,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (5).jpg"}}],
+    location: { city: "Islamabad", area: "F-7" },
+    condition: "like-new",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "3600W" },
+      { key: "Fuel Type", value: "Gasoline" },
+      { key: "Run Time", value: "9 hours" },
+      { key: "Noise Level", value: "68 dB" },
+      { key: "Weight", value: "132 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user27-new",
+    featured: true,
+    views: 135,
+    contactClicks: 25,
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    seller: {
+      id: "user27-new",
+      email: "westinghouse@power.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest27-new",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user27-new",
+        username: "Westinghouse Power",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "gold",
+        tier_points: 1250,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
+  },
+  {
+    _id: "28",
+    _type: "listing",
+    title: "DuroMax XP4400EH Standby Generator",
+    slug: {
+      current: "duromax-xp4400eh-standby"
+    },
+    description: [{children: [{text: "Powerful standby generator with electric start and dual fuel capability. Perfect for whole home backup power."}], _type: "block"}],
+    price: 4200,
+    pricePerHour: 300,
+    category: {
+      _ref: "generators",
+      title: "Generators"
+    },
+    images: [{asset: {url: "/samples/generator (1).png"}}],
+    location: { city: "Karachi", area: "Defence" },
+    condition: "good",
+    availability: { isAvailable: true },
+    specifications: [
+      { key: "Power", value: "4400W" },
+      { key: "Fuel Type", value: "Gasoline/Propane" },
+      { key: "Run Time", value: "10 hours (gasoline)" },
+      { key: "Noise Level", value: "69 dB" },
+      { key: "Weight", value: "168 lbs" }
+    ],
+    rentalRules: [
+      "Valid CNIC required",
+      "Security deposit refundable",
+      "Minimum rental period: 1 day",
+      "Fuel not included"
+    ],
+    status: "active",
+    supabaseId: "user28",
+    featured: true,
+    views: 125,
+    contactClicks: 22,
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    seller: {
+      id: "user28",
+      email: "duromax@power.com",
+      role: "seller",
+      created_at: new Date().toISOString(),
+      is_verified: true,
+      guest_id: "guest28",
+      country: "PK",
+      active: true,
+      email_verified: true,
+      notification_preferences: {
+        email: true,
+        sms: true,
+        push: true
+      },
+      preferred_language: "en",
+      profile: {
+        id: "user28",
+        username: "DuroMax Power",
+        avatar_url: "/placeholder.svg",
+        is_verified: true,
+        tier: "silver",
+        tier_points: 650,
+        tier_last_updated: new Date().toISOString(),
+        verification_status: "approved",
+        is_top_seller: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        verification_documents: {
+          cnic_front: null,
+          cnic_back: null,
+          business_license: null
+        }
+      }
+    }
   },
 ]
 
@@ -823,18 +3609,19 @@ export async function getHomepageListings(): Promise<Listing[]> {
 }
 
 export async function getListingWithAnalytics(slug: string) {
-  const listing = MOCK_LISTINGS.find((l) => l.slug === slug)
+  const listing = MOCK_LISTINGS.find((l) => l.slug?.current === slug)
   return {
     listing: listing || null,
     analytics: {
       views: Math.floor(Math.random() * 1000) + 100,
-      inquiries: Math.floor(Math.random() * 50) + 10,
+      contactClicks: Math.floor(Math.random() * 50) + 10,
+      whatsappClicks: Math.floor(Math.random() * 30) + 5,
     },
   }
 }
 
 export async function getSimilarProducts(listingId: string, listing: Listing) {
-  return MOCK_LISTINGS.filter((l) => l._id !== listingId && l.categoryTitle === listing.categoryTitle).slice(0, 4)
+  return MOCK_LISTINGS.filter((l) => l._id !== listingId && l.category.title === listing.category.title).slice(0, 4)
 }
 
 export function getAllListings(): Listing[] {
@@ -853,14 +3640,22 @@ export function getFilteredListings(filters: SearchFilters): Listing[] {
   let filtered = MOCK_LISTINGS
 
   if (filters.category && filters.category !== "all") {
-    filtered = filtered.filter((listing) => listing.categoryTitle.toLowerCase() === filters.category?.toLowerCase())
+    filtered = filtered.filter((listing) => listing.category.title.toLowerCase() === filters.category?.toLowerCase())
   }
 
   if (filters.query) {
     filtered = filtered.filter(
       (listing) =>
         listing.title.toLowerCase().includes(filters.query!.toLowerCase()) ||
-        listing.description?.toLowerCase().includes(filters.query!.toLowerCase()),
+        (listing.description && 
+         Array.isArray(listing.description) && 
+         listing.description.some(block => 
+           block.children && 
+           block.children.some((child: any) => 
+             child.text && child.text.toLowerCase().includes(filters.query!.toLowerCase())
+           )
+         )
+        ),
     )
   }
 
@@ -868,7 +3663,7 @@ export function getFilteredListings(filters: SearchFilters): Listing[] {
     filtered = filtered.filter(
       (listing) =>
         listing.location.city.toLowerCase().includes(filters.location!.toLowerCase()) ||
-        listing.location.area?.toLowerCase().includes(filters.location!.toLowerCase()),
+        (listing.location.area && listing.location.area.toLowerCase().includes(filters.location!.toLowerCase())),
     )
   }
 

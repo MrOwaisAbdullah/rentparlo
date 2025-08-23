@@ -1,101 +1,166 @@
 "use client"
 
 import Link from "next/link"
-import { Camera, Car, Laptop, Home, Gamepad2, Music, Wrench, Shirt, ChevronLeft, ChevronRight } from "lucide-react"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { useRef, useState, useEffect } from "react"
+import { 
+  Car, 
+  HeartPulse, 
+  Camera as CameraIcon, 
+  Zap, 
+  Heart, 
+  Calendar, 
+  Construction, 
+  Palette, 
+  Megaphone,
+  ChevronLeft, 
+  ChevronRight 
+} from "lucide-react"
+import { useRef, useState, useEffect, useCallback } from "react"
+import { getCategories } from "@/lib/categories"
+import { Category } from "@/types"
 
-const categories = [
-  { name: "Electronics", icon: Laptop, href: "/category/electronics", color: "text-blue-600" },
-  { name: "Cameras", icon: Camera, href: "/category/cameras", color: "text-purple-600" },
-  { name: "Vehicles", icon: Car, href: "/category/vehicles", color: "text-red-600" },
-  { name: "Home & Garden", icon: Home, href: "/category/home-garden", color: "text-green-600" },
-  { name: "Gaming", icon: Gamepad2, href: "/category/gaming", color: "text-orange-600" },
-  { name: "Music", icon: Music, href: "/category/music", color: "text-pink-600" },
-  { name: "Tools", icon: Wrench, href: "/category/tools", color: "text-gray-600" },
-  { name: "Fashion", icon: Shirt, href: "/category/fashion", color: "text-indigo-600" },
-]
+const iconMap: Record<string, React.ComponentType<any>> = {
+  automobiles: Car,
+  "medical-equipment": HeartPulse,
+  camera: CameraIcon,
+  generators: Zap,
+  "wedding-couture": Heart,
+  events: Calendar,
+  "construction-equipment": Construction,
+  studio: Palette,
+  advertisements: Megaphone,
+}
+
+const colorMap: Record<string, string> = {
+  automobiles: "text-blue-600",
+  "medical-equipment": "text-red-600",
+  camera: "text-purple-600",
+  generators: "text-yellow-600",
+  "wedding-couture": "text-pink-600",
+  events: "text-orange-600",
+  "construction-equipment": "text-gray-600",
+  studio: "text-indigo-600",
+  advertisements: "text-green-600",
+}
 
 export function CategoryBar() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
-
-  const checkScrollability = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-      setCanScrollLeft(scrollLeft > 0)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1)
-    }
-  }
+  const [categories, setCategories] = useState<Category[]>([])
 
   useEffect(() => {
-    checkScrollability()
-    const scrollElement = scrollRef.current
-    if (scrollElement) {
-      scrollElement.addEventListener("scroll", checkScrollability)
-      return () => scrollElement.removeEventListener("scroll", checkScrollability)
+    const fetchCategories = async () => {
+      const cats = await getCategories()
+      // Only show the first 8 categories
+      setCategories(cats.slice(0, 8))
+    }
+    
+    fetchCategories()
+  }, [])
+
+  const checkScrollability = useCallback(() => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      
+      // Simple, robust check
+      const isLeft = scrollLeft > 0
+      const isRight = scrollLeft < (scrollWidth - clientWidth)
+      
+      console.log("Scroll check:", { scrollLeft, scrollWidth, clientWidth, isLeft, isRight })
+      
+      setCanScrollLeft(isLeft)
+      setCanScrollRight(isRight)
     }
   }, [])
 
+  useEffect(() => {
+    // Check on mount and after a short delay for rendering
+    const timer1 = setTimeout(checkScrollability, 100)
+    
+    const scrollElement = scrollRef.current
+    if (scrollElement) {
+      // Add listeners
+      scrollElement.addEventListener("scroll", checkScrollability)
+      window.addEventListener("resize", checkScrollability)
+      
+      // Cleanup
+      return () => {
+        scrollElement.removeEventListener("scroll", checkScrollability)
+        window.removeEventListener("resize", checkScrollability)
+        clearTimeout(timer1)
+      }
+    }
+    
+    return () => {
+      clearTimeout(timer1)
+    }
+  }, [checkScrollability])
+
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -200, behavior: "smooth" })
+      console.log("Scrolling left by -150px")
+      scrollRef.current.scrollBy({ left: -150, behavior: "smooth" })
     }
   }
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 200, behavior: "smooth" })
+      console.log("Scrolling right by 150px")
+      scrollRef.current.scrollBy({ left: 150, behavior: "smooth" })
     }
   }
 
   return (
-    <div className="border-b bg-muted/30">
+    <div className="border-b bg-white/60 backdrop-blur-xl">
       <div className="container mx-auto px-4">
-        <div className="relative">
-          {/* Left Arrow - Mobile Only */}
+        <div className="relative py-3">
+          {/* Left Arrow - Always visible but enabled/disabled based on scroll */}
           <button
             onClick={scrollLeft}
-            disabled={!canScrollLeft}
-            className={`md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 transition-all duration-200 ${
-              canScrollLeft ? "opacity-100 hover:bg-gray-50 hover:shadow-lg" : "opacity-50 cursor-not-allowed"
+            className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-md rounded-full p-2 transition-opacity duration-200 ${
+              canScrollLeft ? "opacity-100 hover:bg-gray-50 hover:shadow-lg cursor-pointer" : "opacity-0 cursor-not-allowed"
             }`}
+            aria-label="Scroll left"
+            disabled={!canScrollLeft}
           >
             <ChevronLeft className="h-4 w-4 text-gray-600" />
           </button>
 
-          {/* Right Arrow - Mobile Only */}
+          {/* Right Arrow - Always visible but enabled/disabled based on scroll */}
           <button
             onClick={scrollRight}
-            disabled={!canScrollRight}
-            className={`md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 transition-all duration-200 ${
-              canScrollRight ? "opacity-100 hover:bg-gray-50 hover:shadow-lg" : "opacity-50 cursor-not-allowed"
+            className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-md rounded-full p-2 transition-opacity duration-200 ${
+              canScrollRight ? "opacity-100 hover:bg-gray-50 hover:shadow-lg cursor-pointer" : "opacity-0 cursor-not-allowed"
             }`}
+            aria-label="Scroll right"
+            disabled={!canScrollRight}
           >
             <ChevronRight className="h-4 w-4 text-gray-600" />
           </button>
 
-          <ScrollArea className="w-full">
-            <div ref={scrollRef} className="flex items-center space-x-6 py-3 md:justify-center px-8 md:px-0">
-              {categories.map((category) => {
-                const Icon = category.icon
-                return (
-                  <Link
-                    key={category.name}
-                    href={category.href}
-                    className="flex flex-col items-center space-y-1 min-w-fit group hover:bg-muted/50 rounded-lg p-2 transition-colors"
-                  >
-                    <Icon className={`h-5 w-5 ${category.color} group-hover:scale-110 transition-transform`} />
-                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground whitespace-nowrap">
-                      {category.name}
-                    </span>
-                  </Link>
-                )
-              })}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+          {/* Category Items - Horizontally scrollable */}
+          <div 
+            ref={scrollRef}
+            className="flex items-center space-x-6 md:justify-center px-2 md:px-16 overflow-x-auto scrollbar-hide py-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {categories.map((category) => {
+              const Icon = iconMap[category.slug] || Palette
+              const color = colorMap[category.slug] || "text-gray-600"
+              return (
+                <Link
+                  key={category._id}
+                  href={`/category/${category.slug}`}
+                  className="flex flex-col items-center space-y-1 min-w-fit group hover:bg-muted/50 rounded-lg p-2 transition-colors flex-shrink-0"
+                >
+                  <Icon className={`h-5 w-5 ${color} group-hover:scale-110 transition-transform`} />
+                  <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground whitespace-nowrap">
+                    {category.title}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

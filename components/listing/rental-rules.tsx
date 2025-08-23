@@ -2,10 +2,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, XCircle, Clock, Shield } from "lucide-react"
 
 interface RentalRulesProps {
-  isMobile?: boolean
+  // Add props here if needed in the future
+  [key: string]: never // This ensures the interface is truly empty
 }
 
-export default function RentalRules({ isMobile = false }: RentalRulesProps) {
+export default function RentalRules({}: RentalRulesProps) {
   const rules = [
     { icon: CheckCircle, text: "Valid CNIC required", type: "allowed" },
     { icon: CheckCircle, text: "Security deposit refundable", type: "allowed" },

@@ -5,10 +5,9 @@ import ProductSwiper from "@/components/sections/product-swiper"
 
 interface SimilarListingsProps {
   currentListing: Listing
-  isMobile?: boolean
 }
 
-export default function SimilarListings({ currentListing, isMobile = false }: SimilarListingsProps) {
+export default function SimilarListings({ currentListing }: SimilarListingsProps) {
   const allListings = getAllListings()
   const similarListings = allListings
     .filter((listing) => listing.category === currentListing.category && listing.id !== currentListing.id)

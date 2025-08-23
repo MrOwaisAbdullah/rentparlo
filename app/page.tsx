@@ -1,23 +1,19 @@
-import { Header } from "@/components/layout/header"
-import { Footer } from "@/components/layout/footer"
 import HeroSection from "@/components/sections/hero-section"
 import CategoryCards from "@/components/sections/category-cards"
 import ProductSwiper from "@/components/sections/product-swiper"
-import Testimonials from "@/components/sections/testimonials"
+import { Testimonials } from "@/components/testimonials"
 import LocationLinks from "@/components/sections/location-links"
 import AdBanner from "@/components/ads/ad-banner"
+import { BlogSection } from "@/components/sections/blog-section"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-
-      <main>
         <HeroSection />
 
         <CategoryCards />
 
-        <ProductSwiper title="RentParlo Projects" category="electronics" limit={8} trending={true} />
+        <ProductSwiper title="RentParlo Projects" category="automobiles" limit={8} trending={true} />
 
         <section className="py-8">
           <div className="container mx-auto px-4 flex justify-center">
@@ -25,16 +21,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        <ProductSwiper title="Popular Vehicles" category="vehicles" limit={6} />
+        <ProductSwiper title="Popular Vehicles" category="automobiles" limit={6} />
 
-        <ProductSwiper title="Camera & Photography Equipment" category="cameras" limit={8} />
+        <ProductSwiper title="Camera & Photography Equipment" category="camera" limit={8} />
 
         <Testimonials />
 
-        <LocationLinks />
-      </main>
+        <BlogSection />
 
-      <Footer />
+        <LocationLinks />
+
     </div>
   )
 }

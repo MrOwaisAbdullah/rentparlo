@@ -24,7 +24,6 @@ interface SellerCardProps {
 }
 
 export function SellerCard({
-  id,
   name,
   username,
   avatar,

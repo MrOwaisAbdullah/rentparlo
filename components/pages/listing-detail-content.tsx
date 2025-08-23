@@ -9,7 +9,7 @@ import SpecificationsTable from "@/components/listing/specifications-table"
 import RentalRules from "@/components/listing/rental-rules"
 import SimilarListings from "@/components/listing/similar-listings"
 import AdBanner from "@/components/ads/ad-banner"
-import StarRating from "@/components/ui/star-rating"
+import StarRating from "@/components/star-rating"
 import type { Listing } from "@/lib/listings"
 
 interface ListingDetailContentProps {

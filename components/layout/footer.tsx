@@ -18,7 +18,7 @@ export function Footer() {
               <span className="font-bold text-xl text-primary">RentParlo</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Pakistan's leading rental marketplace. Rent anything, anywhere, anytime.
+              Pakistan&apos;s leading rental marketplace. Rent anything, anywhere, anytime.
             </p>
             <div className="flex space-x-2">
               <Button variant="ghost" size="icon" asChild>
@@ -74,34 +74,34 @@ export function Footer() {
             <h3 className="font-semibold">Popular Categories</h3>
             <div className="space-y-2 text-sm">
               <Link
-                href="/category/electronics"
+                href="/category/automobiles"
                 className="block text-muted-foreground hover:text-foreground transition-colors"
               >
-                Electronics
+                Automobiles
               </Link>
               <Link
-                href="/category/cameras"
+                href="/category/camera"
                 className="block text-muted-foreground hover:text-foreground transition-colors"
               >
-                Cameras
+                Camera
               </Link>
               <Link
-                href="/category/vehicles"
+                href="/category/medical-equipment"
                 className="block text-muted-foreground hover:text-foreground transition-colors"
               >
-                Vehicles
+                Medical Equipment
               </Link>
               <Link
-                href="/category/tools"
+                href="/category/construction-equipment"
                 className="block text-muted-foreground hover:text-foreground transition-colors"
               >
-                Tools & Equipment
+                Construction Equipment
               </Link>
               <Link
-                href="/category/gaming"
+                href="/category/events"
                 className="block text-muted-foreground hover:text-foreground transition-colors"
               >
-                Gaming
+                Events
               </Link>
             </div>
           </div>
