@@ -11,13 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -215,26 +208,18 @@ export function SearchFilters({
             <ChevronDown className={`w-4 h-4 transition-transform ${openSections.category ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2 mt-2">
-            <Select value={currentFilters.category || 'any'} onValueChange={(value) => onFilterChange('category', value === 'any' ? undefined : value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category._id} value={category.slug}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{category.title}</span>
-                      {category.itemCount && (
-                        <Badge variant="secondary" className="ml-2">
-                          {category.itemCount}
-                        </Badge>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select 
+              value={currentFilters.category || ''} 
+              onChange={(e) => onFilterChange('category', e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category._id} value={category.slug}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
           </CollapsibleContent>
         </Collapsible>
 
@@ -379,18 +364,17 @@ export function SearchFilters({
             <ChevronDown className={`w-4 h-4 transition-transform ${openSections.condition ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2 mt-2">
-            <Select value={currentFilters.condition} onValueChange={(value) => onFilterChange('condition', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select condition" />
-              </SelectTrigger>
-              <SelectContent>
-                {CONDITIONS.map((condition) => (
-                  <SelectItem key={condition.value} value={condition.value}>
-                    {condition.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select 
+              value={currentFilters.condition || ''} 
+              onChange={(e) => onFilterChange('condition', e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              {CONDITIONS.map((condition) => (
+                <option key={condition.value} value={condition.value}>
+                  {condition.label}
+                </option>
+              ))}
+            </select>
           </CollapsibleContent>
         </Collapsible>
 

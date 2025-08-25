@@ -307,6 +307,19 @@ export const SEARCH_LISTINGS_QUERY = `
   }
 `
 
+// Search listings count query (for pagination)
+export const SEARCH_LISTINGS_COUNT_QUERY = `
+  count(*[_type == "listing" && status == "active" && published == true 
+    && ($searchQuery == "" || title match $searchQuery + "*" || description[].children[].text match $searchQuery + "*")
+    && ($category == "" || category._ref == $category)
+    && ($city == "" || location.city == $city)
+    && ($area == "" || location.area == $area)
+    && ($condition == "" || condition == $condition)
+    && ($minPrice == 0 || price >= $minPrice)
+    && ($maxPrice == 0 || price <= $maxPrice)
+  ])
+`
+
 // Get similar listings (same category, different listing)
 export const SIMILAR_LISTINGS_QUERY = `
   *[_type == "listing" && category._ref == $categoryId && _id != $listingId && status == "active" && published == true] | order(isFeatured desc, _createdAt desc) [0...6] {
@@ -709,7 +722,7 @@ export async function searchListingsCount(params: {
     maxPrice
   };
 
-  return await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+  return await client.fetch(SEARCH_LISTINGS_COUNT_QUERY, queryParams);
 }
 
 // Helper function to fetch blog posts

@@ -141,7 +141,7 @@ export function ListingCard({
   // Featured variant specific rendering
   if (variant === "featured") {
     return (
-      <Card className={cn("group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md h-full flex flex-col", className)}>
+      <Card className={cn("group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md h-full flex flex-col py-0", className)}>
         <div className="relative">
           {/* Image */}
           <div className="relative aspect-[4/3] overflow-hidden">
@@ -445,7 +445,7 @@ export function ListingCard({
   // List variant specific rendering
   if (variant === "list") {
     return (
-      <div className={cn("bg-background border rounded-lg p-4 hover:shadow-md transition-shadow", className)}>
+      <div className={cn("bg-background border rounded-lg p-4 hover:shadow-md transition-shadow py-0", className)}>
         <div className="flex gap-4">
           <div className="w-24 h-24 flex-shrink-0">
             {effectiveImage ? (
@@ -512,7 +512,7 @@ export function ListingCard({
   }
 
   return (
-    <Card className={cn("group overflow-hidden hover:shadow-lg transition-all duration-300", className)}>
+    <Card className={cn("group overflow-hidden hover:shadow-lg transition-all duration-300 py-0", className)}>
       <div className="relative">
         <Link href={`/listing/${effectiveId}`}>
           <div

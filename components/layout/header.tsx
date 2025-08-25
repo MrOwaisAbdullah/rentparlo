@@ -2,30 +2,21 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { MapPin, User, LogIn, LogOut, UserCircle } from "lucide-react"
+import { MapPin, User, LogIn, LogOut, UserCircle, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CityAreaCombobox } from "@/components/ui/combobox"
 import { HeaderSheet } from "./header-sheet"
 import { createClient } from '@/utils/supabase/client'
 import { usePathname, useRouter } from 'next/navigation'
+import { CITY_AREAS } from '@/lib/area-utils'
 
-const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-  "Quetta",
-  "Hyderabad",
-  "Gujranwala",
-]
+const cities = Object.keys(CITY_AREAS)
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCity, setSelectedCity] = useState("karachi")
+  const [selectedCity, setSelectedCity] = useState("Karachi")
+  const [selectedArea, setSelectedArea] = useState("")
   const supabase = createClient()
   const router = useRouter()
   const pathname = usePathname()
@@ -40,8 +31,27 @@ export function Header() {
     }
   }
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const searchParams = new URLSearchParams()
+    
+    if (searchQuery) {
+      searchParams.set('q', searchQuery)
+    }
+    
+    if (selectedCity) {
+      searchParams.set('city', selectedCity)
+    }
+    
+    if (selectedArea) {
+      searchParams.set('area', selectedArea)
+    }
+    
+    router.push(`/search?${searchParams.toString()}`)
+  }
+
   return (
-    <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-[100] relative">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -54,22 +64,19 @@ export function Header() {
 
           {/* Desktop Search Bar */}
           <div className="hidden md:flex items-center space-x-2 flex-1 max-w-2xl mx-8">
-            <div className="flex-1 flex items-center space-x-2 rounded-lg p-2">
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger size="sm" className="w-40 border-0 bg-transparent hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="City" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city.toLowerCase()}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <form onSubmit={handleSearch} className="flex-1 flex items-center space-x-2 rounded-lg p-2 border bg-white z-[100] relative">
+              <div className="w-56">
+                <CityAreaCombobox
+                  cities={cities}
+                  selectedCity={selectedCity}
+                  selectedArea={selectedArea}
+                  onCityChange={setSelectedCity}
+                  onAreaChange={setSelectedArea}
+                  cityPlaceholder="City"
+                  areaPlaceholder="Area"
+                />
+              </div>
+              
               <div className="flex-1 flex items-center space-x-2">
                 <Input
                   placeholder="Try 'DSLR camera', 'Car', 'Laptop'..."
@@ -78,13 +85,15 @@ export function Header() {
                   className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent h-8"
                 />
               </div>
+              
               <Button 
+                type="submit"
                 size="sm" 
                 className="shrink-0 h-8 bg-primary hover:bg-primary/90 transition-all duration-300"
               >
-                Search
+                <Search className="h-4 w-4" />
               </Button>
-            </div>
+            </form>
           </div>
 
           {/* Desktop Navigation */}

@@ -4,11 +4,12 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Search, MapPin } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { urlFor, getOptimizedImageUrl } from "@/sanity/lib/image"
+import { CityAreaCombobox } from "@/components/ui/combobox"
+import { CITY_AREAS } from '@/lib/area-utils'
 
 interface Banner {
   _id: string;
@@ -35,10 +36,11 @@ interface HeroSectionProps {
   banners?: Banner[];
 }
 
-const PAKISTAN_CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"]
+const PAKISTAN_CITIES = Object.keys(CITY_AREAS)
 
 export function HeroSection({ banners = [] }: HeroSectionProps) {
   const [location, setLocation] = useState("Karachi")
+  const [area, setArea] = useState("")
   const [query, setQuery] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
@@ -77,10 +79,20 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    const searchParams = new URLSearchParams({
-      location: location,
-      ...(query && { q: query }),
-    })
+    const searchParams = new URLSearchParams()
+    
+    if (query) {
+      searchParams.set('q', query)
+    }
+    
+    if (location) {
+      searchParams.set('city', location)
+    }
+    
+    if (area) {
+      searchParams.set('area', area)
+    }
+    
     window.location.href = `/search?${searchParams.toString()}`
   }
 
@@ -268,29 +280,27 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
         )}
       </div>
 
-      <div className="container mx-auto px-4 -mt-16 relative z-20">
+      <div className="container mx-auto px-4 -mt-16 relative z-30">
         <div className="bg-white rounded-lg shadow-xl p-6 max-w-4xl mx-auto border">
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="w-full md:w-2/12 flex-shrink-0">
+            <div className="w-full md:w-4/12 flex-shrink-0">
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
                 <MapPin className="w-4 h-4 text-primary" />
                 Location
               </label>
-              <Select value={location} onValueChange={setLocation}>
-                <SelectTrigger size="l" className="border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-full">
-                  <SelectValue placeholder="City" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAKISTAN_CITIES.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CityAreaCombobox
+                cities={PAKISTAN_CITIES}
+                selectedCity={location}
+                selectedArea={area}
+                onCityChange={setLocation}
+                onAreaChange={setArea}
+                cityPlaceholder="City"
+                areaPlaceholder="Area"
+                className="flex-nowrap"
+              />
             </div>
 
-            <div className="w-full md:w-7/12 flex-grow">
+            <div className="w-full md:w-5/12 flex-grow">
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
                 <Search className="w-4 h-4 text-primary" />
                 What are you looking for?
