@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Category } from "@/types"
+import { getSanityImageUrl } from "@/sanity/lib/image"
 
 interface CategoryCardProps {
   category: Category
@@ -32,11 +33,24 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   advertisements: Megaphone,
 }
 
+// Helper function to safely extract slug value
+const getSlugValue = (slug: string | { current: string } | undefined): string => {
+  if (!slug) return '';
+  if (typeof slug === 'string') {
+    return slug;
+  }
+  if (typeof slug === 'object' && 'current' in slug) {
+    return slug.current || '';
+  }
+  return '';
+};
+
 export function CategoryCard({ category, className }: CategoryCardProps) {
-  const Icon = iconMap[category.slug]
+  const slugValue = getSlugValue(category.slug);
+  const Icon = iconMap[slugValue]
   
   return (
-    <Link href={`/category/${category.slug}`}>
+    <Link href={slugValue ? `/category/${slugValue}` : '#'}>
       <Card
         className={cn("group hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer", className)}
       >
@@ -46,7 +60,7 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
             <div className="mx-auto w-12 h-12 flex items-center justify-center">
               {category.icon?.asset?.url ? (
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden">
-                  <Image src={category.icon.asset.url} alt={category.title} fill className="object-cover" />
+                  <Image src={getSanityImageUrl(category.icon)} alt={category.title} fill className="object-cover" />
                 </div>
               ) : Icon ? (
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">

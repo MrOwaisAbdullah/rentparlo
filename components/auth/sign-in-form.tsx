@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signIn } from '@/app/auth/login/actions';
+import { signIn } from '@/lib/auth-actions';
 import { signInSchema, type SignInFormData } from '@/lib/validations/auth';
 import { cn } from '@/lib/utils';
 
@@ -56,26 +56,22 @@ export function SignInForm({
       setIsLoading(true);
       setError(null);
 
-      // Create FormData for server action
-      const formData = new FormData();
-      formData.set('email', data.email);
-      formData.set('password', data.password);
-      formData.set('rememberMe', data.rememberMe.toString());
-      
-      if (redirectTo) {
-        formData.set('redirectTo', redirectTo);
-      }
+      const result = await signIn({
+        email: data.email,
+        password: data.password
+      });
 
-      const result = await signIn(formData);
-
-      if (result?.error) {
-        setError(result.error);
+      if (!result.success) {
+        setError(result.error || 'Sign in failed');
       } else {
         setSuccess(true);
         
-        // Trigger success callback
+        // Trigger success callback or redirect
         setTimeout(() => {
           onSuccess?.();
+          if (result.redirectTo && !onSuccess) {
+            window.location.href = result.redirectTo;
+          }
         }, 1500);
       }
     } catch (err) {
@@ -93,11 +89,11 @@ export function SignInForm({
       if (provider === 'google') {
         // Import the Google sign-in action dynamically
         try {
-          const { signInWithGoogle } = await import('@/app/auth/login/actions');
+          const { signInWithGoogle } = await import('@/lib/auth-actions');
           const result = await signInWithGoogle();
           
-          if (result?.error) {
-            setError(result.error);
+          if (!result.success) {
+            setError(result.error || 'Google sign-in failed');
           }
           // If successful, the action will redirect automatically
         } catch (importError) {

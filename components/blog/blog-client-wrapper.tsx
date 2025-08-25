@@ -22,7 +22,7 @@ interface BlogClientWrapperProps {
   basePath?: string; // For category pages: '/blog/category/[category]'
 }
 
-export function BlogClientWrapper({
+const BlogClientWrapperComponent = ({
   posts,
   categories,
   popularPosts,
@@ -30,7 +30,7 @@ export function BlogClientWrapper({
   initialFilters,
   initialPagination,
   basePath = '/blog'
-}: BlogClientWrapperProps) {
+}: BlogClientWrapperProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -57,8 +57,9 @@ export function BlogClientWrapper({
       params.delete('page');
     }
 
-    router.push(`${basePath}?${params.toString()}`);
-  }, [router, searchParams]);
+    // Use replace instead of push to avoid adding to browser history
+    router.replace(`${basePath}?${params.toString()}`);
+  }, [router, searchParams, basePath]);
 
   const handlePageChange = React.useCallback((page: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -69,8 +70,9 @@ export function BlogClientWrapper({
       params.delete('page');
     }
 
-    router.push(`${basePath}?${params.toString()}`);
-  }, [router, searchParams]);
+    // Use replace for pagination to avoid excessive history entries
+    router.replace(`${basePath}?${params.toString()}`);
+  }, [router, searchParams, basePath]);
 
   const handleSearch = React.useCallback((query: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -84,8 +86,8 @@ export function BlogClientWrapper({
     // Reset to page 1 when searching
     params.delete('page');
 
-    router.push(`${basePath}?${params.toString()}`);
-  }, [router, searchParams]);
+    router.replace(`${basePath}?${params.toString()}`);
+  }, [router, searchParams, basePath]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -115,4 +117,10 @@ export function BlogClientWrapper({
       </div>
     </div>
   );
-}
+};
+
+// Memoize the component to prevent unnecessary re-renders
+export const BlogClientWrapper = React.memo(BlogClientWrapperComponent);
+
+// Add display name for debugging
+BlogClientWrapper.displayName = 'BlogClientWrapper';

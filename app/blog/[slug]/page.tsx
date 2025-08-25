@@ -4,9 +4,9 @@ import { BlogPostContent } from '@/components/blog/blog-post-content';
 import { BlogPost, BlogPostSummary } from '@/types';
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 // Mock function to fetch blog post - replace with actual data fetching
@@ -64,7 +64,7 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
     mainImage: {
       asset: { 
         url: '/api/placeholder/1200/630',
-        metadata: { lqip: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSZX7jxDJdHmEFWBBBBBHY9iD7hNvLm9A=' },
+        metadata: { lqip: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSZX7jxDJdHmEFWBBBBBHY9iD7hNvLm9A=' },
       },
       alt: 'Electronics rental guide illustration',
       caption: 'Modern electronics available for rent in Pakistan'
@@ -141,7 +141,9 @@ async function getRelatedPosts(postId: string): Promise<BlogPostSummary[]> {
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const post = await getBlogPost(params.slug);
+  // Await params before accessing properties
+  const resolvedParams = await params;
+  const post = await getBlogPost(resolvedParams.slug);
 
   if (!post) {
     return {
@@ -152,7 +154,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   const title = post.seo?.metaTitle || post.title;
   const description = post.seo?.metaDescription || post.excerpt;
-  const socialImage = post.seo?.socialImage?.asset.url || post.mainImage.asset.url;
+  const socialImage = post.seo?.socialImage?.asset?.url || post.mainImage?.asset?.url || "/placeholder.svg";
 
   return {
     title: `${title} | RentParLo.pk`,
@@ -170,7 +172,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: post.seo?.socialImage?.alt || post.mainImage.alt
+          alt: post.seo?.socialImage?.alt || post.mainImage?.alt || "Blog image"
         }
       ]
     },
@@ -181,13 +183,15 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       images: [socialImage]
     },
     alternates: {
-      canonical: `/blog/${params.slug}`
+      canonical: `/blog/${resolvedParams.slug}`
     }
   };
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = await getBlogPost(params.slug);
+  // Await params before accessing properties
+  const resolvedParams = await params;
+  const post = await getBlogPost(resolvedParams.slug);
 
   if (!post) {
     notFound();
@@ -201,7 +205,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.excerpt,
-    image: post.mainImage.asset.url,
+    image: post.mainImage?.asset?.url || "/placeholder.svg",
     author: {
       '@type': 'Person',
       name: post.author
@@ -218,7 +222,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     dateModified: post._updatedAt,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://rentparlo.pk/blog/${params.slug}`
+      '@id': `https://rentparlo.pk/blog/${resolvedParams.slug}`
     }
   };
 

@@ -42,6 +42,11 @@ export default defineType({
       type: 'number',
       initialValue: 0,
     })
-  ]
+  ],
+  preview: {
+    select: {
+      title: 'title',
+      media: 'bannerImage',
+    }
+  }
 })
-  

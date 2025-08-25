@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { contactFormSchema } from '@/lib/validations/auth';
 import { sanitizeFormData, createRateLimiter, applySecurityHeaders } from '@/lib/security/sanitization';
@@ -112,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Validate with Zod schema
     const validationResult = contactFormSchema.safeParse(sanitizedData);
     if (!validationResult.success) {
-      const errors = validationResult.error.errors.map(err => err.message).join(', ');
+      const errors = validationResult.error.issues.map(err => err.message).join(', ');
       return applySecurityHeaders(
         NextResponse.json(
           { error: `Validation failed: ${errors}` },

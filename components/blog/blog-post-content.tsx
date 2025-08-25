@@ -74,8 +74,8 @@ const PortableTextRenderer: React.FC<{ content: (PortableTextBlock | ImageBlock 
           <figure key={imageBlock._key} className="my-8">
             <div className="relative aspect-video overflow-hidden rounded-lg">
               <Image
-                src={imageBlock.asset.url}
-                alt={imageBlock.alt}
+                src={imageBlock.asset?.url || "/placeholder.svg"}
+                alt={imageBlock.alt || "Blog image"}
                 fill
                 className="object-cover"
               />
@@ -204,13 +204,13 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
         {/* Featured Image */}
         <div className="relative aspect-video overflow-hidden rounded-lg mb-8">
           <Image
-            src={post.mainImage.asset.url}
-            alt={post.mainImage.alt}
+            src={post.mainImage?.asset?.url || "/placeholder.svg"}
+            alt={post.mainImage?.alt || "Featured image"}
             fill
             className="object-cover"
             priority
           />
-          {post.mainImage.caption && (
+          {post.mainImage?.caption && (
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
               <p className="text-sm">{post.mainImage.caption}</p>
             </div>

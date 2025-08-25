@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Star, Settings, Calendar, Zap, Award, Tag, Percent, Leaf, MapPinHouse } from "lucide-react"
 import Link from "next/link"
 import { Listing, ListingBadge } from "@/types"
+import { getSanityImageUrl } from "@/sanity/lib/image"
+import Image from "next/image";
 
 // Pakistan-specific badge configuration
 const BADGE_CONFIG = {
@@ -118,17 +120,50 @@ interface ProductSwiperCardProps {
 export function ProductSwiperCard({ listing, isMobile }: ProductSwiperCardProps) {
   const badgesToDisplay = getBadgesToDisplay(listing.badges || []);
 
+  // Get the image URL - handle both direct URLs and Sanity image objects
+  const getImageUrl = (image: any): string => {
+    if (!image) return "/placeholder.svg";
+    
+    // If it's already a URL string
+    if (typeof image === 'string') {
+      return image;
+    }
+    
+    // If it's a Sanity image object with asset.url
+    if (image.asset?.url) {
+      return image.asset.url;
+    }
+    
+    // If it's a Sanity image object with asset reference, use the image utility
+    if (image.asset?._ref) {
+      return getSanityImageUrl(image) || "/placeholder.svg";
+    }
+    
+    return "/placeholder.svg";
+  };
+
+  const imageUrl = listing.images?.[0] ? getImageUrl(listing.images[0]) : "/placeholder.svg";
+
   return (
-    <Link href={`/listing/${listing.slug.current}`} className="flex-shrink-0 block transform transition-transform duration-300 hover:-translate-y-1">
+    <Link href={`/listing/${listing.slug?.current || listing._id}`} className="flex-shrink-0 block transform transition-transform duration-300 hover:-translate-y-1">
       <Card className="w-72 sm:w-80 h-full py-0 gap-1 bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col transform hover:-translate-y-1 hover:border-primary/10 hover:ring-1 hover:ring-primary/20">
         <div className="relative">
           <div className="aspect-[4/3] overflow-hidden">
-            {listing.images[0]?.asset?.url ? (
-              <img
-                src={listing.images[0].asset.url || "/placeholder.svg"}
-                alt={listing.title}
-                className="w-full h-full object-cover transition-transform duration-300 transform hover:scale-105"
-              />
+            {imageUrl ? (
+              <div className="relative w-full h-full">
+                <Image
+                  src={imageUrl}
+                  alt={listing.title || "Listing image"}
+                  fill
+                  className="object-cover transition-transform duration-300 transform group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                  }}
+                />
+              </div>
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                 <div className="text-center">
@@ -162,11 +197,19 @@ export function ProductSwiperCard({ listing, isMobile }: ProductSwiperCardProps)
           <div className="flex items-center justify-between mt-auto mb-1">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {listing.seller?.profile?.avatar_url ? (
-                <img 
-                  src={listing.seller.profile.avatar_url} 
-                  alt={listing.seller.profile.username} 
-                  className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                />
+                <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                  <Image 
+                    src={getImageUrl(listing.seller.profile.avatar_url)} 
+                    alt={listing.seller.profile.username || "Seller"} 
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-medium">
@@ -189,7 +232,7 @@ export function ProductSwiperCard({ listing, isMobile }: ProductSwiperCardProps)
           
           <div className="mb-1 flex-1">
             <div className="font-bold text-base sm:text-lg text-gray-900 mb-1">
-              PKR {listing.price.toLocaleString()}/day
+              PKR {listing.price?.toLocaleString() || "0"}/day
             </div>
             <h3 className="font-semibold text-gray-800 line-clamp-2 mb-2 text-sm leading-tight">
               {listing.title}
@@ -197,8 +240,8 @@ export function ProductSwiperCard({ listing, isMobile }: ProductSwiperCardProps)
             <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
               <MapPin className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">
-                {listing.location.area ? `${listing.location.area}, ` : ""}
-                {listing.location.city}
+                {listing.location?.area ? `${listing.location.area}, ` : ""}
+                {listing.location?.city || "Unknown Location"}
               </span>
             </div>
           </div>

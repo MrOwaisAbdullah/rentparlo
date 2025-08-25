@@ -12,7 +12,7 @@ import { FormSection } from '@/components/forms/form-section';
 import { MultiStepForm, Step } from '@/components/forms/multi-step-form';
 import { ProfileImageUpload } from '@/components/forms/profile-image-upload';
 import { RoleSelector } from './role-selector';
-import { signUp, signUpWithGoogle } from '@/app/auth/login/actions';
+import { signUp, signInWithGoogle } from '@/lib/auth-actions';
 import { uploadProfileImage } from '@/app/auth/upload-image/actions';
 import { registrationSchema, type RegistrationFormData } from '@/lib/validations/auth';
 import { sanitizeFormData } from '@/lib/security/sanitization';
@@ -242,36 +242,34 @@ export function RegisterForm({
       // Sanitize input data
       const sanitizedData = sanitizeFormData(data);
 
-      // Create FormData for server action
-      const formDataObj = new FormData();
-      Object.entries(sanitizedData).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          formDataObj.set(key, value.toString());
-        }
-      });
+      // Prepare signup data for the new auth action
+      const signUpData = {
+        email: sanitizedData.email,
+        password: sanitizedData.password,
+        name: sanitizedData.name,
+        phone: sanitizedData.phone,
+        city: sanitizedData.city,
+        role: sanitizedData.role as 'user' | 'seller',
+        sellerData: sanitizedData.role === 'seller' ? {
+          username: sanitizedData.email.split('@')[0], // Generate username from email
+          businessName: sanitizedData.businessName,
+          cnic: sanitizedData.cnic,
+          address: sanitizedData.address
+        } : undefined
+      };
       
-      // Add profile image URL if available
-      if (profileImageUrl) {
-        formDataObj.set('profileImageUrl', profileImageUrl);
-      }
+      const result = await signUp(signUpData);
 
-      const result = await signUp(formDataObj);
-
-      if (result?.error) {
-        if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors);
-          // Go back to the step with errors
-          const errorFields = Object.keys(result.fieldErrors);
-          if (errorFields.includes('email') || errorFields.includes('name')) {
-            setCurrentStep(1);
-          } else if (errorFields.includes('password')) {
-            setCurrentStep(2);
-          }
-        } else {
+      if (!result.success) {
+        if (result.error) {
           setError(result.error);
         }
       } else {
+        // If successful, handle redirect or success callback
         onSuccess?.();
+        if (result.redirectTo && !onSuccess) {
+          window.location.href = result.redirectTo;
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -287,10 +285,10 @@ export function RegisterForm({
       setIsLoading(true);
       setError(null);
       
-      const result = await signUpWithGoogle();
+      const result = await signInWithGoogle();
       
-      if (result?.error) {
-        setError(result.error);
+      if (!result.success) {
+        setError(result.error || 'Google sign-up failed');
       }
       // If successful, the action will redirect automatically
     } catch (error) {

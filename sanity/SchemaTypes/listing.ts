@@ -24,15 +24,30 @@ export default defineType({
     defineField({
       name: 'description',
       title: 'Description',
-      type: 'array',
-      of: [{type: 'block'}],
-      validation: Rule => Rule.required().min(50),
+      type: 'text',
+      validation: Rule => Rule.required().min(50).max(2000),
     }),
     defineField({
       name: 'pricePerHour',
       title: 'Hourly Price (PKR)',
       type: 'number',
       description: 'Optional hourly rate for short-term rentals',
+    }),
+    defineField({
+      name: 'priceType',
+      title: 'Price Type',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Hourly', value: 'hourly'},
+          {title: 'Daily', value: 'daily'},
+          {title: 'Weekly', value: 'weekly'},
+          {title: 'Monthly', value: 'monthly'},
+          {title: 'Yearly', value: 'yearly'},
+        ],
+      },
+      initialValue: 'daily',
+      validation: Rule => Rule.required(),
     }),
     defineField({
       name: 'price',
@@ -162,6 +177,36 @@ export default defineType({
       },
       initialValue: 'pending',
       validation: Rule => Rule.required(),
+    }),
+    defineField({
+      name: 'badges',
+      title: 'Listing Badges',
+      type: 'array',
+      of: [{
+        type: 'string',
+        options: {
+          list: [
+            {title: 'Hot', value: 'hot'},
+            {title: 'New', value: 'new'},
+            {title: 'Featured', value: 'featured'},
+            {title: 'Verified', value: 'verified'},
+            {title: 'Top Seller', value: 'top_seller'},
+            {title: 'Discount', value: 'discount'},
+            {title: 'Eco Friendly', value: 'eco_friendly'},
+            {title: 'Local', value: 'local'},
+            {title: 'Instant Delivery', value: 'instant_delivery'},
+          ]
+        }
+      }],
+      description: 'Display badges for this listing (e.g., Hot, New, Featured)',
+    }),
+    defineField({
+      name: 'createdAt',
+      title: 'Created At',
+      type: 'datetime',
+      initialValue: () => new Date().toISOString(),
+      hidden: true,
+      description: 'When this listing was created',
     }),
     defineField({
       name: 'supabaseId',

@@ -21,8 +21,8 @@ import { cn } from '@/lib/utils';
 const onboardingSchema = z.object({
   role: z.enum(['user', 'seller']),
   phone: z.string()
-    .regex(/^(\\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani phone number format (03XXXXXXXXX)')
-    .transform(val => val.replace(/\\s+/g, '')),
+    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani phone number format (03XXXXXXXXX)')
+    .transform(val => val.replace(/\s+/g, '')),
   city: z.enum([
     'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
     'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
@@ -31,7 +31,7 @@ const onboardingSchema = z.object({
   // Seller-specific fields
   businessName: z.string().optional(),
   cnic: z.string()
-    .regex(/^\\d{5}-\\d{7}-\\d{1}$/, 'CNIC must be in format XXXXX-XXXXXXX-X')
+    .regex(/^\d{5}-\d{7}-\d{1}$/, 'CNIC must be in format XXXXX-XXXXXXX-X')
     .optional(),
   address: z.string().min(10, 'Address must be at least 10 characters').optional()
 });
@@ -288,25 +288,25 @@ export function WelcomeContent() {
             description="Add your contact details to complete your profile"
             icon={Phone}
           >
-            <div className=\"grid gap-4 sm:gap-6 md:grid-cols-2\">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <FormField
-                id=\"phone\"
-                name=\"phone\"
-                label=\"Phone Number\"
-                type=\"tel\"
-                placeholder=\"03XX XXXXXXX\"
+                id="phone"
+                name="phone"
+                label="Phone Number"
+                type="tel"
+                placeholder="03XX XXXXXXX"
                 value={formData.phone}
                 error={errors.phone?.message}
                 required
-                description=\"Pakistani mobile number format\"
+                description="Pakistani mobile number format"
                 onChange={(value) => setValue('phone', value as string)}
               />
 
               <FormField
-                id=\"city\"
-                name=\"city\"
-                label=\"City\"
-                type=\"select\"
+                id="city"
+                name="city"
+                label="City"
+                type="select"
                 options={pakistaniCities}
                 value={formData.city}
                 error={errors.city?.message}
@@ -326,36 +326,36 @@ export function WelcomeContent() {
               description="Tell us about your business for verification"
               icon={Store}
             >
-              <div className=\"space-y-4 sm:space-y-6\">
+              <div className="space-y-4 sm:space-y-6">
                 <FormField
-                  id=\"businessName\"
-                  name=\"businessName\"
-                  label=\"Business Name\"
-                  placeholder=\"Enter your business name (optional)\"
+                  id="businessName"
+                  name="businessName"
+                  label="Business Name"
+                  placeholder="Enter your business name (optional)"
                   value={formData.businessName}
                   error={errors.businessName?.message}
                   icon={Building2}
                   onChange={(value) => setValue('businessName', value as string)}
                 />
 
-                <div className=\"grid gap-4 sm:gap-6 md:grid-cols-2\">
+                <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
                   <FormField
-                    id=\"cnic\"
-                    name=\"cnic\"
-                    label=\"CNIC Number\"
-                    placeholder=\"XXXXX-XXXXXXX-X\"
+                    id="cnic"
+                    name="cnic"
+                    label="CNIC Number"
+                    placeholder="XXXXX-XXXXXXX-X"
                     value={formData.cnic}
                     error={errors.cnic?.message}
-                    description=\"Required for seller verification\"
+                    description="Required for seller verification"
                     onChange={(value) => setValue('cnic', value as string)}
                   />
 
                   <FormField
-                    id=\"address\"
-                    name=\"address\"
-                    label=\"Business Address\"
-                    type=\"textarea\"
-                    placeholder=\"Enter your complete business address\"
+                    id="address"
+                    name="address"
+                    label="Business Address"
+                    type="textarea"
+                    placeholder="Enter your complete business address"
                     value={formData.address}
                     error={errors.address?.message}
                     onChange={(value) => setValue('address', value as string)}
@@ -380,17 +380,17 @@ export function WelcomeContent() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className=\"text-center space-y-6\"
+      className="text-center space-y-6"
     >
-      <div className=\"w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto\">
-        <CheckCircle2 className=\"w-10 h-10 text-green-600\" />
+      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+        <CheckCircle2 className="w-10 h-10 text-green-600" />
       </div>
       
-      <div className=\"space-y-2\">
-        <h3 className=\"text-2xl font-bold text-foreground\">
+      <div className="space-y-2">
+        <h3 className="text-2xl font-bold text-foreground">
           Welcome to RentParLo, {user?.user_metadata?.full_name || user?.email}!
         </h3>
-        <p className=\"text-muted-foreground max-w-md mx-auto\">
+        <p className="text-muted-foreground max-w-md mx-auto">
           {selectedRole === 'seller' 
             ? 'Your seller account is ready! You can now start listing items for rent.'
             : 'Your account is ready! You can now browse and rent items across Pakistan.'
@@ -403,9 +403,9 @@ export function WelcomeContent() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className=\"flex items-center justify-center space-x-2 text-sm text-muted-foreground\"
+          className="flex items-center justify-center space-x-2 text-sm text-muted-foreground"
         >
-          <div className=\"animate-spin rounded-full h-4 w-4 border-b-2 border-primary\"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
           <span>Redirecting to dashboard...</span>
         </motion.div>
       )}
@@ -414,8 +414,8 @@ export function WelcomeContent() {
 
   if (!user) {
     return (
-      <div className=\"flex items-center justify-center py-12\">
-        <div className=\"animate-spin rounded-full h-8 w-8 border-b-2 border-primary\"></div>
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -424,21 +424,21 @@ export function WelcomeContent() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className=\"w-full max-w-2xl mx-auto\"
+      className="w-full max-w-2xl mx-auto"
     >
       {/* Welcome Message */}
       {isNewUser && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className=\"mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg\"
+          className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg"
         >
-          <div className=\"flex items-center space-x-3\">
-            <div className=\"w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center\">
-              <CheckCircle2 className=\"w-5 h-5 text-primary\" />
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className=\"text-sm font-medium\">
+              <p className="text-sm font-medium">
                 {fromSignup ? 'Registration successful!' : 'Welcome!'} 🎉
               </p>
               <p className="text-xs text-muted-foreground">
@@ -457,9 +457,9 @@ export function WelcomeContent() {
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: -10, height: 0 }}
             transition={{ duration: 0.3 }}
-            className=\"mb-6\"
+            className="mb-6"
           >
-            <Alert variant=\"destructive\">
+            <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           </motion.div>
@@ -479,8 +479,8 @@ export function WelcomeContent() {
           submitLabel={selectedRole === 'seller' ? 'Complete Setup' : 'Get Started'}
           allowStepNavigation={true}
           completedSteps={completedSteps}
-          variant=\"default\"
-          animation=\"slide\"
+          variant="default"
+          animation="slide"
         >
           {renderStepContent()}
         </MultiStepForm>

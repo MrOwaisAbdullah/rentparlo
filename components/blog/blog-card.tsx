@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { BlogPostSummary } from '@/types';
+import { getSanityImageUrl } from '@/sanity/lib/image';
 
 interface BlogCardProps {
   post: BlogPostSummary;
@@ -55,13 +56,18 @@ export function BlogCard({
   // Featured variant - large card with prominent display
   if (variant === 'featured') {
     return (
-      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-lg", className)}>
+      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-lg py-0", className)}>
         <div className="relative aspect-[16/9] overflow-hidden">
           <Image
-            src={post.mainImage.asset.url}
-            alt={post.mainImage.alt}
+            src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
+            alt={post.mainImage?.alt || "Blog image"}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              // Fallback to placeholder if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.src = "/placeholder-blog-new.svg";
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
@@ -151,18 +157,23 @@ export function BlogCard({
   // Horizontal variant - for list view
   if (variant === 'horizontal') {
     return (
-      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-md", className)}>
+      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-md py-0", className)}>
         <div className="flex">
           <div className="relative w-1/3 aspect-video overflow-hidden">
             <Image
-              src={post.mainImage.asset.url}
-              alt={post.mainImage.alt}
+              src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
+              alt={post.mainImage?.alt || "Blog image"}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                // Fallback to placeholder if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.src = "/placeholder-blog-new.svg";
+              }}
             />
             {post.featured && (
               <div className="absolute top-2 left-2">
-                <Badge size="sm" className="bg-primary text-primary-foreground">
+                <Badge className="bg-primary text-primary-foreground">
                   <Star className="w-3 h-3" />
                 </Badge>
               </div>
@@ -174,7 +185,7 @@ export function BlogCard({
               {showCategories && post.categories && post.categories.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {post.categories.slice(0, 2).map((category) => (
-                    <Badge key={category._id} variant="outline" size="sm">
+                    <Badge key={category._id} variant="outline">
                       {category.title}
                     </Badge>
                   ))}
@@ -225,14 +236,19 @@ export function BlogCard({
   // Compact variant - for sidebar or related posts
   if (variant === 'compact') {
     return (
-      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-md", className)}>
+      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-md py-0", className)}>
         <div className="flex space-x-3 p-4">
           <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-md">
             <Image
-              src={post.mainImage.asset.url}
-              alt={post.mainImage.alt}
+              src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
+              alt={post.mainImage?.alt || "Blog image"}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                // Fallback to placeholder if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.src = "/placeholder-blog-new.svg";
+              }}
             />
           </div>
 
@@ -257,7 +273,7 @@ export function BlogCard({
 
             {showCategories && post.categories && post.categories.length > 0 && (
               <div className="mt-2">
-                <Badge variant="outline" size="sm">
+                <Badge variant="outline">
                   {post.categories[0].title}
                 </Badge>
               </div>
@@ -270,13 +286,18 @@ export function BlogCard({
 
   // Default variant - standard grid card
   return (
-    <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-lg", className)}>
+    <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-lg py-0", className)}>
       <div className="relative aspect-video overflow-hidden">
         <Image
-          src={post.mainImage.asset.url}
-          alt={post.mainImage.alt}
+          src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
+          alt={post.mainImage?.alt || "Blog image"}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={(e) => {
+            // Fallback to placeholder if image fails to load
+            const target = e.target as HTMLImageElement;
+            target.src = "/placeholder-blog-new.svg";
+          }}
         />
         
         {post.featured && (
@@ -301,7 +322,7 @@ export function BlogCard({
         {showCategories && post.categories && post.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {post.categories.slice(0, 2).map((category) => (
-              <Badge key={category._id} variant="outline" size="sm">
+              <Badge key={category._id} variant="outline">
                 {category.title}
               </Badge>
             ))}
@@ -347,7 +368,7 @@ export function BlogCard({
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t">
             {post.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="secondary" size="sm">
+              <Badge key={tag} variant="secondary">
                 <Tag className="w-3 h-3 mr-1" />
                 {tag}
               </Badge>

@@ -8,7 +8,8 @@ import blog from './blog'
 import category from './category'
 import review from './review'
 import listing from './listing'
+import { verificationDocument } from './verificationDocument'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [adBanner, affiltateProgram, banner, blog, category, review, listing],
+  types: [adBanner, affiltateProgram, banner, blog, category, review, listing, verificationDocument],
 }

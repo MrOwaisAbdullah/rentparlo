@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/header";
-import { CategoryBar } from "@/components/layout/category-bar";
+import { HeaderWrapper } from "@/components/layout/header-wrapper";
+import { CategoryBarWrapper } from "@/components/layout/category-bar-wrapper";
 import { Footer } from "@/components/layout/footer";
+import { QueryProvider } from "@/components/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +32,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
-        <div className="sticky top-0 z-50">
-          <CategoryBar />
-        </div>
-        {children}
-        <Footer />
+        <QueryProvider>
+          <HeaderWrapper />
+          <div className="sticky top-0 z-50">
+            <CategoryBarWrapper />
+          </div>
+          {children}
+          <Footer />
+        </QueryProvider>
       </body>
     </html>
   );

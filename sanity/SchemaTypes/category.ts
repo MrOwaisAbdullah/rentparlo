@@ -47,6 +47,20 @@ export default defineType({
       type: 'number',
       initialValue: 0,
       description: 'Lower number = higher position',
+    }),
+    defineField({
+      name: 'itemCount',
+      title: 'Item Count',
+      type: 'number',
+      initialValue: 0,
+      description: 'Number of active listings in this category',
+    }),
+    defineField({
+      name: 'popular',
+      title: 'Popular Category',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Mark as popular to show prominently',
     })
   ],
   preview: {

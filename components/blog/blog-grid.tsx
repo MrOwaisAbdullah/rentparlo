@@ -41,17 +41,39 @@ export function BlogGrid({
   const [sortBy, setSortBy] = React.useState<SortBy>('newest');
   const [searchQuery, setSearchQuery] = React.useState(filters.query || '');
   const [showFilters, setShowFilters] = React.useState(false);
+  const debounceTimer = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Handle search input with debounce
+  // Handle search input with optimized debounce
   React.useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (searchQuery !== filters.query) {
-        onFiltersChange({ ...filters, query: searchQuery, page: 1 });
-      }
-    }, 500);
+    // Clear previous timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
 
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, filters, onFiltersChange]);
+    // Only trigger search if query actually changed
+    if (searchQuery !== (filters.query || '')) {
+      debounceTimer.current = setTimeout(() => {
+        // Double-check that the query still differs before making the request
+        if (searchQuery !== (filters.query || '')) {
+          onFiltersChange({ ...filters, query: searchQuery, page: 1 });
+        }
+      }, 500);
+    }
+
+    // Cleanup function
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchQuery]); // Only depend on searchQuery, not on filters or onFiltersChange
+
+  // Update searchQuery when filters.query changes from outside (e.g. URL changes)
+  React.useEffect(() => {
+    if (searchQuery !== (filters.query || '')) {
+      setSearchQuery(filters.query || '');
+    }
+  }, [filters.query]);
 
   const handleFilterChange = (key: keyof BlogFilters, value: string | boolean | undefined) => {
     onFiltersChange({
@@ -192,14 +214,14 @@ export function BlogGrid({
               <div>
                 <label className="text-sm font-medium mb-2 block">Category</label>
                 <Select
-                  value={filters.category || ''}
-                  onValueChange={(value) => handleFilterChange('category', value || undefined)}
+                  value={filters.category || 'any'}
+                  onValueChange={(value) => handleFilterChange('category', value === 'any' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All categories</SelectItem>
+                    <SelectItem value="any">All categories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category._id} value={category.slug.current}>
                         {category.title}
@@ -213,14 +235,14 @@ export function BlogGrid({
               <div>
                 <label className="text-sm font-medium mb-2 block">Tag</label>
                 <Select
-                  value={filters.tag || ''}
-                  onValueChange={(value) => handleFilterChange('tag', value || undefined)}
+                  value={filters.tag || 'any'}
+                  onValueChange={(value) => handleFilterChange('tag', value === 'any' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All tags" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All tags</SelectItem>
+                    <SelectItem value="any">All tags</SelectItem>
                     {tags.map((tag) => (
                       <SelectItem key={tag} value={tag}>
                         {tag}
@@ -234,14 +256,14 @@ export function BlogGrid({
               <div>
                 <label className="text-sm font-medium mb-2 block">Language</label>
                 <Select
-                  value={filters.language || ''}
-                  onValueChange={(value) => handleFilterChange('language', value || undefined)}
+                  value={filters.language || 'any'}
+                  onValueChange={(value) => handleFilterChange('language', value === 'any' ? undefined : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All languages" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All languages</SelectItem>
+                    <SelectItem value="any">All languages</SelectItem>
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="ur">Urdu</SelectItem>
                     <SelectItem value="both">Both</SelectItem>
@@ -254,7 +276,7 @@ export function BlogGrid({
                 <label className="text-sm font-medium mb-2 block">Sort by</label>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="newest">Newest first</SelectItem>

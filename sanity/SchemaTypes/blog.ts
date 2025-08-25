@@ -122,11 +122,6 @@ export default defineType({
             },
           ],
         },
-        {
-          type: 'code',
-          name: 'codeBlock',
-          title: 'Code Block',
-        },
       ],
       validation: Rule => Rule.required().min(1),
     }),

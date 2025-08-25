@@ -22,7 +22,7 @@ const mockPosts = [
     slug: { current: 'complete-guide-renting-electronics-pakistan' },
     excerpt: 'Everything you need to know about renting electronics in Pakistan, from smartphones to laptops and gaming equipment.',
     mainImage: {
-      asset: { url: '/api/placeholder/600/400' },
+      asset: { url: '/placeholder-blog-new.svg' },
       alt: 'Electronics rental guide'
     },
     categories: [{ _id: '1', title: 'Electronics', slug: 'electronics' }],
@@ -39,7 +39,7 @@ const mockPosts = [
     slug: { current: 'top-10-most-rented-items-karachi' },
     excerpt: 'Discover which items are in highest demand in Karachi\'s rental market and what makes them so popular.',
     mainImage: {
-      asset: { url: '/api/placeholder/600/400' },
+      asset: { url: '/placeholder-blog-new.svg' },
       alt: 'Popular rental items in Karachi'
     },
     categories: [{ _id: '2', title: 'Market Insights', slug: 'market-insights' }],
@@ -64,7 +64,7 @@ const mockPopularPosts = [
     _id: '1',
     title: 'How to Choose the Right Camera for Events',
     slug: { current: 'choose-right-camera-events' },
-    mainImage: { asset: { url: '/api/placeholder/400/300' }, alt: 'Camera rental' },
+    mainImage: { asset: { url: '/placeholder-blog-new.svg' }, alt: 'Camera rental' },
     publishedAt: '2024-01-05T09:00:00Z',
     readingTime: 6
   },
@@ -72,7 +72,7 @@ const mockPopularPosts = [
     _id: '2',
     title: 'Wedding Decor Rental: Complete Checklist',
     slug: { current: 'wedding-decor-rental-checklist' },
-    mainImage: { asset: { url: '/api/placeholder/400/300' }, alt: 'Wedding decor' },
+    mainImage: { asset: { url: '/placeholder-blog-new.svg' }, alt: 'Wedding decor' },
     publishedAt: '2024-01-01T11:00:00Z',
     readingTime: 10
   }
@@ -81,27 +81,30 @@ const mockPopularPosts = [
 const mockTags = ['electronics', 'furniture', 'wedding', 'events', 'photography', 'decor', 'tips', 'karachi', 'lahore', 'islamabad'];
 
 interface BlogPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     category?: string;
     tag?: string;
     query?: string;
     language?: string;
     featured?: string;
-  };
+  }>;
 }
 
-export default function BlogPage({ searchParams }: BlogPageProps) {
+export default async function BlogPage({ searchParams }: BlogPageProps) {
+  // Await searchParams before accessing properties
+  const params = await searchParams;
+  
   const filters = {
-    query: searchParams.query,
-    category: searchParams.category,
-    tag: searchParams.tag,
-    language: searchParams.language as 'en' | 'ur' | undefined,
-    featured: searchParams.featured === 'true' ? true : undefined
+    query: params.query,
+    category: params.category,
+    tag: params.tag,
+    language: params.language as 'en' | 'ur' | undefined,
+    featured: params.featured === 'true' ? true : undefined
   };
 
   const pagination = {
-    page: parseInt(searchParams.page || '1'),
+    page: parseInt(params.page || '1'),
     limit: 12,
     total: mockPosts.length,
     totalPages: Math.ceil(mockPosts.length / 12),

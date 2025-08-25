@@ -153,7 +153,7 @@ export interface ListingImage {
 export interface Category {
   _id: string;
   title: string;
-  slug: string;
+  slug: string | { current: string };
   description?: string;
   parent?: { 
   _ref: string; 
@@ -195,7 +195,9 @@ export interface Listing {
   slug: {
     current: string;
   };
-  description: any[]; // Portable text blocks
+  description: string; // Changed from any[] to string to match Sanity schema
+  priceType: 'hourly' | 'daily' | 'monthly' | 'yearly';
+  createdAt: string;
   price: number;
   pricePerHour?: number;
   priceWeekly?: number;
@@ -214,7 +216,7 @@ export interface Listing {
   rentalRules: RentalRule[];
   status: ListingStatus;
   supabaseId: string; // References seller's Supabase ID
-  featured?: boolean;
+  isFeatured?: boolean;
   featuredPriority?: number;
   created_at: string;
   views?: number;
@@ -617,6 +619,13 @@ export interface SubscriptionPackage {
  * User subscription status
  */
 export type SubscriptionStatus = 'active' | 'canceled' | 'expired' | 'pending';
+
+/**
+ * Enhanced user subscription with package information
+ */
+export interface EnhancedUserSubscription extends UserSubscription {
+  subscription_packages?: SubscriptionPackage;
+}
 
 /**
  * User subscription (stored in Supabase)

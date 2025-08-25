@@ -112,14 +112,6 @@ export default defineType({
       type: 'number',
       initialValue: 0,
       description: 'Lower number = higher priority'
-    }),
-    defineField({
-      name: 'clicks',
-      title: 'Click Count',
-      type: 'number',
-      initialValue: 0,
-      readOnly: true,
-      hidden: true
     })
   ],
   preview: {

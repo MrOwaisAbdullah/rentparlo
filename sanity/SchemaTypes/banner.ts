@@ -71,6 +71,12 @@ export default defineType({
       name: 'orderAsc',
       by: [{field: 'order', direction: 'asc'}]
     }
-  ]
+  ],
+  preview: {
+    select: {
+      title: 'title',
+      subtitle: 'link',
+      media: 'image',
+    }
+  }
 })
-  

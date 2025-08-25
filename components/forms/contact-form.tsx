@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Phone, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -17,48 +16,6 @@ interface ContactFormProps {
   onSuccess?: () => void;
   className?: string;
 }
-
-const contactInfo = [
-  {
-    icon: Mail,
-    title: 'Email',
-    details: 'support@rentparlo.pk',
-    description: 'Send us an email anytime!'
-  },
-  {
-    icon: Phone,
-    title: 'Phone',
-    details: '+92 300 123 4567',
-    description: 'Mon-Fri from 9am to 6pm'
-  },
-  {
-    icon: MapPin,
-    title: 'Office',
-    details: 'Gulshan-e-Iqbal, Karachi',
-    description: 'Come say hello at our office'
-  },
-  {
-    icon: Clock,
-    title: 'Working Hours',
-    details: 'Mon-Fri: 9:00 AM - 6:00 PM',
-    description: 'Saturday: 10:00 AM - 4:00 PM'
-  }
-];
-
-const faqItems = [
-  {
-    question: 'How quickly do you respond to inquiries?',
-    answer: 'We typically respond to all inquiries within 24 hours during business days.'
-  },
-  {
-    question: 'Do you provide support in Urdu?',
-    answer: 'Yes, our support team is fluent in both English and Urdu.'
-  },
-  {
-    question: 'Can I schedule a call instead of sending an email?',
-    answer: 'Absolutely! Just mention your preferred time in the message and we\'ll reach out to you.'
-  }
-];
 
 export function ContactForm({ onSuccess, className }: ContactFormProps) {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -212,7 +169,7 @@ export function ContactForm({ onSuccess, className }: ContactFormProps) {
                       value={formData.subject}
                       error={errors.subject?.message}
                       required
-                      onChange={(value) => setValue('subject', value as string)}
+                      onChange={(value) => setValue('subject', value as ContactFormData['subject'])}
                     />
 
                     <FormField
@@ -227,7 +184,7 @@ export function ContactForm({ onSuccess, className }: ContactFormProps) {
                       ]}
                       value={formData.urgency}
                       error={errors.urgency?.message}
-                      onChange={(value) => setValue('urgency', value as string)}
+                      onChange={(value) => setValue('urgency', value as ContactFormData['urgency'])}
                     />
                   </div>
 
@@ -262,85 +219,6 @@ export function ContactForm({ onSuccess, className }: ContactFormProps) {
                   . We'll only use your information to respond to your inquiry.
                 </p>
               </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Contact Information */}
-        <div className="space-y-6">
-          {/* Contact Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-              <CardDescription>
-                Reach out to us directly through any of these channels
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {contactInfo.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.title} className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-sm">{item.title}</h4>
-                      <p className="font-semibold text-foreground">{item.details}</p>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          {/* FAQ */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Frequently Asked Questions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {faqItems.map((item, index) => (
-                <div key={index} className="space-y-2">
-                  <h4 className="text-sm font-medium">{item.question}</h4>
-                  <p className="text-sm text-muted-foreground">{item.answer}</p>
-                  {index < faqItems.length - 1 && <hr className="my-4" />}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Quick Links */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Links</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <a
-                href="/help"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Help Center →
-              </a>
-              <Link
-                href="/blog"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Blog & Guides →
-              </Link>
-              <a
-                href="/terms"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Terms of Service →
-              </a>
-              <a
-                href="/privacy"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Privacy Policy →
-              </a>
             </CardContent>
           </Card>
         </div>

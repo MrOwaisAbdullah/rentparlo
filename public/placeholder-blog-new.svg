@@ -1,0 +1,25 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f8fafc"/>
+  <rect x="0" y="0" width="100%" height="100%" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Camera icon -->
+  <g transform="translate(300, 180)">
+    <rect x="-40" y="-30" width="80" height="60" rx="8" fill="#cbd5e1"/>
+    <circle cx="0" cy="-10" r="12" fill="#94a3b8"/>
+    <circle cx="15" cy="-20" r="4" fill="#f8fafc"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="50%" y="280" font-family="Arial, sans-serif" font-size="20" fill="#64748b" text-anchor="middle" font-weight="500">
+    Blog Post Image
+  </text>
+  <text x="50%" y="310" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle">
+    Placeholder Image
+  </text>
+</svg>

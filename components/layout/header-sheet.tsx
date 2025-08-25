@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, MapPin, User, Menu, X, Megaphone, FileText, LayoutDashboard, HelpCircle, Mail } from "lucide-react"
+import { Search, MapPin, User, Menu, X, Megaphone, FileText, LayoutDashboard, HelpCircle, Mail, LogIn, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -113,12 +113,18 @@ export function HeaderSheet() {
                       </Link>
                     </Button>
                     <Button variant="outline" className="w-full justify-start bg-transparent text-lg py-6" asChild>
-                      <Link href="/auth/signin" onClick={() => setIsOpen(false)}>
-                        <User className="h-5 w-5 mr-3" />
+                      <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                        <LogIn className="h-5 w-5 mr-3" />
                         Sign In
                       </Link>
                     </Button>
                     <Button className="w-full justify-start text-lg py-6" asChild>
+                      <Link href="/auth/register" onClick={() => setIsOpen(false)}>
+                        <UserPlus className="h-5 w-5 mr-3" />
+                        Sign Up
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-lg py-6" asChild>
                       <Link href="/seller/dashboard" onClick={() => setIsOpen(false)}>
                         <LayoutDashboard className="h-5 w-5 mr-3" />
                         Seller Dashboard
@@ -128,13 +134,13 @@ export function HeaderSheet() {
                     <Separator className="max-w-[400px] my-4"/>
 
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="/help">
+                      <Link href="/help" onClick={() => setIsOpen(false)}>
                         <HelpCircle className="h-4 w-4 mr-2" />
                         Help Center
                       </Link>
                     </Button>
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="/contact">
+                      <Link href="/contact" onClick={() => setIsOpen(false)}>
                         <Mail className="h-4 w-4 mr-2" />
                         Contact Us
                       </Link>

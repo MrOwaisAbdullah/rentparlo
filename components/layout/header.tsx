@@ -2,12 +2,13 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { MapPin, User,  } from "lucide-react"
+import { MapPin, User, LogIn, LogOut, UserCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { HeaderSheet } from "./header-sheet"
-
+import { createClient } from '@/utils/supabase/client'
+import { usePathname, useRouter } from 'next/navigation'
 
 const cities = [
   "Karachi",
@@ -25,6 +26,19 @@ const cities = [
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCity, setSelectedCity] = useState("karachi")
+  const supabase = createClient()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Error signing out:', error)
+    } else {
+      router.push('/auth/login')
+      router.refresh()
+    }
+  }
 
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -82,13 +96,13 @@ export function Header() {
               <Link href="/blog">Blog</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/auth/signin">
-                <User className="h-4 w-4 mr-2" />
+              <Link href="/auth/login">
+                <LogIn className="h-4 w-4 mr-2" />
                 Sign In
               </Link>
             </Button>
             <Button asChild>
-              <Link href="/seller/dashboard">Seller Dashboard</Link>
+              <Link href="/auth/register">Sign Up</Link>
             </Button>
           </div>
 

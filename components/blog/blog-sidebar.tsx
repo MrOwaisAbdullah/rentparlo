@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, Mail, TrendingUp, Tag, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -136,10 +137,16 @@ export function BlogSidebar({
                   <div className="flex space-x-3">
                     <div className="flex-shrink-0 w-16 h-16 relative overflow-hidden rounded-md">
                       {post.mainImage && (
-                        <img
-                          src={post.mainImage.asset.url}
-                          alt={post.mainImage.alt}
-                          className="w-full h-full object-cover"
+                        <Image
+                          src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
+                          alt={post.mainImage?.alt || "Blog image"}
+                          fill
+                          className="object-cover"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder-blog-new.svg";
+                          }}
                         />
                       )}
                     </div>

@@ -1,0 +1,966 @@
+/**
+ * =====================================================
+ * RentParlo.pk Data Integration Layer
+ * =====================================================
+ * This layer combines data from Sanity CMS and Supabase database
+ * to provide unified data access for the frontend
+ */
+
+import { Listing, Seller, SellerProfile, User, SearchParams, SearchResults, Category, BlogPost, EnhancedUserSubscription } from '@/types'
+import {
+  getListingBySlug,
+  getListingsByCategory,
+  searchListings,
+  searchListingsCount,
+  getCategories,
+  getCategoryBySlug,
+  getFeaturedListings,
+  getSimilarListings as sanityGetSimilarListings,
+  getBlogPosts,
+  getBlogPostBySlug,
+  getHomepageBanners,
+  getListingReviews
+} from './sanity-queries'
+import {
+  getUserById,
+  getSellerProfile,
+  getSellerProfileByUsername,
+  getListingAnalytics,
+  getSellerAnalytics,
+  trackAnalyticsEvent,
+  getTopSellers,
+  getUserActiveSubscription
+} from './supabase-queries'
+import { cacheManager } from '@/lib/cache-redis';
+
+// Define the banner interface matching the Sanity query result
+interface Banner {
+  _id: string;
+  title: string;
+  titleUrdu?: string;
+  subtitle?: string;
+  subtitleUrdu?: string;
+  image: {
+    asset: {
+      url: string;
+    };
+  };
+  mobileImage?: {
+    asset: {
+      url: string;
+    };
+  };
+  link?: string;
+  order: number;
+  active: boolean;
+}
+
+// Define the homepage data interface
+interface HomepageData {
+  featuredListings: Listing[]
+  categories: Category[]
+  banners: Banner[]
+  recentBlogs: BlogPost[]
+  topSellers: SellerProfile[]
+}
+
+/**
+ * =====================================================
+ * CACHING CONFIGURATION
+ * =====================================================
+ */
+
+// Cache key generators
+const getCacheKey = {
+  listing: (slug: string) => `listing:${slug}`,
+  seller: (username: string) => `seller:${username}`,
+  category: (slug: string) => `category:${slug}`,
+  search: (params: SearchParams) => `search:${JSON.stringify(params)}`,
+  homepage: () => 'homepage:data',
+  analytics: (listingId: string) => `analytics:${listingId}`
+}
+
+// Enhanced TTL Configuration (in seconds)
+const CACHE_TTL = {
+  homepage: 300,        // 5 minutes
+  category: 600,        // 10 minutes
+  categoryListings: 300, // 5 minutes
+  listing: 180,         // 3 minutes
+  seller: 900,          // 15 minutes
+  sellerListings: 300,  // 5 minutes
+  search: 120,          // 2 minutes
+  userSession: 86400,   // 24 hours
+  analytics: 60,        // 1 minute
+  blogPost: 3600,       // 1 hour
+  blogList: 1800        // 30 minutes
+}
+
+/**
+ * =====================================================
+ * ENHANCED LISTING OPERATIONS
+ * =====================================================
+ */
+
+// Get listing with seller information and analytics
+export async function getEnhancedListingBySlug(slug: string): Promise<Listing | null> {
+  try {
+    // Try to get from cache first
+    const cacheKey = getCacheKey.listing(slug);
+    const cached: Listing | null = await cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get listing from Sanity
+    const listing = await getListingBySlug(slug)
+    if (!listing) return null
+
+    // Get seller information from Supabase
+    const seller = await getUserById(listing.supabaseId)
+    if (!seller) return listing
+
+    // Get seller profile if user is a seller
+    let sellerProfile: SellerProfile | null = null
+    if (seller.role === 'seller') {
+      sellerProfile = await getSellerProfile(seller.id)
+    }
+
+    // Get listing analytics
+    const analytics = await getListingAnalytics(listing._id)
+
+    // Combine data
+    const enhancedListing: Listing = {
+      ...listing,
+      views: analytics.views,
+      contactClicks: analytics.contactClicks,
+      seller: sellerProfile ? {
+        ...seller,
+        profile: sellerProfile
+      } : undefined
+    }
+
+    // Cache the result
+    await cacheManager.set(cacheKey, enhancedListing, { 
+      ttl: CACHE_TTL.listing,
+      tags: [`listing:${slug}`]
+    });
+
+    return enhancedListing
+  } catch (error) {
+    console.error('Error getting enhanced listing:', error)
+    return null
+  }
+}
+
+// Get listings with seller information
+export async function getEnhancedListings(limit?: number): Promise<Listing[]> {
+  try {
+    const listings = await getFeaturedListings()
+    
+    // Enhance each listing with seller information
+    const enhancedListings = await Promise.all(
+      listings.slice(0, limit).map(async (listing) => {
+        try {
+          const seller = await getUserById(listing.supabaseId)
+          if (!seller) return listing
+
+          let sellerProfile: SellerProfile | null = null
+          if (seller.role === 'seller') {
+            sellerProfile = await getSellerProfile(seller.id)
+          }
+
+          const analytics = await getListingAnalytics(listing._id)
+
+          return {
+            ...listing,
+            views: analytics.views,
+            contactClicks: analytics.contactClicks,
+            seller: sellerProfile ? {
+              ...seller,
+              profile: sellerProfile
+            } : undefined
+          }
+        } catch (error) {
+          console.error(`Error enhancing listing ${listing._id}:`, error)
+          return listing
+        }
+      })
+    )
+
+    return enhancedListings
+  } catch (error) {
+    console.error('Error getting enhanced listings:', error)
+    return []
+  }
+}
+
+// Search listings with enhanced data
+export async function searchEnhancedListings(params: SearchParams): Promise<SearchResults> {
+  try {
+    // Try to get from cache first
+    const cacheKey = getCacheKey.search(params);
+    const cached: SearchResults | null = await cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get the total count of matching listings
+    const total = await searchListingsCount({
+      query: params.query,
+      category: params.category,
+      city: params.city,
+      area: params.area,
+      condition: params.condition,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice
+    });
+
+    // Get the paginated results
+    const paginatedListings = await searchListings({
+      query: params.query,
+      category: params.category,
+      city: params.city,
+      area: params.area,
+      condition: params.condition,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice,
+      offset: params.offset || 0,
+      limit: params.limit || 20
+    });
+
+    // Enhance listings with seller information (limit concurrent requests)
+    const batchSize = 5;
+    const enhancedListings: Listing[] = [];
+
+    for (let i = 0; i < paginatedListings.length; i += batchSize) {
+      const batch = paginatedListings.slice(i, i + batchSize);
+      const enhancedBatch = await Promise.all(
+        batch.map(async (listing) => {
+          try {
+            const seller = await getUserById(listing.supabaseId);
+            if (!seller) return listing;
+
+            let sellerProfile: SellerProfile | null = null;
+            if (seller.role === 'seller') {
+              sellerProfile = await getSellerProfile(seller.id);
+            }
+
+            return {
+              ...listing,
+              seller: sellerProfile ? {
+                ...seller,
+                profile: sellerProfile
+              } : undefined
+            };
+          } catch (error) {
+            console.error(`Error enhancing listing ${listing._id}:`, error);
+            return listing;
+          }
+        })
+      );
+      enhancedListings.push(...enhancedBatch);
+    }
+
+    const result: SearchResults = {
+      results: enhancedListings,
+      filters: params,
+      total: total
+    };
+
+    // Cache the result
+    await cacheManager.set(cacheKey, result, { 
+      ttl: CACHE_TTL.search,
+      tags: ['search']
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error searching enhanced listings:', error);
+    return {
+      results: [],
+      filters: params,
+      total: 0
+    };
+  }
+}
+
+/**
+ * =====================================================
+ * SELLER OPERATIONS
+ * =====================================================
+ */
+
+// Get complete seller information with listings and analytics
+export async function getCompleteSellerProfile(username: string) {
+  try {
+    // Try to get from cache first
+    const cacheKey = getCacheKey.seller(username);
+    const cached: any = await cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get seller from Supabase
+    const seller = await getSellerProfileByUsername(username);
+    if (!seller) return null;
+
+    // Get seller's listings from Sanity
+    const listings = await searchListings({
+      query: '',
+      category: '',
+      city: '',
+      condition: '',
+      minPrice: 0,
+      maxPrice: 0,
+      offset: 0,
+      limit: 50
+    });
+
+    // Filter listings by seller
+    const sellerListings = listings.filter(listing => listing.supabaseId === seller.id);
+
+    // Get seller analytics
+    const analytics = await getSellerAnalytics(seller.id);
+
+    // Get active subscription
+    const subscription: EnhancedUserSubscription | null = await getUserActiveSubscription(seller.id);
+
+    const result = {
+      seller,
+      listings: sellerListings,
+      analytics,
+      subscription
+    };
+
+    // Cache the result
+    await cacheManager.set(cacheKey, result, { 
+      ttl: CACHE_TTL.seller,
+      tags: [`seller:${username}`]
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error getting complete seller profile:', error);
+    return null;
+  }
+}
+
+// Get seller dashboard data
+export async function getSellerDashboardData(sellerId: string) {
+  try {
+    // Get seller profile
+    const sellerProfile = await getSellerProfile(sellerId)
+    if (!sellerProfile) return null
+
+    // Get seller's listings
+    const listings = await searchListings({
+      query: '',
+      category: '',
+      city: '',
+      condition: '',
+      minPrice: 0,
+      maxPrice: 0,
+      offset: 0,
+      limit: 100
+    })
+
+    const sellerListings = listings.filter(listing => listing.supabaseId === sellerId)
+
+    // Get analytics for each listing
+    const listingsWithAnalytics = await Promise.all(
+      sellerListings.map(async (listing) => {
+        const analytics = await getListingAnalytics(listing._id)
+        return {
+          ...listing,
+          ...analytics
+        }
+      })
+    )
+
+    // Get overall seller analytics
+    const sellerAnalytics = await getSellerAnalytics(sellerId)
+
+    // Get subscription information
+    const subscription: EnhancedUserSubscription | null = await getUserActiveSubscription(sellerId)
+
+    return {
+      profile: sellerProfile,
+      listings: listingsWithAnalytics,
+      analytics: sellerAnalytics,
+      subscription
+    }
+  } catch (error) {
+    console.error('Error getting seller dashboard data:', error)
+    return null
+  }
+}
+
+// Get seller by username with enhanced data
+export async function getSellerByUsername(username: string) {
+  try {
+    const seller = await getSellerProfileByUsername(username);
+    if (!seller) return null;
+
+    return seller;
+  } catch (error: any) {
+    console.error('Error fetching seller by username:', {
+      username,
+      error: error.message || error,
+      stack: error.stack
+    });
+    return null;
+  }
+}
+
+// Get seller listings with enhanced data
+export async function getSellerListings(
+  sellerId: string, 
+  options: { 
+    limit?: number; 
+    status?: string; 
+    category?: string; 
+    offset?: number;
+  } = {}
+) {
+  try {
+    const { limit = 20, status = 'active', category, offset = 0 } = options;
+    
+    // Get all listings and filter by seller
+    const allListings = await searchListings({
+      query: '',
+      category: category || '',
+      city: '',
+      condition: '',
+      minPrice: 0,
+      maxPrice: 0,
+      offset: 0,
+      limit: 1000 // Get more to filter properly
+    });
+    
+    // Filter by seller ID
+    let sellerListings = allListings.filter(listing => listing.supabaseId === sellerId);
+    
+    // Apply status filter if provided
+    if (status) {
+      sellerListings = sellerListings.filter(listing => listing.status === status);
+    }
+    
+    // Apply pagination
+    sellerListings = sellerListings.slice(offset, offset + limit);
+
+    // Enhance listings with analytics data
+    const enhancedListings = await Promise.all(
+      sellerListings.map(async (listing: any) => {
+        try {
+          const analytics = await getListingAnalytics(listing._id);
+          return {
+            ...listing,
+            views: analytics.views,
+            contactClicks: analytics.contactClicks,
+            createdAt: listing._createdAt,
+            updatedAt: listing._updatedAt
+          };
+        } catch (error) {
+          console.error(`Error getting analytics for listing ${listing._id}:`, error);
+          return listing;
+        }
+      })
+    );
+
+    return enhancedListings;
+  } catch (error) {
+    console.error('Error fetching seller listings:', error);
+    return [];
+  }
+}
+
+/**
+ * =====================================================
+ * HOMEPAGE DATA
+ * =====================================================
+ */
+
+// Get all homepage data in one request
+export async function getHomepageData(): Promise<HomepageData> {
+  try {
+    // Try to get from cache first
+    const cacheKey = getCacheKey.homepage();
+    const cached: HomepageData | null = await cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const [
+      featuredListings,
+      categories,
+      banners,
+      recentBlogs,
+      topSellers
+    ] = await Promise.all([
+      getEnhancedListings(12),
+      getCategories(),
+      getHomepageBanners(),
+      getBlogPosts(),
+      getTopSellers(6)
+    ])
+
+    // Ensure all category slugs are properly formatted
+    const processedCategories = categories.slice(0, 8).map(category => ({
+      ...category,
+      // Ensure slug is always in the correct format
+      slug: typeof category.slug === 'object' && category.slug !== null && 'current' in category.slug 
+        ? category.slug.current 
+        : category.slug
+    }));
+
+    const result: HomepageData = {
+      featuredListings,
+      categories: processedCategories, // Show top 8 categories with processed slugs
+      banners,
+      recentBlogs: recentBlogs.slice(0, 3), // Show 3 recent blogs
+      topSellers
+    };
+
+    // Cache the result
+    await cacheManager.set(cacheKey, result, { 
+      ttl: CACHE_TTL.homepage,
+      tags: ['homepage']
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error getting homepage data:', error)
+    return {
+      featuredListings: [],
+      categories: [],
+      banners: [],
+      recentBlogs: [],
+      topSellers: []
+    }
+  }
+}
+
+/**
+ * =====================================================
+ * ANALYTICS TRACKING
+ * =====================================================
+ */
+
+// Track listing view with enhanced context
+export async function trackListingView(
+  listingId: string,
+  userId?: string,
+  additionalData?: {
+    userAgent?: string
+    referrer?: string
+    city?: string
+    deviceType?: 'mobile' | 'tablet' | 'desktop'
+  }
+) {
+  try {
+    await trackAnalyticsEvent({
+      listing_id: listingId,
+      event_type: 'view',
+      user_id: userId,
+      ip_address: additionalData?.referrer,
+      user_agent: additionalData?.userAgent,
+      city: additionalData?.city,
+      device_type: additionalData?.deviceType,
+      referrer: additionalData?.referrer
+    })
+  } catch (error) {
+    console.error('Error tracking listing view:', error)
+  }
+}
+
+// Track contact click
+export async function trackContactClick(
+  listingId: string,
+  userId?: string,
+  contactType: 'phone' | 'whatsapp' | 'email' = 'phone'
+) {
+  try {
+    const eventType = contactType === 'whatsapp' ? 'WhatsApp_click' : 'contact_click'
+    
+    await trackAnalyticsEvent({
+      listing_id: listingId,
+      event_type: eventType,
+      user_id: userId
+    })
+  } catch (error) {
+    console.error('Error tracking contact click:', error)
+  }
+}
+
+// Track search query
+export async function trackSearchQuery(
+  query: string,
+  userId?: string,
+  filters?: SearchParams
+) {
+  try {
+    await trackAnalyticsEvent({
+      listing_id: 'search', // Special identifier for search events
+      event_type: 'search',
+      user_id: userId,
+      referrer: `query:${query}|filters:${JSON.stringify(filters)}`
+    })
+  } catch (error) {
+    console.error('Error tracking search query:', error)
+  }
+}
+
+/**
+ * =====================================================
+ * LISTING MANAGEMENT
+ * =====================================================
+ */
+
+// Create new listing with Sanity and track in Supabase
+export async function createNewListing(listingData: any, sellerId: string) {
+  try {
+    // Add seller ID to listing data
+    const enhancedListingData = {
+      ...listingData,
+      supabaseId: sellerId,
+      status: 'pending', // Start as pending for review
+      published: false,
+      _type: 'listing'
+    }
+
+    // Create listing in Sanity
+    const { createListing } = await import('./sanity-queries')
+    const newListing = await createListing(enhancedListingData)
+
+    if (newListing) {
+      // Track listing creation in analytics
+      await trackAnalyticsEvent({
+        listing_id: newListing._id,
+        event_type: 'listing_click', // Using as listing creation event
+        user_id: sellerId
+      })
+    }
+
+    return newListing
+  } catch (error) {
+    console.error('Error creating new listing:', error)
+    return null
+  }
+}
+
+/**
+ * =====================================================
+ * SIMILAR LISTINGS
+ * =====================================================
+ */
+
+// Get similar listings based on category and current listing
+export async function getSimilarListings(
+  listingId: string, 
+  categoryTitle: string, 
+  limit: number = 4
+): Promise<Listing[]> {
+  try {
+    const similarListings = await sanityGetSimilarListings(listingId, categoryTitle);
+    return similarListings.slice(0, limit);
+  } catch (error) {
+    console.error('Error fetching similar listings:', error);
+    return [];
+  }
+}
+
+/**
+ * =====================================================
+ * LISTING REVIEWS
+ * =====================================================
+ */
+
+// Get enhanced listing reviews with user information
+export async function getEnhancedListingReviews(listingId: string) {
+  try {
+    const reviews = await getListingReviews(listingId);
+    
+    // Enhance reviews with user information (limited for performance)
+    const enhancedReviews = await Promise.all(
+      reviews.slice(0, 20).map(async (review) => {
+        try {
+          if (review.supabaseUserId) {
+            const user = await getUserById(review.supabaseUserId);
+            if (user) {
+              return {
+                ...review,
+                userName: user.email,
+                userAvatar: null // User type doesn't have avatar_url, only SellerProfile does
+              };
+            }
+          }
+          return review;
+        } catch (error) {
+          console.error(`Error enhancing review ${review._id}:`, error);
+          return review;
+        }
+      })
+    );
+
+    return enhancedReviews;
+  } catch (error) {
+    console.error('Error getting enhanced listing reviews:', error);
+    return [];
+  }
+}
+
+/**
+ * =====================================================
+ * ERROR HANDLING HELPERS
+ * =====================================================
+ */
+
+// Graceful error handling for data fetching
+export async function safeDataFetch<T>(
+  operation: () => Promise<T>,
+  fallback: T,
+  errorMessage: string
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    console.error(errorMessage, error)
+    return fallback
+  }
+}
+
+/**
+ * =====================================================
+ * VALIDATION HELPERS
+ * =====================================================
+ */
+
+// Validate listing data before creation
+export function validateListingData(data: any): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  if (!data.title || data.title.length < 10) {
+    errors.push('Title must be at least 10 characters long')
+  }
+  
+  if (!data.description || data.description.length < 50) {
+    errors.push('Description must be at least 50 characters long')
+  }
+  
+  if (!data.price || data.price <= 0) {
+    errors.push('Price must be greater than 0')
+  }
+  
+  if (!data.category) {
+    errors.push('Category is required')
+  }
+  
+  if (!data.location || !data.location.city) {
+    errors.push('Location city is required')
+  }
+  
+  if (!data.condition) {
+    errors.push('Condition is required')
+  }
+  
+  if (!data.images || data.images.length === 0) {
+    errors.push('At least one image is required')
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  }
+}
+
+/**
+ * =====================================================
+ * BULK OPERATIONS
+ * =====================================================
+ */
+
+// Get multiple listings by IDs
+export async function getListingsByIds(listingIds: string[]): Promise<Listing[]> {
+  try {
+    const listings = await Promise.all(
+      listingIds.map(id => getListingBySlug(id).catch(() => null))
+    )
+    
+    return listings.filter((listing): listing is Listing => listing !== null)
+  } catch (error) {
+    console.error('Error getting listings by IDs:', error)
+    return []
+  }
+}
+
+// Batch update analytics
+export async function batchTrackAnalytics(events: Array<{
+  listingId: string
+  eventType: string
+  userId?: string
+  additionalData?: any
+}>) {
+  try {
+    await Promise.all(
+      events.map(event => 
+        trackAnalyticsEvent({
+          listing_id: event.listingId,
+          event_type: event.eventType as any,
+          user_id: event.userId,
+          ...event.additionalData
+        })
+      )
+    )
+  } catch (error) {
+    console.error('Error batch tracking analytics:', error)
+  }
+}
+
+/**
+ * =====================================================
+ * CATEGORY OPERATIONS
+ * =====================================================
+ */
+
+// Get category with listings and filtering
+export async function getCategoryWithListings(slug: string, filters: any) {
+  try {
+    // Try to get from cache first
+    const cacheKey = `category:${slug}:filters:${JSON.stringify(filters)}`;
+    const cached: any = await cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get category data from Sanity
+    const category = await getCategoryBySlug(slug);
+    if (!category) {
+      return {
+        category: null,
+        listings: [],
+        totalCount: 0,
+        subcategories: []
+      }
+    }
+
+    // Get listings for this category with filters
+    const searchParams = {
+      query: '',
+      category: slug,
+      city: filters.location || '',
+      condition: filters.condition || '',
+      minPrice: filters.priceRange ? parseInt(filters.priceRange.split('-')[0]) : undefined,
+      maxPrice: filters.priceRange ? parseInt(filters.priceRange.split('-')[1]) : undefined,
+      availability: filters.availability || 'available',
+      priceType: filters.priceType,
+      featured: filters.featured === 'true',
+      verified: filters.verified === 'true',
+      hasImages: filters.hasImages === 'true',
+      sort: filters.sort || 'newest',
+      offset: filters.offset || 0,
+      limit: filters.limit || 20
+    }
+
+    const listings = await getListingsByCategory(category._id);
+    
+    // Get subcategories (if any)
+    const subcategories = await getCategories()
+    const categorySubcategories = subcategories.filter(sub => 
+      sub.parent && sub.parent._ref === category._id
+    );
+
+    // Apply filters to listings
+    let filteredListings = [...listings];
+    
+    // Filter by city if provided
+    if (searchParams.city) {
+      filteredListings = filteredListings.filter(listing => 
+        listing.location.city === searchParams.city
+      );
+    }
+    
+    // Filter by condition if provided
+    if (searchParams.condition) {
+      filteredListings = filteredListings.filter(listing => 
+        listing.condition === searchParams.condition
+      );
+    }
+    
+    // Filter by price range if provided
+    if (searchParams.minPrice) {
+      filteredListings = filteredListings.filter(listing => 
+        listing.price >= searchParams.minPrice!
+      );
+    }
+    
+    if (searchParams.maxPrice) {
+      filteredListings = filteredListings.filter(listing => 
+        listing.price <= searchParams.maxPrice!
+      );
+    }
+    
+    // Apply pagination
+    const startIndex = searchParams.offset || 0;
+    const limit = searchParams.limit || 20;
+    filteredListings = filteredListings.slice(startIndex, startIndex + limit);
+
+    // Enhance listings with seller information (limited batch processing)
+    const enhancedListings = await Promise.all(
+      listings.slice(0, 50).map(async (listing) => {
+        try {
+          const seller = await getUserById(listing.supabaseId)
+          if (!seller) return listing
+
+          let sellerProfile = null
+          if (seller.role === 'seller') {
+            sellerProfile = await getSellerProfile(seller.id)
+          }
+
+          return {
+            ...listing,
+            seller: {
+              id: seller.id,
+              username: sellerProfile?.username || seller.email,
+              tier: sellerProfile?.tier || 'basic',
+              isVerified: seller.is_verified || false,
+              rating: undefined // SellerProfile doesn't have a rating field
+            }
+          }
+        } catch (error) {
+          console.error(`Error enhancing listing ${listing._id}:`, error)
+          return listing
+        }
+      })
+    )
+
+    const result = {
+      category,
+      listings: enhancedListings,
+      totalCount: listings.length,
+      subcategories: categorySubcategories.map(sub => ({
+        _id: sub._id,
+        title: sub.title,
+        slug: typeof sub.slug === 'object' && sub.slug !== null && 'current' in sub.slug 
+          ? sub.slug.current 
+          : sub.slug,
+        itemCount: Math.floor(Math.random() * 50) + 1 // Mock count for now
+      }))
+    };
+
+    // Cache the result
+    await cacheManager.set(cacheKey, result, { 
+      ttl: CACHE_TTL.category,
+      tags: [`category:${slug}`]
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error getting category with listings:', error);
+    return {
+      category: null,
+      listings: [],
+      totalCount: 0,
+      subcategories: []
+    }
+  }
+}
