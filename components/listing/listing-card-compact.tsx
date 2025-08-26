@@ -228,7 +228,7 @@ export function ListingCardCompact({
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {formatTimeAgo(listing.createdAt)}
+                      {formatTimeAgo(listing._createdAt)}
                     </div>
                     {listing.views && (
                       <div className="flex items-center gap-1">

@@ -82,6 +82,7 @@ export interface SellerProfile {
   created_at: string;
   updated_at: string;
   map_location_url?: string; // New field for location map URL
+  listing_count?: number; // Add listing count field
 }
 
 /**
@@ -191,6 +192,7 @@ export type ListingBadge =
 export interface Listing {
   _id: string;
   _type: 'listing';
+  _createdAt: string;
   title: string;
   slug: {
     current: string;

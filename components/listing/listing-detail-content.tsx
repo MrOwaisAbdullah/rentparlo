@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FeaturedListings } from '@/components/sections/featured-listings';
 import { ListingReviews } from '@/components/listing/listing-reviews';
 import { ContactSellerModal } from '@/components/listing/contact-seller-modal';
+import { PriceInfoCard } from '@/components/listing/price-info-card';
 import { cn } from '@/lib/utils';
 import { Listing as SanityListing, Seller, SellerProfile } from '@/types';
 
@@ -91,18 +92,24 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
     }).format(price);
 
     const typeMap = {
-      hourly: 'per hour',
-      daily: 'per day', 
-      weekly: 'per week',
-      monthly: 'per month',
-      yearly: 'per year'
+      hourly: '/hr',
+      daily: '/day', 
+      weekly: '/week',
+      monthly: '/month',
+      yearly: '/year'
     };
 
-    return `${formatted} ${typeMap[priceType as keyof typeof typeMap] || priceType}`;
+    // Handle case where priceType might be undefined
+    const normalizedPriceType = priceType || 'daily';
+    return `${formatted}${typeMap[normalizedPriceType as keyof typeof typeMap] || '/' + normalizedPriceType}`;
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    // Use _createdAt from Sanity if available, otherwise use fallbacks
+    const dateToFormat = dateString || listing._createdAt || listing.createdAt || listing.created_at;
+    if (!dateToFormat) return 'N/A';
+    
+    return new Date(dateToFormat).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -177,6 +184,50 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
     return '< 1 hour';
   };
 
+  // Get seller phone number (from user object)
+  const getSellerPhone = () => {
+    // Debugging: log the seller object to see what's available
+    console.log('Seller object:', listing.seller);
+    return listing.seller?.phone || '';
+  };
+
+  // Get seller email
+  const getSellerEmail = () => {
+    return listing.seller?.email || '';
+  };
+
+  // Get seller location URL
+  const getSellerMapUrl = () => {
+    return listing.seller?.profile?.map_location_url || 
+           (listing.seller?.last_location ? 
+             `https://maps.google.com/?q=${listing.seller.last_location.coordinates[1]},${listing.seller.last_location.coordinates[0]}` : 
+             '');
+  };
+
+  // Handle call action
+  const handleCallSeller = () => {
+    const phone = getSellerPhone();
+    if (phone) {
+      window.location.href = `tel:${phone}`;
+    }
+  };
+
+  // Handle WhatsApp action
+  const handleWhatsAppSeller = () => {
+    const phone = getSellerPhone();
+    if (phone) {
+      window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank');
+    }
+  };
+
+  // Handle map action
+  const handleMapSeller = () => {
+    const mapUrl = getSellerMapUrl();
+    if (mapUrl) {
+      window.open(mapUrl, '_blank');
+    }
+  };
+
   // Transform listing for ContactSellerModal
   const transformListingForContactModal = (): ContactModalListing => {
     return {
@@ -239,13 +290,13 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
             <div className="relative">
-              <div className="aspect-[16/9] relative overflow-hidden rounded-lg bg-muted">
+              <div className="aspect-[16/9] sm:aspect-[21/9] relative overflow-hidden rounded-lg bg-muted">
                 {listing.images && listing.images.length > 0 ? (
                   <Image
                     src={listing.images[currentImageIndex]?.asset?.url || "/placeholder.svg"}
                     alt={listing.title}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     priority
                   />
                 ) : (
@@ -260,18 +311,18 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 p-0 bg-white/90 hover:bg-white"
+                      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
                       onClick={previousImage}
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 p-0 bg-white/90 hover:bg-white"
+                      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
                       onClick={nextImage}
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
                     
                     {/* Image Indicators */}
@@ -295,36 +346,38 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="w-10 h-10 p-0 bg-white/90 hover:bg-white"
+                    className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
                     onClick={() => setIsFavorited(!isFavorited)}
                   >
-                    <Heart className={cn("w-4 h-4", isFavorited && "fill-red-500 text-red-500")} />
+                    <Heart className={cn("w-3 h-3 sm:w-4 sm:h-4", isFavorited && "fill-red-500 text-red-500")} />
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="w-10 h-10 p-0 bg-white/90 hover:bg-white"
+                    className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
                     onClick={handleShare}
                   >
-                    <Share2 className="w-4 h-4" />
+                    <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="w-10 h-10 p-0 bg-white/90 hover:bg-white"
+                    className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
                   >
-                    <Flag className="w-4 h-4" />
+                    <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                 </div>
 
                 {/* Status Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                   {listing.isFeatured && (
-                    <Badge className="bg-yellow-500 text-white">Featured</Badge>
+                    <Badge className="bg-yellow-500 text-white text-xs sm:text-sm">Featured</Badge>
                   )}
-                  <Badge className={cn("text-xs", listing.availability?.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                    {listing.availability?.isAvailable ? 'Available' : 'Not Available'}
-                  </Badge>
+                  {listing.availability?.isAvailable !== undefined && (
+                    <Badge className={cn("text-xs", listing.availability?.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                      {listing.availability?.isAvailable ? 'Available' : 'Not Available'}
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -356,20 +409,20 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
             <div className="space-y-6">
               {/* Title and Basic Info */}
               <div>
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                   <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-foreground mb-2">{listing.title}</h1>
-                    <div className="flex items-center gap-4 text-muted-foreground">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{listing.title}</h1>
+                    <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
                         <span>
                           {listing.location?.area ? `${listing.location.area}, ` : ''}
-                          {listing.location?.city}
+                          {listing.location?.city || 'N/A'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>Listed {formatDate(listing.createdAt)}</span>
+                        <span>Listed {formatDate(listing._createdAt)}</span>
                       </div>
                       {viewCount > 0 && (
                         <div className="flex items-center gap-1">
@@ -380,8 +433,8 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     </div>
                   </div>
                   
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="text-right sm:text-right">
+                    <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">
                       {formatPrice(listing.price, listing.priceType)}
                     </div>
                   </div>
@@ -389,20 +442,20 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
 
                 {/* Categories and Condition */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Badge variant="outline">{listing.category?.title}</Badge>
+                  {listing.category?.title && (
+                    <Badge variant="outline">{listing.category?.title}</Badge>
+                  )}
                   <Badge className={cn("text-xs", conditionConfig[listing.condition as keyof typeof conditionConfig]?.color || 'bg-gray-100 text-gray-800')}>
-                    {conditionConfig[listing.condition as keyof typeof conditionConfig]?.label || listing.condition}
+                    {conditionConfig[listing.condition as keyof typeof conditionConfig]?.label || listing.condition || 'N/A'}
                   </Badge>
                 </div>
 
                 {/* Rating */}
                 {listing.seller?.profile?.tier && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Badge className={cn("text-xs", tierConfig[listing.seller.profile.tier as keyof typeof tierConfig]?.color || 'bg-gray-100 text-gray-700')}>
-                        {tierConfig[listing.seller.profile.tier as keyof typeof tierConfig]?.icon || '👤'} {listing.seller.profile.tier}
-                      </Badge>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <Badge className={cn("text-xs", tierConfig[listing.seller.profile.tier as keyof typeof tierConfig]?.color || 'bg-gray-100 text-gray-700')}>
+                      {tierConfig[listing.seller.profile.tier as keyof typeof tierConfig]?.icon || '👤'} {listing.seller.profile.tier}
+                    </Badge>
                   </div>
                 )}
               </div>
@@ -453,6 +506,9 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Price Information Card */}
+            <PriceInfoCard listing={listing} />
+            
             {/* Contact Card */}
             <Card>
               <CardHeader>
@@ -467,13 +523,13 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                         <Avatar className="w-12 h-12">
                           <AvatarImage src={listing.seller.profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${listing.seller.profile?.username}`} />
                           <AvatarFallback>
-                            {listing.seller.profile?.username?.charAt(0).toUpperCase() || 'U'}
+                            {listing.seller.profile?.username?.charAt(0).toUpperCase() || listing.seller.email?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold">
-                              {listing.seller.profile?.business_name || listing.seller.profile?.username}
+                              {listing.seller.profile?.business_name || listing.seller.profile?.username || listing.seller.email || 'N/A'}
                             </h4>
                             {listing.seller.profile?.is_verified && (
                               <Shield className="w-4 h-4 text-green-600" />
@@ -481,7 +537,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Badge className={cn("text-xs", tierConfig[listing.seller.profile?.tier as keyof typeof tierConfig]?.color || 'bg-gray-100 text-gray-700')}>
-                              {tierConfig[listing.seller.profile?.tier as keyof typeof tierConfig]?.icon || '👤'} {listing.seller.profile?.tier}
+                              {tierConfig[listing.seller.profile?.tier as keyof typeof tierConfig]?.icon || '👤'} {listing.seller.profile?.tier || 'N/A'}
                             </Badge>
                           </div>
                         </div>
@@ -491,7 +547,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     {/* Seller Stats */}
                     <div className="grid grid-cols-2 gap-4 text-center text-sm">
                       <div>
-                        <div className="font-semibold text-primary">1</div>
+                        <div className="font-semibold text-primary">{listing.seller.profile?.listing_count || 0}</div>
                         <div className="text-muted-foreground">Listings</div>
                       </div>
                       <div>
@@ -507,11 +563,47 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                       <Button 
                         className="w-full" 
                         onClick={handleContactSeller}
-                        disabled={!listing.availability?.isAvailable}
+                        disabled={listing.availability?.isAvailable === false}
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
-                        {listing.availability?.isAvailable ? 'Send Message' : 'Not Available'}
+                        {listing.availability?.isAvailable !== false ? 'Send Message' : 'Not Available'}
                       </Button>
+                    
+                      {/* New CTA Buttons */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleCallSeller}
+                          disabled={!getSellerPhone()}
+                          className="flex flex-col items-center justify-center h-16"
+                        >
+                          <Phone className="w-4 h-4" />
+                          <span className="text-xs mt-1">Call</span>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleWhatsAppSeller}
+                          disabled={!getSellerPhone()}
+                          className="flex flex-col items-center justify-center h-16"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                          <span className="text-xs mt-1">WhatsApp</span>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleMapSeller}
+                          disabled={!getSellerMapUrl()}
+                          className="flex flex-col items-center justify-center h-16"
+                        >
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-xs mt-1">Map</span>
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Safety Notice */}
@@ -524,7 +616,15 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground">
-                    Seller information not available
+                    {listing.supabaseId ? (
+                      <div>
+                        <p>Seller information is not available for this listing.</p>
+                        <p className="text-sm mt-2">Seller ID: {listing.supabaseId}</p>
+                        <p className="text-xs mt-2 text-muted-foreground">This could be because the seller account has been deleted or the listing data is incomplete.</p>
+                      </div>
+                    ) : (
+                      <p>This listing does not have an associated seller.</p>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -540,7 +640,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="font-medium">{listing.location?.city}</div>
+                  <div className="font-medium">{listing.location?.city || 'N/A'}</div>
                   {listing.location?.area && (
                     <div className="text-muted-foreground">{listing.location.area}</div>
                   )}
@@ -592,6 +692,47 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
           seller={transformSellerForContactModal() as ContactModalSeller}
           onClose={() => setShowContactModal(false)}
         />
+      )}
+
+      {/* Fixed Bottom CTA Bar for Mobile */}
+      {listing.seller && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden z-50">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">{listing.title}</div>
+                <div className="text-sm text-muted-foreground truncate">
+                  {formatPrice(listing.price, listing.priceType)}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  onClick={handleCallSeller}
+                  disabled={!getSellerPhone() || listing.availability?.isAvailable === false}
+                >
+                  <Phone className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={handleWhatsAppSeller}
+                  disabled={!getSellerPhone() || listing.availability?.isAvailable === false}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={handleContactSeller}
+                  disabled={listing.availability?.isAvailable === false}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

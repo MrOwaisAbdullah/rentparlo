@@ -69,7 +69,7 @@ export function FilterSidebar({ filters, onFiltersChange, className }: FilterSid
         <CardContent className="space-y-6">
           {/* Price Range */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Price Range (PKR per day)</Label>
+            <Label className="text-sm font-medium">Price Range (PKR / day)</Label>
             <div className="px-2">
               <Slider
                 value={localFilters.priceRange}

@@ -15,7 +15,7 @@ export default function PriceBlock({ price }: PriceBlockProps) {
         <div className="space-y-4">
           <div className="text-center">
             <div className="text-3xl font-bold text-primary">PKR {price.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">per day</div>
+            <div className="text-sm text-muted-foreground">/ day</div>
           </div>
 
           <div className="space-y-2">

@@ -49,7 +49,7 @@ interface Listing {
   title: string;
   views: number;
   contactClicks: number;
-  createdAt: string;
+  _createdAt: string;
 }
 
 interface PerformanceInsightsProps {
@@ -73,7 +73,7 @@ export function PerformanceInsights({ analytics, profile, listings }: Performanc
   // Get underperforming listings (less than 10 views in 30 days)
   const underperformingListings = listings.filter(listing => {
     const daysSinceCreated = Math.floor(
-      (new Date().getTime() - new Date(listing.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      (new Date().getTime() - new Date(listing._createdAt).getTime()) / (1000 * 60 * 60 * 24)
     );
     return daysSinceCreated >= 7 && (listing.views || 0) < 10;
   });

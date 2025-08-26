@@ -101,6 +101,7 @@ async function ListingContent({ slug }: { slug: string }) {
   try {
     // Get enhanced listing data
     const listing = await getEnhancedListingBySlug(slug);
+    console.log('Listing data:', listing); // Debugging
     
     if (!listing) {
       notFound();

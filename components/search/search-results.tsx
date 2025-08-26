@@ -40,6 +40,7 @@ interface Listing {
       city?: string;
     };
   };
+  _createdAt?: string; // Add _createdAt field
   createdAt: string;
   views?: number;
   contactClicks?: number;
@@ -97,9 +98,13 @@ const transformToListingType = (listing: Listing): FullListing => {
     });
   }
 
+  // Use _createdAt if available, otherwise fallback to createdAt
+  const createdAt = listing._createdAt || listing.createdAt;
+
   return {
     _id: listing._id,
     _type: 'listing',
+    _createdAt: createdAt,
     title: listing.title,
     slug: { current: listing._id },
     description: listing.description || '', // Keep as simple string, not array
@@ -125,8 +130,8 @@ const transformToListingType = (listing: Listing): FullListing => {
     supabaseId: listing.seller?.id || '', // Add safety check for seller object
     isFeatured: false,
     featuredPriority: 0,
-    created_at: listing.createdAt,
-    createdAt: listing.createdAt,
+    created_at: createdAt,
+    createdAt: createdAt,
     views: listing.views || 0,
     contactClicks: listing.contactClicks || 0,
     badges: []

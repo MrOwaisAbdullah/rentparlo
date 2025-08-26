@@ -80,13 +80,13 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
     }).format(price);
 
     const typeMap = {
-      hourly: 'per hour',
-      daily: 'per day', 
-      weekly: 'per week',
-      monthly: 'per month'
+      hourly: '/hr',
+      daily: '/day', 
+      weekly: '/week',
+      monthly: '/month'
     };
 
-    return `${formatted} ${typeMap[priceType as keyof typeof typeMap] || priceType}`;
+    return `${formatted}${typeMap[priceType as keyof typeof typeMap] || '/' + priceType}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

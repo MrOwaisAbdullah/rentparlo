@@ -17,6 +17,7 @@ import { BlogCard } from "@/components/blog/blog-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import LocationLinks from "@/components/sections/location-links"; // Import LocationLinks component
 import {
   Seller,
   SellerProfile,
@@ -182,6 +183,9 @@ async function HomepageContent() {
             <Testimonials />
           </div>
         </section>
+
+        {/* Location Links */}
+        <LocationLinks />
       </div>
     );
   } catch (error) {

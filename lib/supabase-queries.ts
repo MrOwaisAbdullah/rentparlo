@@ -63,6 +63,7 @@ export async function getUserById(userId: string): Promise<User | null> {
     return null
   }
 
+  console.log('User data fetched:', data); // Debugging
   return data
 }
 
@@ -162,10 +163,14 @@ export async function getSellerProfile(userId: string): Promise<SellerProfile | 
     .single()
 
   if (error) {
-    console.error('Error fetching seller profile:', error)
+    // Don't log as error if seller profile simply doesn't exist - this is expected in many cases
+    if (error.code !== 'PGRST116') {
+      console.error('Error fetching seller profile:', error)
+    }
     return null
   }
 
+  console.log('Seller profile data fetched:', data); // Debugging
   return data
 }
 
