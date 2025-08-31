@@ -22,10 +22,9 @@ interface SearchPageProps {
 }
 
 export async function generateMetadata({
+  searchParams,
 }: SearchPageProps): Promise<Metadata> {
-  // Await searchParams as required by Next.js 15
   const params = await searchParams;
-
   const query = params.q || "";
   const category = params.category || "";
   const city = params.city || "";
@@ -81,9 +80,7 @@ export async function generateMetadata({
 // Server component for data fetching
 async function SearchPageContent({ searchParams }: SearchPageProps) {
   try {
-    // Await searchParams as required by Next.js 15
     const params = await searchParams;
-
     // Fetch initial data for filters
     const [categories, cities] = await Promise.all([
       getCategories(),

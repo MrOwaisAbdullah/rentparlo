@@ -344,7 +344,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                 )}
 
                 {/* Action Buttons */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                <div className="absolute top-4 right-4 flex md:flex-col gap-2">
                   <Button
                     size="sm"
                     variant="secondary"
@@ -436,15 +436,9 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     </div>
                   </div>
                   
-                  <div className="text-right sm:text-right">
-                    <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">
-                      {formatPrice(listing.price, listing.priceType)}
-                    </div>
-                  </div>
-                </div>
-
+                  <div className="flex justify-between gap-2 text-right sm:text-right">
                 {/* Categories and Condition */}
-                <div className="flex flex-wrap items-center gap-2 mb-4">
+                <div className="flex flex-wrap items-center gap-2">
                   {listing.category?.title && (
                     <Badge variant="outline">{listing.category?.title}</Badge>
                   )}
@@ -452,6 +446,14 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     {conditionConfig[listing.condition as keyof typeof conditionConfig]?.label || listing.condition || 'N/A'}
                   </Badge>
                 </div>
+
+                    <div className="text-2xl sm:text-3xl font-bold text-primary">
+                      {formatPrice(listing.price, listing.priceType)}
+                    </div>
+
+                  </div>
+                </div>
+
 
                 {/* Rating */}
                 {listing.seller?.profile?.tier && (

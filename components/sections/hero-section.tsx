@@ -170,7 +170,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
   };
 
   return (
-    <section className="relative">
+    <section className="relative bg-muted/20">
       <div className="relative h-[400px] bg-cover bg-center bg-no-repeat overflow-hidden">
         {/* Banner Slider with Smooth Animations */}
         <AnimatePresence mode="wait">

@@ -89,7 +89,7 @@ export function PriceInfoCard({ listing }: PriceInfoCardProps) {
   const priceInfo = getPriceInfo();
 
   return (
-    <Card className="sticky top-10 z-40">
+    <Card className="">
       <CardHeader>
         <CardTitle className="text-lg sm:text-xl">Price Information</CardTitle>
       </CardHeader>

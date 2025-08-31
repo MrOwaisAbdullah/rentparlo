@@ -3,19 +3,17 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, Clock, User, Tag, ArrowRight, Star } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Calendar, Clock, Tag, ArrowRight, Star } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { BlogPostSummary } from '@/types';
-import { getSanityImageUrl } from '@/sanity/lib/image';
 
 interface BlogCardProps {
   post: BlogPostSummary;
   variant?: 'default' | 'featured' | 'compact' | 'horizontal';
   showExcerpt?: boolean;
-  showAuthor?: boolean;
   showDate?: boolean;
   showCategories?: boolean;
   showReadingTime?: boolean;
@@ -26,7 +24,6 @@ export function BlogCard({
   post,
   variant = 'default',
   showExcerpt = true,
-  showAuthor = true,
   showDate = true,
   showCategories = true,
   showReadingTime = true,
@@ -119,12 +116,6 @@ export function BlogCard({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-sm text-white/80">
-                {showAuthor && (
-                  <div className="flex items-center">
-                    <User className="w-4 h-4 mr-1" />
-                    {post.author}
-                  </div>
-                )}
                 {showDate && (
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
@@ -206,12 +197,6 @@ export function BlogCard({
 
               <div className="flex items-center justify-between mt-auto">
                 <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                  {showAuthor && (
-                    <div className="flex items-center">
-                      <User className="w-4 h-4 mr-1" />
-                      {post.author}
-                    </div>
-                  )}
                   {showDate && (
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
@@ -343,12 +328,6 @@ export function BlogCard({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-            {showAuthor && (
-              <div className="flex items-center">
-                <User className="w-4 h-4 mr-1" />
-                {post.author}
-              </div>
-            )}
             {showDate && (
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />

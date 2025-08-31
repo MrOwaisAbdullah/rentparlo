@@ -7,8 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListingCard } from '@/components/cards/listing-card';
-import { ListingCardHorizontal } from '@/components/cards/listing-card-horizontal';
-import { ListingCardCompact } from '@/components/listing/listing-card-compact';
 import { cn } from '@/lib/utils';
 import { Listing as FullListing, ListingImage } from '@/types';
 
@@ -231,14 +229,6 @@ export function SearchResults({
             >
               <List className="w-4 h-4" />
             </Button>
-            <Button
-              variant={viewMode === 'horizontal' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('horizontal')}
-              className="p-2"
-            >
-              <List className="w-4 h-4 rotate-90" />
-            </Button>
           </div>
         )}
       </div>
@@ -249,28 +239,20 @@ export function SearchResults({
           {listings.map((listing) => (
             <ListingCard
               key={listing._id}
+              variant='category'
               listing={transformToListingType(listing)}
               showSellerInfo={true}
               priority={false}
             />
           ))}
         </div>
-      ) : viewMode === 'horizontal' ? (
-        <div className="space-y-4">
-          {listings.map((listing) => (
-            <ListingCardHorizontal
-              key={listing._id}
-              listing={transformToListingType(listing)}
-              showSellerInfo={true}
-            />
-          ))}
-        </div>
       ) : (
         <div className="space-y-4">
           {listings.map((listing) => (
-            <ListingCardCompact
+            <ListingCard
               key={listing._id}
-              listing={listing}
+              variant='list'
+              listing={transformToListingType(listing)}
               showSellerInfo={true}
             />
           ))}

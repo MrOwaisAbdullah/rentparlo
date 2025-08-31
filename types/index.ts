@@ -9,12 +9,12 @@
 /**
  * User roles in the platform
  */
-export type UserRole = 'user' | 'seller' | 'admin';
+export type UserRole = "user" | "seller" | "admin";
 
 /**
  * Language preferences for users
  */
-export type UserLanguage = 'en' | 'ur';
+export type UserLanguage = "en" | "ur";
 
 /**
  * Notification preferences for users
@@ -41,7 +41,7 @@ export interface User {
   state?: string;
   country: string;
   last_location?: {
-    type: 'Point';
+    type: "Point";
     coordinates: [number, number]; // [longitude, latitude]
   };
   active: boolean;
@@ -54,7 +54,13 @@ export interface User {
 /**
  * Seller tier levels
  */
-export type SellerTier = 'basic' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+export type SellerTier =
+  | "basic"
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "platinum"
+  | "diamond";
 
 /**
  * Seller profile information (stored in Supabase)
@@ -77,7 +83,7 @@ export interface SellerProfile {
   tier: SellerTier;
   tier_points: number;
   tier_last_updated: string;
-  verification_status: 'pending' | 'approved' | 'rejected';
+  verification_status: "pending" | "approved" | "rejected";
   verification_notes?: string;
   created_at: string;
   updated_at: string;
@@ -101,12 +107,12 @@ export interface Seller extends User {
 /**
  * Listing condition levels
  */
-export type ItemCondition = 'new' | 'like-new' | 'good' | 'fair';
+export type ItemCondition = "new" | "like-new" | "good" | "fair";
 
 /**
  * Listing status
  */
-export type ListingStatus = 'active' | 'pending' | 'suspended' | 'expired';
+export type ListingStatus = "active" | "pending" | "suspended" | "expired";
 
 /**
  * Specification for a listing
@@ -156,9 +162,9 @@ export interface Category {
   title: string;
   slug: string | { current: string };
   description?: string;
-  parent?: { 
-  _ref: string; 
-  title: string;
+  parent?: {
+    _ref: string;
+    title: string;
   };
   icon?: {
     asset: {
@@ -170,35 +176,33 @@ export interface Category {
   itemCount?: number;
 }
 
-
 /**
  * Listing badge types
  */
-export type ListingBadge = 
-  | 'hot' 
-  | 'new' 
-  | 'featured' 
-  | 'verified' 
-  | 'top_seller' 
-  | 'discount' 
-  | 'eco_friendly'
-  | 'local'
-  | 'instant_delivery';
+export type ListingBadge =
+  | "hot"
+  | "new"
+  | "featured"
+  | "verified"
+  | "top_seller"
+  | "discount"
+  | "eco_friendly"
+  | "local"
+  | "instant_delivery";
 
-  
 /**
  * Listing information (stored in Sanity)
  */
 export interface Listing {
   _id: string;
-  _type: 'listing';
+  _type: "listing";
   _createdAt: string;
   title: string;
   slug: {
     current: string;
   };
   description: string; // Changed from any[] to string to match Sanity schema
-  priceType: 'hourly' | 'daily' | 'monthly' | 'yearly';
+  priceType: "hourly" | "daily" | "monthly" | "yearly";
   createdAt: string;
   price: number;
   pricePerHour?: number;
@@ -235,20 +239,20 @@ export interface Listing {
 /**
  * Types of analytics events
  */
-export type AnalyticsEventType = 
-  | 'impressions' 
-  | 'listing_click' 
-  | 'view' 
-  | 'contact_click' 
-  | 'WhatsApp_click'
-  | 'share'
-  | 'save'
-  | 'search';
+export type AnalyticsEventType =
+  | "impressions"
+  | "listing_click"
+  | "view"
+  | "contact_click"
+  | "WhatsApp_click"
+  | "share"
+  | "save"
+  | "search";
 
 /**
  * Device types for analytics
  */
-export type DeviceType = 'mobile' | 'tablet' | 'desktop';
+export type DeviceType = "mobile" | "tablet" | "desktop";
 
 /**
  * Analytics event (stored in Supabase)
@@ -311,12 +315,12 @@ export interface SellerAnalytics {
 /**
  * Blog post status
  */
-export type BlogStatus = 'draft' | 'published' | 'archived';
+export type BlogStatus = "draft" | "published" | "archived";
 
 /**
  * Blog post language
  */
-export type BlogLanguage = 'en' | 'ur' | 'both';
+export type BlogLanguage = "en" | "ur" | "both";
 
 /**
  * SEO settings for blog posts
@@ -353,7 +357,7 @@ export interface BlogImage {
  */
 export interface BlogCategoryRef {
   _ref: string;
-  _type: 'reference';
+  _type: "reference";
 }
 
 /**
@@ -361,18 +365,18 @@ export interface BlogCategoryRef {
  */
 export interface BlogPostRef {
   _ref: string;
-  _type: 'reference';
+  _type: "reference";
 }
 
 /**
  * Portable text block for blog content
  */
 export interface PortableTextBlock {
-  _type: 'block';
+  _type: "block";
   _key: string;
   style?: string;
   children: Array<{
-    _type: 'span';
+    _type: "span";
     _key: string;
     text: string;
     marks?: string[];
@@ -388,7 +392,7 @@ export interface PortableTextBlock {
  * Code block in portable text
  */
 export interface CodeBlock {
-  _type: 'code';
+  _type: "code";
   _key: string;
   language?: string;
   code: string;
@@ -398,7 +402,7 @@ export interface CodeBlock {
  * Image block in portable text
  */
 export interface ImageBlock {
-  _type: 'image';
+  _type: "image";
   _key: string;
   asset: {
     url: string;
@@ -417,7 +421,7 @@ export type BlogContent = Array<PortableTextBlock | CodeBlock | ImageBlock>;
  */
 export interface BlogPost {
   _id: string;
-  _type: 'blog';
+  _type: "blog";
   _createdAt: string;
   _updatedAt: string;
   title: string;
@@ -473,7 +477,7 @@ export interface BlogPostSummary {
  */
 export interface BlogCategory {
   _id: string;
-  _type: 'category';
+  _type: "category";
   title: string;
   slug: {
     current: string;
@@ -557,14 +561,14 @@ export interface NewsletterSubscription {
 /**
  * Review status
  */
-export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+export type ReviewStatus = "pending" | "approved" | "rejected";
 
 /**
  * Review information (stored in Sanity)
  */
 export interface Review {
   _id: string;
-  _type: 'review';
+  _type: "review";
   listing: {
     _ref: string;
     title: string;
@@ -586,7 +590,7 @@ export interface Review {
 /**
  * Billing cycle for subscriptions
  */
-export type BillingCycle = 'monthly' | 'yearly';
+export type BillingCycle = "monthly" | "yearly";
 
 /**
  * Subscription package features
@@ -620,7 +624,7 @@ export interface SubscriptionPackage {
 /**
  * User subscription status
  */
-export type SubscriptionStatus = 'active' | 'canceled' | 'expired' | 'pending';
+export type SubscriptionStatus = "active" | "canceled" | "expired" | "pending";
 
 /**
  * Enhanced user subscription with package information
@@ -656,7 +660,7 @@ export interface UserSubscription {
 /**
  * Discount type for affiliate codes
  */
-export type DiscountType = 'percentage' | 'fixed';
+export type DiscountType = "percentage" | "fixed";
 
 /**
  * Affiliate program (stored in Supabase)
@@ -687,7 +691,7 @@ export interface AffiliateCode {
   current_uses: number;
   valid_from: string;
   valid_to?: string;
-  status: 'active' | 'expired' | 'disabled';
+  status: "active" | "expired" | "disabled";
   created_at: string;
   updated_at: string;
 }
@@ -695,7 +699,7 @@ export interface AffiliateCode {
 /**
  * Affiliate referral status
  */
-export type ReferralStatus = 'pending' | 'completed' | 'cancelled';
+export type ReferralStatus = "pending" | "completed" | "cancelled";
 
 /**
  * Affiliate referral (stored in Supabase)
@@ -733,31 +737,31 @@ export interface AffiliateStats {
 /**
  * Banner placement locations
  */
-export type BannerPlacement = 
-  | 'homepage-top'
-  | 'homepage-middle'
-  | 'homepage-bottom'
-  | 'category-sidebar'
-  | 'search-top'
-  | 'listing-sidebar'
-  | 'mobile-banner';
+export type BannerPlacement =
+  | "homepage-top"
+  | "homepage-middle"
+  | "homepage-bottom"
+  | "category-sidebar"
+  | "search-top"
+  | "listing-sidebar"
+  | "mobile-banner";
 
 /**
  * Banner sizes
  */
-export type BannerSize = 
-  | 'leaderboard'
-  | 'medium-rectangle'
-  | 'large-rectangle'
-  | 'half-page'
-  | 'mobile-banner';
+export type BannerSize =
+  | "leaderboard"
+  | "medium-rectangle"
+  | "large-rectangle"
+  | "half-page"
+  | "mobile-banner";
 
 /**
  * Advertisement banner (stored in Sanity)
  */
 export interface AdBanner {
   _id: string;
-  _type: 'adBanner';
+  _type: "adBanner";
   title: string;
   placement: BannerPlacement;
   size: BannerSize;
@@ -777,7 +781,7 @@ export interface AdBanner {
     _ref: string;
     title: string;
   };
-  targetUserType: 'all' | 'sellers' | 'new-users';
+  targetUserType: "all" | "sellers" | "new-users";
   startDate: string;
   endDate?: string;
   isActive: boolean;
@@ -807,22 +811,22 @@ export interface BannerClick {
 /**
  * Support ticket categories
  */
-export type TicketCategory = 
-  | 'technical' 
-  | 'billing' 
-  | 'verification' 
-  | 'listing' 
-  | 'other';
+export type TicketCategory =
+  | "technical"
+  | "billing"
+  | "verification"
+  | "listing"
+  | "other";
 
 /**
  * Support ticket priorities
  */
-export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TicketPriority = "low" | "medium" | "high" | "urgent";
 
 /**
  * Support ticket statuses
  */
-export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
 /**
  * Support ticket (stored in Supabase)
@@ -859,7 +863,7 @@ export interface SearchParams {
   minPrice?: number;
   maxPrice?: number;
   condition?: ItemCondition;
-  sort?: 'featured' | 'price-low' | 'price-high' | 'newest';
+  sort?: "featured" | "price-low" | "price-high" | "newest";
 }
 
 /**
@@ -873,7 +877,7 @@ export interface SearchFilters {
   minPrice?: number;
   maxPrice?: number;
   condition?: ItemCondition;
-  sort?: 'featured' | 'price-low' | 'price-high' | 'newest';
+  sort?: "featured" | "price-low" | "price-high" | "newest";
 }
 
 /**
@@ -929,3 +933,12 @@ export interface PaginatedResults<T> {
   page: number;
   pageSize: number;
 }
+
+/**
+ * =====================
+ * UNIFIED SEARCH TYPES
+ * =====================
+ */
+
+// Re-export unified search types
+export * from "./search";

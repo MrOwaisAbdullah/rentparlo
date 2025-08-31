@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronRight, ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { Listing } from "@/types"
-import { ProductSwiperCard } from "@/components/cards/product-swiper-card"
+import { ListingCard } from "@/components/cards/listing-card"
 
 // Extended interface for homepage listings that includes additional properties
 interface HomepageListing extends Listing {
@@ -50,7 +50,7 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
           // If no items are explicitly marked as featured, show all items for trending
           if (trending) {
             // Handle both boolean true and truthy values
-            const isFeatured = item.featured === true || item.featured === 1 || item.isFeatured === true;
+            const isFeatured = item.featured === true || item.isFeatured === true;
             // If we're in trending mode and no items are featured, show all items
             // Otherwise, only show featured items
             return isFeatured;
@@ -62,15 +62,11 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
                                     item.category?.title || 
                                     '').toLowerCase();
           
-          const itemCategorySlug = (typeof item.category?.slug === 'object' && item.category?.slug?.current
-                                    ? item.category.slug.current
-                                    : item.category?.slug || '').toLowerCase();
-          
           // Handle category matching - convert common category names
           const normalizedCategory = category.toLowerCase();
           
           // Direct match with category slug or title
-          if (itemCategorySlug === normalizedCategory || itemCategoryTitle === normalizedCategory) {
+          if (itemCategoryTitle === normalizedCategory) {
             return true;
           }
           
@@ -89,7 +85,7 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
           
           const mappings = categoryMappings[normalizedCategory] || [normalizedCategory];
           return mappings.some(mapping => 
-            itemCategorySlug.includes(mapping) || itemCategoryTitle.includes(mapping)
+            itemCategoryTitle.includes(mapping)
           );
         })
         .slice(0, limit);
@@ -214,7 +210,7 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
           <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 overflow-x-auto py-2 pb-4 scrollbar-hide">
             {filteredlistings.length > 0 ? (
               filteredlistings.map((listing, index) => (
-                <ProductSwiperCard key={`${listing._id}-${index}`} listing={listing} isMobile={isMobile} />
+                <ListingCard variant="swiper" key={`${listing._id}-${index}`} listing={listing} isMobile={isMobile} />
               ))
             ) : (
               <div className="w-full text-center py-8">

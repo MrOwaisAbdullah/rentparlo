@@ -38,10 +38,10 @@ export function HeaderSheet() {
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
+                <Menu className="h-7 w-7" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 p-0">
+            <SheetContent side="right" className="w-80 p-0 z-50">
               <div className="flex flex-col h-full">
                 {/* Sheet Header */}
                 <div className="p-6 border-b flex items-center justify-between">
