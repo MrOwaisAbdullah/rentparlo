@@ -6,6 +6,8 @@
  * analytics, seller operations, and database interactions
  */
 
+export { validateListingData, getSellerDashboardData } from './supabase-queries-missing';
+
 import { createClient } from '../utils/supabase/server'
 import { createClient as createBrowserClient } from '../utils/supabase/client'
 import { 

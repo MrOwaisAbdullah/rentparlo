@@ -151,7 +151,7 @@ CREATE TABLE public.user_subscriptions (
 -- ANALYTICS EVENTS (Fixed with session reference)
 CREATE TABLE public.analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  listing_id TEXT NOT NULL,
+  listing_id TEXT, -- Made nullable to allow profile view tracking
   event_type TEXT NOT NULL CHECK (event_type IN ('view', 'contact_click', 'WhatsApp_click', 'share', 'save', 'search')),
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
   guest_id UUID,
@@ -161,6 +161,7 @@ CREATE TABLE public.analytics_events (
   referrer TEXT,
   city TEXT,
   device_type TEXT CHECK (device_type IN ('mobile', 'tablet', 'desktop')),
+  metadata JSONB, -- Add metadata column for storing additional event data
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -438,12 +439,12 @@ ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON public.users
   FOR SELECT TO authenticated USING (id = auth.uid());
 
-CREATE POLICY "Users can update own profile" ON public.users
-  FOR UPDATE TO authenticated USING (id = auth.uid());
-
 CREATE POLICY "Admins can view all users" ON public.users
   FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "Anyone can view basic user info" ON public.users
+  FOR SELECT TO authenticated, anon USING (true);
 
 -- Session policies
 CREATE POLICY "Admins can manage sessions" ON public.event_sessions
@@ -477,11 +478,15 @@ CREATE POLICY "Anyone can update guest tracking" ON public.user_guest_tracking
   WITH CHECK (true);
 
 -- Seller policies
-CREATE POLICY "Sellers can view own profile" ON public.seller_profiles
-  FOR SELECT TO authenticated USING (id = auth.uid());
+CREATE POLICY "Anyone can view seller profiles" ON public.seller_profiles
+  FOR SELECT TO authenticated, anon USING (true);
 
-CREATE POLICY "Sellers can update own profile" ON public.seller_profiles
-  FOR UPDATE TO authenticated USING (id = auth.uid());
+CREATE POLICY "Sellers can manage own profile" ON public.seller_profiles
+  FOR ALL TO authenticated USING (id = auth.uid());
+
+CREATE POLICY "Admins can manage seller profiles" ON public.seller_profiles
+  FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
 
 -- Subscription policies
 CREATE POLICY "Users can view own subscriptions" ON public.user_subscriptions
@@ -491,6 +496,15 @@ CREATE POLICY "Users can view own subscriptions" ON public.user_subscriptions
 CREATE POLICY "Admins can view analytics" ON public.analytics_events
   FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+
+-- Allow sellers to view their own analytics
+CREATE POLICY "Sellers can view own analytics" ON public.analytics_events
+  FOR SELECT TO authenticated
+  USING (
+    user_id = auth.uid()
+    OR 
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
+  );
 
 -- Add policy to allow inserting analytics events
 CREATE POLICY "Anyone can track analytics events" ON public.analytics_events
@@ -606,6 +620,37 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================
+-- ANALYTICS FUNCTIONS
+-- =============================================
+
+-- Get seller analytics function
+CREATE OR REPLACE FUNCTION public.get_seller_analytics(seller_id UUID)
+RETURNS TABLE(
+  total_views BIGINT,
+  total_contact_clicks BIGINT,
+  total_whatsapp_clicks BIGINT,
+  top_listings JSONB,
+  views_by_day JSONB
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    COALESCE(SUM(CASE WHEN ae.event_type = 'view' THEN 1 ELSE 0 END), 0)::BIGINT as total_views,
+    COALESCE(SUM(CASE WHEN ae.event_type = 'contact_click' THEN 1 ELSE 0 END), 0)::BIGINT as total_contact_clicks,
+    COALESCE(SUM(CASE WHEN ae.event_type = 'WhatsApp_click' THEN 1 ELSE 0 END), 0)::BIGINT as total_whatsapp_clicks,
+    '[]'::JSONB as top_listings,  -- Simplified, can be enhanced later
+    '[]'::JSONB as views_by_day    -- Simplified, can be enhanced later
+  FROM analytics_events ae
+  WHERE ae.user_id = seller_id;
+END;
+$$;
+
+-- Grant execute permission on the function
+GRANT EXECUTE ON FUNCTION public.get_seller_analytics TO authenticated, anon;
+
+-- =============================================
 -- ANALYTICS VIEW
 -- =============================================
 
@@ -654,12 +699,7 @@ GROUP BY a.listing_id, sp.id, sp.username, event_date;
 CREATE POLICY "Sellers can view own analytics" ON public.analytics_events
   FOR SELECT TO authenticated
   USING (
-    EXISTS (
-      SELECT 1 
-      FROM public.seller_profiles sp 
-      WHERE sp.id = auth.uid() 
-      AND sp.id = (SELECT id FROM public.users WHERE id = user_id)
-    ) 
+    user_id = auth.uid()
     OR 
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
   );

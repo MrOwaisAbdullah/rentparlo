@@ -92,7 +92,6 @@ async function getPostsByCategory(categorySlug: string): Promise<BlogPostSummary
 }
 
 export async function generateMetadata({ params }: BlogCategoryPageProps): Promise<Metadata> {
-  const category = await getCategoryData(params.category);
 
   if (!category) {
     return {

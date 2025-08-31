@@ -141,7 +141,6 @@ async function getRelatedPosts(postId: string): Promise<BlogPostSummary[]> {
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  // Await params before accessing properties
   const resolvedParams = await params;
   const post = await getBlogPost(resolvedParams.slug);
 

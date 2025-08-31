@@ -6,6 +6,8 @@
  * to provide unified data access for the frontend
  */
 
+export { getListingReviews, getSellerListingsCount } from './data-integration-missing';
+
 import { Listing, Seller, SellerProfile, User, SearchParams, SearchResults, Category, BlogPost, EnhancedUserSubscription } from '@/types'
 import {
   getListingBySlug,

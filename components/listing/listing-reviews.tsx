@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface Review {
   _id: string;
@@ -90,14 +91,11 @@ export function ListingReviews({ reviews, listingId, className }: ListingReviews
 
   const handleHelpfulClick = async (reviewId: string) => {
     try {
-      await fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'impressions',
-          listing_id: listingId,
-          metadata: { review_id: reviewId }
-        })
+      // Track helpful click using trackAnalyticsEventClient
+      await trackAnalyticsEventClient({
+        event_type: 'impressions',
+        listing_id: listingId,
+        metadata: { review_id: reviewId }
       });
     } catch (error) {
       console.error('Error tracking helpful click:', error);

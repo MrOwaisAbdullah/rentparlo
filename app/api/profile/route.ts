@@ -183,7 +183,7 @@ export async function PUT(request: NextRequest) {
         'owner_name',
         'owner_cnic',
         'address_line1',
-        'address_line2',
+        // 'address_line2', // Removed because it doesn't exist in the database schema
         'city',
         'state',
         'phone',
@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
         owner_name: profileData.owner_name || userData?.name,
         owner_cnic: profileData.owner_cnic,
         address_line1: profileData.address_line1,
-        address_line2: profileData.address_line2,
+        // address_line2: profileData.address_line2, // Removed because it doesn't exist in the database schema
         city: profileData.city || userData?.city,
         state: profileData.state || userData?.state,
         phone: profileData.phone,

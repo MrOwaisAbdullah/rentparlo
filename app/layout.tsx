@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://rentparlo.pk"),
   title: "RentParlo",
   description: "Rent Out Anything, Anywhere, Any Time",
   keywords: ["rent", "parlo", "rentparlo"],

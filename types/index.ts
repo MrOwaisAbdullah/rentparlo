@@ -70,7 +70,7 @@ export interface SellerProfile {
   };
   owner_cnic?: string;
   address_line1?: string;
-  address_line2?: string;
+  // address_line2?: string; // Removed because it doesn't exist in the database schema
   avatar_url?: string;
   is_verified: boolean;
   is_top_seller: boolean;
@@ -82,7 +82,6 @@ export interface SellerProfile {
   created_at: string;
   updated_at: string;
   map_location_url?: string; // New field for location map URL
-  listing_count?: number; // Add listing count field
 }
 
 /**
@@ -90,6 +89,7 @@ export interface SellerProfile {
  */
 export interface Seller extends User {
   profile: SellerProfile;
+  listingCount?: number; // Add listing count property
 }
 
 /**

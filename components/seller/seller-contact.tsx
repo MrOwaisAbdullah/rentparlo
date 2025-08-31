@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface Seller {
   id: string;
@@ -34,45 +35,45 @@ export function SellerContact({
 }: SellerContactProps) {
   const displayName = seller.business_name || seller.username;
 
-  const handlePhoneCall = () => {
+  const handlePhoneCall = async () => {
     if (seller.phone) {
       window.location.href = `tel:${seller.phone}`;
       onContact();
       
-      // Track phone call
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Track phone call using trackAnalyticsEventClient
+      try {
+        await trackAnalyticsEventClient({
           event_type: 'contact_click',
-          seller_id: seller.id,
+          user_id: seller.id,
           metadata: { contact_method: 'phone', source: 'seller_profile' }
-        })
-      }).catch(console.error);
+        });
+      } catch (error) {
+        console.error('Error tracking phone call:', error);
+      }
     }
   };
 
-  const handleEmail = () => {
+  const handleEmail = async () => {
     if (seller.email) {
       const subject = encodeURIComponent(`Inquiry from RentParLo.pk - ${displayName}`);
       const body = encodeURIComponent(`Hi ${displayName},\n\nI found your profile on RentParLo.pk and I'm interested in your rental items.\n\nBest regards`);
       window.location.href = `mailto:${seller.email}?subject=${subject}&body=${body}`;
       onContact();
       
-      // Track email contact
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Track email contact using trackAnalyticsEventClient
+      try {
+        await trackAnalyticsEventClient({
           event_type: 'contact_click',
-          seller_id: seller.id,
+          user_id: seller.id,
           metadata: { contact_method: 'email', source: 'seller_profile' }
-        })
-      }).catch(console.error);
+        });
+      } catch (error) {
+        console.error('Error tracking email contact:', error);
+      }
     }
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (seller.phone) {
       // Clean phone number for WhatsApp
       const cleanPhone = seller.phone.replace(/\D/g, '');
@@ -82,16 +83,16 @@ export function SellerContact({
       window.open(`https://wa.me/${whatsappPhone}?text=${message}`, '_blank');
       onContact();
       
-      // Track WhatsApp contact
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Track WhatsApp contact using trackAnalyticsEventClient
+      try {
+        await trackAnalyticsEventClient({
           event_type: 'WhatsApp_click',
-          seller_id: seller.id,
+          user_id: seller.id,
           metadata: { contact_method: 'whatsapp', source: 'seller_profile' }
-        })
-      }).catch(console.error);
+        });
+      } catch (error) {
+        console.error('Error tracking WhatsApp contact:', error);
+      }
     }
   };
 

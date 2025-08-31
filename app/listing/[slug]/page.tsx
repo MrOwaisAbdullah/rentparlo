@@ -1,10 +1,11 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import { getEnhancedListingBySlug, getSimilarListings, getEnhancedListingReviews } from '@/lib/data-integration';
+import { getEnhancedListingBySlug, getSimilarListings, getListingReviews } from '@/lib/data-integration';
 import { trackAnalyticsEvent } from '@/lib/supabase-queries';
 import { ListingDetailContent } from '@/components/listing/listing-detail-content';
 import { ListingDetailSkeleton } from '@/components/listing/listing-detail-skeleton';
+import { ClientRetryButton } from '@/components/listing/client-retry-button';
 import { headers } from 'next/headers';
 
 interface ListingPageProps {
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
   } catch (error) {
     return {
       title: 'Listing | RentParLo.pk',
-      description: 'Browse rental listings on RentParLo.pk',
+      description: 'Browse rental listings on RentParlo.pk',
     };
   }
 }
@@ -113,7 +114,7 @@ async function ListingContent({ slug }: { slug: string }) {
     // Get similar listings and reviews in parallel
     const [similarListings, reviews] = await Promise.all([
       getSimilarListings(listing._id, listing.category?.title || '', 4),
-      getEnhancedListingReviews(listing._id)
+      getListingReviews(listing._id)
     ]);
 
     return (
@@ -134,12 +135,7 @@ async function ListingContent({ slug }: { slug: string }) {
           <p className="text-muted-foreground mb-4">
             We're having trouble loading this listing. Please try again later.
           </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 transition-colors"
-          >
-            Retry
-          </button>
+          <ClientRetryButton />
         </div>
       </div>
     );

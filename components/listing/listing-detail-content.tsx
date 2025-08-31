@@ -5,9 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
-  Heart, Share2, Flag, MapPin, Calendar, Star, User, 
-  Shield, Clock, Eye, MessageCircle, Phone, Mail,
-  ChevronLeft, ChevronRight, ExternalLink, Info
+  Heart, Share2, 
+  // Flag,
+  MapPin, Calendar,
+  Shield, Eye, MessageCircle, Phone,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -359,13 +361,14 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                   >
                     <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
-                  <Button
+                  {/* Temporary Disabled */}
+                  {/* <Button
                     size="sm"
                     variant="secondary"
                     className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
                   >
                     <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {/* Status Badges */}
@@ -519,8 +522,8 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                   <div className="space-y-4">
                     {/* Seller Info */}
                     <Link href={`/seller/${listing.seller.profile?.username}`} className="block">
-                      <div className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <Avatar className="w-12 h-12">
+                      <div className="flex items-center gap-3 hover:opacity-80 transition-opacity relative z-0">
+                        <Avatar className="w-12 h-12 z-0">
                           <AvatarImage src={listing.seller.profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${listing.seller.profile?.username}`} />
                           <AvatarFallback>
                             {listing.seller.profile?.username?.charAt(0).toUpperCase() || listing.seller.email?.charAt(0).toUpperCase() || 'U'}
@@ -547,7 +550,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     {/* Seller Stats */}
                     <div className="grid grid-cols-2 gap-4 text-center text-sm">
                       <div>
-                        <div className="font-semibold text-primary">{listing.seller.profile?.listing_count || 0}</div>
+                        <div className="font-semibold text-primary">{listing.seller?.listingCount || 0}</div>
                         <div className="text-muted-foreground">Listings</div>
                       </div>
                       <div>
@@ -692,7 +695,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
 
       {/* Fixed Bottom CTA Bar for Mobile */}
       {listing.seller && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden z-40">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">

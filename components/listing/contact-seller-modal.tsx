@@ -11,6 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface Listing {
   _id: string;
@@ -94,18 +95,15 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
     setIsSubmitting(true);
 
     try {
-      // Track contact attempt
-      await fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'contact_click',
-          listing_id: listing._id,
-          metadata: { 
-            contact_method: contactMethod,
-            seller_id: seller.id 
-          }
-        })
+      // Track contact attempt using trackAnalyticsEventClient
+      await trackAnalyticsEventClient({
+        event_type: 'contact_click',
+        listing_id: listing._id,
+        user_id: seller.id,
+        metadata: { 
+          contact_method: contactMethod,
+          seller_id: seller.id 
+        }
       });
 
       // Simulate message sending (replace with actual API call)
@@ -129,39 +127,41 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
     setFormData(prev => ({ ...prev, message: template }));
   };
 
-  const handlePhoneCall = () => {
+  const handlePhoneCall = async () => {
     if (seller.profile?.phone) {
       window.location.href = `tel:${seller.profile.phone}`;
       
-      // Track phone call
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Track phone call using trackAnalyticsEventClient
+      try {
+        await trackAnalyticsEventClient({
           event_type: 'contact_click',
           listing_id: listing._id,
+          user_id: seller.id,
           metadata: { seller_id: seller.id }
-        })
-      }).catch(console.error);
+        });
+      } catch (error) {
+        console.error('Error tracking phone call:', error);
+      }
     }
   };
 
-  const handleEmailContact = () => {
+  const handleEmailContact = async () => {
     if (seller.profile?.email) {
       const subject = encodeURIComponent(`Inquiry about: ${listing.title}`);
       const body = encodeURIComponent(formData.message);
       window.location.href = `mailto:${seller.profile.email}?subject=${subject}&body=${body}`;
       
-      // Track email contact
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Track email contact using trackAnalyticsEventClient
+      try {
+        await trackAnalyticsEventClient({
           event_type: 'contact_click',
           listing_id: listing._id,
+          user_id: seller.id,
           metadata: { seller_id: seller.id }
-        })
-      }).catch(console.error);
+        });
+      } catch (error) {
+        console.error('Error tracking email contact:', error);
+      }
     }
   };
 

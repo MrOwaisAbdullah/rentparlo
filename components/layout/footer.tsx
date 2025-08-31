@@ -123,14 +123,15 @@ export function Footer() {
                 <span>Karachi, Pakistan</span>
               </div>
             </div>
-
+{/* 
             <div className="space-y-2">
               <p className="text-sm font-medium">Newsletter</p>
               <div className="flex space-x-2">
                 <Input placeholder="Your email" className="flex-1" />
                 <Button size="sm">Subscribe</Button>
               </div>
-            </div>
+            </div> */}
+            
           </div>
         </div>
 

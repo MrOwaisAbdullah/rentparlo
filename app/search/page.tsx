@@ -22,7 +22,6 @@ interface SearchPageProps {
 }
 
 export async function generateMetadata({
-  searchParams,
 }: SearchPageProps): Promise<Metadata> {
   // Await searchParams as required by Next.js 15
   const params = await searchParams;

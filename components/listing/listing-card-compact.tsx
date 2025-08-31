@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { getSanityImageUrl } from "@/sanity/lib/image"
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface Listing {
   _id: string;
@@ -101,7 +102,7 @@ export function ListingCardCompact({
     return `${Math.ceil(diffDays / 30)} months ago`;
   };
 
-  const handleContact = () => {
+  const handleContact = async () => {
     if (listing.seller?.profile?.phone) {
       const cleanPhone = listing.seller.profile.phone.replace(/\D/g, '');
       const whatsappPhone = cleanPhone.startsWith('92') ? cleanPhone : `92${cleanPhone.replace(/^0/, '')}`;
@@ -109,34 +110,36 @@ export function ListingCardCompact({
       
       window.open(`https://wa.me/${whatsappPhone}?text=${message}`, '_blank');
       
-      // Track contact click
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Track contact click using trackAnalyticsEventClient
+      try {
+        await trackAnalyticsEventClient({
           event_type: 'contact_click',
           listing_id: listing._id,
+          user_id: listing.seller.id,
           metadata: { source: 'compact_card', contact_method: 'whatsapp' }
-        })
-      }).catch(console.error);
+        });
+      } catch (error) {
+        console.error('Error tracking contact click:', error);
+      }
     }
   };
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsLiked(!isLiked);
     
-    // Track like action
-    fetch('/api/analytics', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_type: isLiked ? 'save' : 'save',
+    // Track like action using trackAnalyticsEventClient
+    try {
+      await trackAnalyticsEventClient({
+        event_type: 'save',
         listing_id: listing._id,
+        user_id: listing.seller.id,
         metadata: { source: 'compact_card' }
-      })
-    }).catch(console.error);
+      });
+    } catch (error) {
+      console.error('Error tracking like action:', error);
+    }
   };
 
   const primaryImage = listing.images?.[0];

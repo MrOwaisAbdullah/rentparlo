@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface Analytics {
   totalViews: number;
@@ -23,7 +24,7 @@ interface Seller {
   total_reviews: number;
   total_sales: number;
   response_time_avg: number;
-  created_at: string;
+  created_at?: string;
 }
 
 interface SellerStatsProps {
@@ -32,10 +33,22 @@ interface SellerStatsProps {
 }
 
 export function SellerStats({ analytics, seller }: SellerStatsProps) {
-  const joinDate = new Date(seller.created_at);
+  // Handle missing created_at gracefully
+  const joinDate = seller.created_at ? new Date(seller.created_at) : new Date();
   const monthsActive = Math.max(1, Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
   
-  const avgListingsPerMonth = Math.round(analytics.totalListings / monthsActive);
+  // Ensure all analytics values are valid numbers
+  const safeAnalytics = {
+    totalViews: typeof analytics.totalViews === 'number' ? Math.max(0, analytics.totalViews) : 0,
+    totalContactClicks: typeof analytics.totalContactClicks === 'number' ? Math.max(0, analytics.totalContactClicks) : 0,
+    totalWhatsAppClicks: typeof analytics.totalWhatsAppClicks === 'number' ? Math.max(0, analytics.totalWhatsAppClicks) : 0,
+    totalListings: typeof analytics.totalListings === 'number' ? Math.max(0, analytics.totalListings) : 0,
+    activeListings: typeof analytics.activeListings === 'number' ? Math.max(0, analytics.activeListings) : 0,
+    avgSessionDuration: typeof analytics.avgSessionDuration === 'number' ? Math.max(0, analytics.avgSessionDuration) : undefined,
+    uniqueUsers: typeof analytics.uniqueUsers === 'number' ? Math.max(0, analytics.uniqueUsers) : undefined,
+  };
+  
+  const avgListingsPerMonth = Math.round(safeAnalytics.totalListings / monthsActive);
   const responseTimeHours = Math.round(seller.response_time_avg / 60);
   
   const formatNumber = (num: number) => {
@@ -56,7 +69,7 @@ export function SellerStats({ analytics, seller }: SellerStatsProps) {
   const getPerformanceLevel = () => {
     const score = (seller.customer_rating / 5) * 0.4 + 
                   (Math.min(responseTimeHours, 24) / 24) * 0.3 +
-                  (Math.min(analytics.totalContactClicks / analytics.totalViews, 0.1) / 0.1) * 0.3;
+                  (Math.min((safeAnalytics.totalContactClicks + safeAnalytics.totalWhatsAppClicks) / Math.max(1, safeAnalytics.totalViews), 0.1) / 0.1) * 0.3;
     
     if (score >= 0.8) return { label: 'Excellent', color: 'bg-green-100 text-green-800' };
     if (score >= 0.6) return { label: 'Good', color: 'bg-blue-100 text-blue-800' };
@@ -69,15 +82,15 @@ export function SellerStats({ analytics, seller }: SellerStatsProps) {
   const stats = [
     {
       title: 'Profile Views',
-      value: formatNumber(analytics.totalViews),
+      value: formatNumber(safeAnalytics.totalViews),
       icon: Eye,
       description: 'Total profile visits',
-      change: analytics.totalViews > 100 ? '+12%' : null,
+      change: safeAnalytics.totalViews > 100 ? '+12%' : null,
       changeType: 'positive' as const
     },
     {
       title: 'Contact Requests',
-      value: formatNumber(analytics.totalContactClicks + analytics.totalWhatsAppClicks),
+      value: formatNumber(safeAnalytics.totalContactClicks + safeAnalytics.totalWhatsAppClicks),
       icon: MessageCircle,
       description: 'People who contacted',
       change: null,
@@ -85,9 +98,9 @@ export function SellerStats({ analytics, seller }: SellerStatsProps) {
     },
     {
       title: 'Active Listings',
-      value: analytics.activeListings.toString(),
+      value: safeAnalytics.activeListings.toString(),
       icon: Package,
-      description: `${analytics.totalListings} total listings`,
+      description: `${safeAnalytics.totalListings} total listings`,
       change: null,
       changeType: 'neutral' as const
     },
@@ -121,53 +134,53 @@ export function SellerStats({ analytics, seller }: SellerStatsProps) {
     <div className="space-y-6">
       {/* Performance Overview */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
               Performance Overview
             </CardTitle>
-            <Badge className={performance.color}>
+            <Badge className={`text-xs sm:text-sm py-0.5 px-2 ${performance.color}`}>
               {performance.label}
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">
+              <div className="text-lg sm:text-xl font-bold text-primary">
                 {seller.total_sales}
               </div>
-              <div className="text-sm text-muted-foreground">Total Sales</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Total Sales</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {analytics.uniqueUsers ? formatNumber(analytics.uniqueUsers) : 'N/A'}
+              <div className="text-lg sm:text-xl font-bold text-green-600">
+                {safeAnalytics.uniqueUsers ? formatNumber(safeAnalytics.uniqueUsers) : 'N/A'}
               </div>
-              <div className="text-sm text-muted-foreground">Unique Visitors</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Visitors</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {formatDuration(analytics.avgSessionDuration)}
+              <div className="text-lg sm:text-xl font-bold text-blue-600">
+                {formatDuration(safeAnalytics.avgSessionDuration)}
               </div>
-              <div className="text-sm text-muted-foreground">Avg. Session</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Avg. Session</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Detailed Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat, index) => (
           <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
                     {stat.title}
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg sm:text-2xl font-bold">
                       {stat.value}
                     </p>
                     {stat.change && (
@@ -187,42 +200,22 @@ export function SellerStats({ analytics, seller }: SellerStatsProps) {
                   </p>
                 </div>
                 <div className="flex-shrink-0">
-                  <stat.icon className="w-8 h-8 text-muted-foreground" />
+                  <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
                 </div>
               </div>
 
               {/* Progress bar for some stats */}
               {stat.title === 'Customer Rating' && seller.customer_rating > 0 && (
-                <div className="mt-4">
+                <div className="mt-3 sm:mt-4">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Rating</span>
                     <span>{seller.customer_rating.toFixed(1)}/5.0</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div 
-                      className="bg-yellow-400 h-2 rounded-full transition-all duration-300" 
+                      className="bg-yellow-400 h-1.5 rounded-full" 
                       style={{ width: `${(seller.customer_rating / 5) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {stat.title === 'Response Time' && (
-                <div className="mt-4">
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>Speed</span>
-                    <span>{responseTimeHours <= 1 ? 'Excellent' : responseTimeHours <= 6 ? 'Good' : 'Slow'}</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        responseTimeHours <= 1 ? 'bg-green-500' : 
-                        responseTimeHours <= 6 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ 
-                        width: `${Math.max(20, Math.min(100, 100 - (responseTimeHours / 24) * 100))}%` 
-                      }}
-                    />
+                    ></div>
                   </div>
                 </div>
               )}
@@ -230,56 +223,6 @@ export function SellerStats({ analytics, seller }: SellerStatsProps) {
           </Card>
         ))}
       </div>
-
-      {/* Quick Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <h4 className="font-medium">Engagement</h4>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>
-                  • Contact rate: {analytics.totalViews > 0 
-                    ? `${(((analytics.totalContactClicks + analytics.totalWhatsAppClicks) / analytics.totalViews) * 100).toFixed(1)}%`
-                    : '0%'
-                  }
-                </li>
-                <li>
-                  • Active since: {joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
-                </li>
-                <li>
-                  • Listings per month: {avgListingsPerMonth}
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium">Performance</h4>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>
-                  • Overall rating: {performance.label.toLowerCase()}
-                </li>
-                <li>
-                  • Reviews ratio: {analytics.totalListings > 0 
-                    ? `${(seller.total_reviews / analytics.totalListings).toFixed(1)} per listing`
-                    : 'No data'
-                  }
-                </li>
-                <li>
-                  • Sales conversion: {analytics.totalContactClicks > 0 
-                    ? `${((seller.total_sales / analytics.totalContactClicks) * 100).toFixed(1)}%`
-                    : 'No data'
-                  }
-                </li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
-
-export default SellerStats;
