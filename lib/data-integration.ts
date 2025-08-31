@@ -126,48 +126,103 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
         console.log('Seller data for listing:', seller); // Debugging
         
         if (seller) {
-          // Get seller profile if user is a seller
+          // Always try to get seller profile, regardless of role
           let sellerProfile: SellerProfile | null = null
-          if (seller.role === 'seller') {
-            sellerProfile = await getSellerProfile(seller.id)
-            console.log('Seller profile data:', sellerProfile); // Debugging
-            
-            // If no seller profile exists, create a minimal one from user data
-            if (!sellerProfile) {
-              console.log('Creating minimal seller profile from user data');
-              sellerProfile = {
-                id: seller.id,
-                username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`, // Use email prefix or ID as username
-                is_verified: seller.is_verified || false,
-                tier: 'basic',
-                tier_points: 0,
-                tier_last_updated: seller.created_at || new Date().toISOString(),
-                verification_status: 'pending',
-                verification_documents: {
-                  cnic_front: null,
-                  cnic_back: null,
-                  business_license: null
-                },
-                created_at: seller.created_at || new Date().toISOString(),
-                updated_at: seller.created_at || new Date().toISOString(),
-                listing_count: 0
-              };
-            }
-          } else {
-            console.log('User is not a seller, role:', seller.role); // Debugging
+          
+          // Try to get seller profile first
+          sellerProfile = await getSellerProfile(seller.id)
+          console.log('Seller profile data:', sellerProfile); // Debugging
+          
+          // If no seller profile exists, but user is a seller, create a minimal one
+          if (!sellerProfile && seller.role === 'seller') {
+            console.log('Creating minimal seller profile for seller user');
+            sellerProfile = {
+              id: seller.id,
+              username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`,
+              is_verified: seller.is_verified || false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: seller.created_at || new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              created_at: seller.created_at || new Date().toISOString(),
+              updated_at: seller.created_at || new Date().toISOString(),
+              listing_count: 0
+            };
+          }
+          
+          // If we still don't have a seller profile but have user data, create minimal profile
+          if (!sellerProfile) {
+            console.log('Creating minimal seller profile from user data');
+            sellerProfile = {
+              id: seller.id,
+              username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`,
+              is_verified: seller.is_verified || false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: seller.created_at || new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              created_at: seller.created_at || new Date().toISOString(),
+              updated_at: seller.created_at || new Date().toISOString(),
+              listing_count: 0
+            };
           }
 
           // Combine data
-          enhancedSeller = sellerProfile ? {
+          enhancedSeller = {
             ...seller,
             profile: sellerProfile
-          } : undefined
+          }
         } else {
           console.log('No seller found for listing with supabaseId:', listing.supabaseId); // Debugging
         }
       } catch (sellerError) {
         console.error('Error fetching seller data:', sellerError);
-        // Continue with listing even if seller data fails
+        // Try to create minimal seller profile from listing data if possible
+        try {
+          // Create a very minimal seller profile with just the ID
+          enhancedSeller = {
+            id: listing.supabaseId,
+            email: 'unknown@example.com',
+            role: 'seller',
+            is_verified: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            active: true,
+            email_verified: false,
+            country: 'Pakistan',
+            notification_preferences: { email: true, sms: false, push: true },
+            preferred_language: 'en',
+            profile: {
+              id: listing.supabaseId,
+              username: `user-${listing.supabaseId.substring(0, 8)}`,
+              is_verified: false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              listing_count: 0
+            }
+          };
+        } catch (minimalProfileError) {
+          console.error('Error creating minimal seller profile:', minimalProfileError);
+        }
       }
     }
 

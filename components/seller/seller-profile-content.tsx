@@ -116,8 +116,21 @@ export function SellerProfileContent({ seller, listings, analytics }: SellerProf
   const [activeTab, setActiveTab] = React.useState('overview');
   const [showAllListings, setShowAllListings] = React.useState(false);
 
-  const displayName = seller.business_name || seller.username;
-  const joinDate = new Date(seller.created_at).toLocaleDateString('en-US', {
+  // Handle case where seller data might be incomplete
+  if (!seller) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Seller information is not available. The seller profile may have been removed or the data is incomplete.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const displayName = seller.business_name || seller.username || 'Unknown Seller';
+  const joinDate = new Date(seller.created_at || new Date()).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long'
   });
@@ -167,7 +180,7 @@ export function SellerProfileContent({ seller, listings, analytics }: SellerProf
               <div className="relative">
                 <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                   <AvatarImage 
-                    src={seller.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${seller.username}`}
+                    src={seller.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${seller.username || 'U'}`}
                     alt={displayName}
                   />
                   <AvatarFallback className="text-2xl">
@@ -188,88 +201,75 @@ export function SellerProfileContent({ seller, listings, analytics }: SellerProf
                     <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                       {displayName}
                     </h1>
-                    <SellerTierBadge tier={seller.tier} points={seller.tier_points} />
+                    <SellerTierBadge tier={seller.tier || 'basic'} points={seller.tier_points || 0} />
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
-                    <span className="text-sm">@{seller.username}</span>
+                    {seller.username && (
+                      <span className="text-sm">@{seller.username}</span>
+                    )}
                     {seller.business_type && (
                       <>
                         <span>•</span>
                         <span className="text-sm">{seller.business_type}</span>
                       </>
                     )}
-                    {seller.city && (
-                      <>
-                        <span>•</span>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          <span className="text-sm">{seller.city}, {seller.state || 'Pakistan'}</span>
-                        </div>
-                      </>
-                    )}
                   </div>
                 </div>
 
                 {/* Verification Status */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className={cn("text-xs", verificationConfig[seller.verification_status].color)}>
-                    {React.createElement(verificationConfig[seller.verification_status].icon, { className: "w-3 h-3 mr-1" })}
-                    {verificationConfig[seller.verification_status].label}
-                  </Badge>
-                  
-                  {seller.is_top_seller && (
-                    <Badge className="bg-purple-100 text-purple-800 text-xs">
-                      <Award className="w-3 h-3 mr-1" />
-                      Top Seller
+                {seller.verification_status && (
+                  <div className="flex items-center gap-2">
+                    {React.createElement(
+                      verificationConfig[seller.verification_status]?.icon || AlertCircle,
+                      { className: "w-4 h-4" }
+                    )}
+                    <Badge 
+                      className={cn(
+                        "text-xs",
+                        verificationConfig[seller.verification_status]?.color || "bg-gray-100 text-gray-800"
+                      )}
+                    >
+                      {verificationConfig[seller.verification_status]?.label || seller.verification_status}
                     </Badge>
-                  )}
-                  
-                  <span className="text-sm text-muted-foreground">
-                    Joined {joinDate}
-                  </span>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="flex flex-wrap items-center gap-6 text-sm">
-                  {seller.customer_rating > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{seller.customer_rating.toFixed(1)}</span>
-                      <span className="text-muted-foreground">
-                        ({seller.total_reviews} reviews)
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4 text-green-600" />
-                    <span>Responds in {responseTime}</span>
                   </div>
-                  
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="w-4 h-4 text-blue-600" />
-                    <span>{analytics.activeListings} active listings</span>
-                  </div>
-                </div>
-
-                {/* Bio */}
-                {seller.bio && (
-                  <p className="text-muted-foreground leading-relaxed max-w-2xl">
-                    {seller.bio}
-                  </p>
                 )}
+
+                {/* Location */}
+                {(seller.city || seller.state) && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-sm">
+                      {seller.city}{seller.state ? `, ${seller.state}` : ''}
+                    </span>
+                  </div>
+                )}
+
+                {/* Member since */}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm">Member since {joinDate}</span>
+                </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:w-auto w-full">
-              <SellerContact seller={seller} onContact={handleContact} />
-              
-              <Button variant="outline" onClick={handleShare} className="flex-1 lg:flex-none">
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Profile
+            {/* Contact Actions */}
+            <div className="flex flex-col gap-3 w-full lg:w-auto">
+              <Button 
+                className="w-full lg:w-auto" 
+                onClick={() => {
+                  handleContact();
+                  // Open contact modal or perform contact action
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Contact Seller
               </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={handleShare}>
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>

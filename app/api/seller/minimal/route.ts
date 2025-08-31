@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       .from('seller_profiles')
       .select('username, avatar_url, is_verified, tier')
       .eq('id', userId)
-      .maybeSingle(); // Changed from .single() to .maybeSingle() to handle 0 rows
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching seller info:', {
@@ -33,8 +33,24 @@ export async function GET(request: Request) {
         details: error.details,
         hint: error.hint
       });
+      
+      // Try to get basic user info if seller profile doesn't exist
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('Error fetching user info:', {
+          userId,
+          error: userError.message
+        });
+      }
+      
+      // Return minimal data based on what we could fetch
       return Response.json({ 
-        username: 'User',
+        username: userData?.email ? userData.email.split('@')[0] : `user-${userId.substring(0, 8)}`,
         avatarUrl: null,
         is_verified: false,
         tier: 'basic'
@@ -43,11 +59,27 @@ export async function GET(request: Request) {
 
     // Handle case when no data is found
     if (!data) {
-      console.log(`No seller profile found for user ${userId}`);
+      console.log(`No seller profile found for user ${userId}, trying user data`);
+      
+      // Try to get basic user info if seller profile doesn't exist
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email, is_verified')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('Error fetching user info:', {
+          userId,
+          error: userError.message
+        });
+      }
+      
+      // Return minimal data based on what we could fetch
       return Response.json({ 
-        username: 'User',
+        username: userData?.email ? userData.email.split('@')[0] : `user-${userId.substring(0, 8)}`,
         avatarUrl: null,
-        is_verified: false,
+        is_verified: userData?.is_verified || false,
         tier: 'basic'
       });
     }

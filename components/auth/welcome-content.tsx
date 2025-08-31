@@ -229,23 +229,42 @@ export function WelcomeContent() {
 
       // If seller, create seller profile
       if (sanitizedData.role === 'seller') {
-        const { error: sellerError } = await supabase
+        // Check if seller profile already exists
+        const existingProfile = await supabase
           .from('seller_profiles')
-          .insert({
-            id: user.id,
-            username: user.email?.split('@')[0] || `seller_${Date.now()}`,
-            business_name: sanitizedData.businessName,
-            owner_cnic: sanitizedData.cnic,
-            address_line1: sanitizedData.address,
-            is_verified: false,
-            is_top_seller: false,
-            tier: 'basic',
-            tier_points: 0,
-            verification_status: 'pending'
-          });
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (!existingProfile.data) {
+          const { error: sellerError } = await supabase
+            .from('seller_profiles')
+            .insert({
+              id: user.id,
+              username: user.email?.split('@')[0] || `seller_${Date.now()}`,
+              business_name: sanitizedData.businessName || '',
+              owner_cnic: sanitizedData.cnic || '',
+              address_line1: sanitizedData.address || '',
+              city: sanitizedData.city || '',
+              phone: sanitizedData.phone || '',
+              email: user.email || '',
+              is_verified: false,
+              is_top_seller: false,
+              tier: 'basic',
+              tier_points: 0,
+              verification_status: 'pending',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
 
-        if (sellerError && sellerError.code !== '23505') { // Ignore duplicate key error
-          console.error('Seller profile creation error:', sellerError);
+          if (sellerError) {
+            console.error('Seller profile creation error:', sellerError);
+            // Don't throw error, continue with user creation
+          } else {
+            console.log('Seller profile created successfully for user:', user.id);
+          }
+        } else {
+          console.log('Seller profile already exists for user:', user.id);
         }
       }
 

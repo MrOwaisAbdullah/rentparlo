@@ -568,7 +568,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                         <MessageCircle className="w-4 h-4 mr-2" />
                         {listing.availability?.isAvailable !== false ? 'Send Message' : 'Not Available'}
                       </Button>
-                    
+        
                       {/* New CTA Buttons */}
                       <div className="grid grid-cols-3 gap-2">
                         <Button 
@@ -605,26 +605,22 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                         </Button>
                       </div>
                     </div>
-
-                    {/* Safety Notice */}
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        Always meet in a public place and inspect the item before making any payment.
-                      </AlertDescription>
-                    </Alert>
                   </div>
                 ) : (
-                  <div className="text-center text-muted-foreground">
-                    {listing.supabaseId ? (
-                      <div>
-                        <p>Seller information is not available for this listing.</p>
-                        <p className="text-sm mt-2">Seller ID: {listing.supabaseId}</p>
-                        <p className="text-xs mt-2 text-muted-foreground">This could be because the seller account has been deleted or the listing data is incomplete.</p>
-                      </div>
-                    ) : (
-                      <p>This listing does not have an associated seller.</p>
-                    )}
+                  <div className="text-center py-8">
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        Seller information is not available for this listing.
+                        {listing.supabaseId && (
+                          <span className="block mt-2 text-sm">
+                            Seller ID: {listing.supabaseId}
+                          </span>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                    <p className="text-muted-foreground text-sm mt-4">
+                      This may be because the seller account has been deleted or the listing data is incomplete.
+                    </p>
                   </div>
                 )}
               </CardContent>
