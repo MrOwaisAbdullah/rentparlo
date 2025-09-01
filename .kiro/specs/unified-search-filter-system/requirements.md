@@ -30,9 +30,9 @@ This feature focuses on creating a unified, robust search and filter system acro
 4. WHEN search results are displayed THEN they SHALL be properly categorized as listings or blog posts
 5. IF no results are found THEN the system SHALL display appropriate "no results" messaging
 
-### Requirement 3: Category Page Filters
+### Requirement 3: Category Page Filters and Layout
 
-**User Story:** As a user browsing a category page, I want to filter listings by various criteria (price, location, condition, etc.), so that I can narrow down results to find exactly what I need.
+**User Story:** As a user browsing a category page, I want to filter listings by various criteria (price, location, condition, etc.) and see relevant advertisements in a sidebar, so that I can narrow down results while discovering additional services.
 
 #### Acceptance Criteria
 
@@ -42,22 +42,26 @@ This feature focuses on creating a unified, robust search and filter system acro
 4. WHEN I change filter values THEN the URL SHALL update to reflect current filter state
 5. IF I bookmark or share a filtered URL THEN it SHALL restore the same filtered view
 6. WHEN filters are applied THEN the system SHALL show the number of results found
+7. WHEN I view a category page THEN a sidebar SHALL be displayed for advertisement banners and related content
+8. WHEN viewing on mobile devices THEN the sidebar SHALL adapt appropriately (collapse or stack below content)
 
 ### Requirement 4: Search Page Functionality
 
-**User Story:** As a user on the search page, I want comprehensive filtering and sorting options for my search results, so that I can refine my search to find the most relevant items.
+**User Story:** As a user on the search page, I want focused filtering options (sorting, pricing, condition, area, availability) and a sidebar for advertisements, so that I can efficiently find relevant items while seeing promotional content.
 
 #### Acceptance Criteria
 
-1. WHEN I enter a search query THEN the system SHALL display relevant listings and blog posts
-2. WHEN I apply filters on search results THEN they SHALL work in combination with the search query
+1. WHEN I enter a search query THEN the system SHALL display relevant listings with simplified filter options
+2. WHEN I apply filters (sorting, pricing, condition, area, availability) THEN they SHALL work in combination with the search query
 3. WHEN I sort search results THEN the system SHALL maintain my search query and applied filters
 4. WHEN I navigate back to search results THEN my previous search state SHALL be preserved
 5. IF search results span multiple pages THEN pagination SHALL maintain search and filter state
+6. WHEN I view the search page THEN a sidebar SHALL be displayed for advertisement banners
+7. WHEN viewing on mobile devices THEN the sidebar SHALL adapt appropriately (collapse or stack below content)
 
-### Requirement 5: Blog Page Search and Filters
+### Requirement 5: Blog Page Search, Filters, and Layout
 
-**User Story:** As a user browsing blog content, I want to search and filter blog posts by categories, tags, or date, so that I can find relevant articles efficiently.
+**User Story:** As a user browsing blog content, I want to search and filter blog posts by categories, tags, or date, and see relevant content in a sidebar, so that I can find articles efficiently while discovering additional resources.
 
 #### Acceptance Criteria
 
@@ -66,6 +70,8 @@ This feature focuses on creating a unified, robust search and filter system acro
 3. WHEN I filter by tags THEN posts containing those tags SHALL be shown
 4. WHEN I filter by date range THEN posts within that timeframe SHALL be displayed
 5. WHEN I combine blog filters THEN they SHALL work together to refine results
+6. WHEN I view blog pages THEN a sidebar SHALL be displayed for advertisements, related posts, and other relevant content
+7. WHEN viewing on mobile devices THEN the sidebar SHALL adapt appropriately (collapse or stack below content)
 
 ### Requirement 6: Clear Filters and Reset Functionality
 
@@ -117,7 +123,22 @@ This feature focuses on creating a unified, robust search and filter system acro
 4. WHEN large result sets are loaded THEN they SHALL be paginated or virtualized for performance
 5. IF network requests fail THEN appropriate error messages SHALL be displayed with retry options
 
-### Requirement 10: Accessibility and Usability
+### Requirement 10: Universal Sidebar Layout and Content Integration
+
+**User Story:** As a business stakeholder, I want search, category, and blog pages to have consistent sidebars for displaying advertisements and relevant content, so that we can monetize the platform and improve user engagement across all main content areas.
+
+#### Acceptance Criteria
+
+1. WHEN users visit search, category, or blog pages THEN a sidebar SHALL be displayed alongside main content
+2. WHEN advertisements are loaded THEN they SHALL be displayed in designated sidebar banner slots
+3. WHEN viewing on desktop THEN the sidebar SHALL be positioned to the right of main content
+4. WHEN viewing on tablet THEN the sidebar SHALL adapt to available screen space
+5. WHEN viewing on mobile THEN the sidebar SHALL stack below main content or be collapsible
+6. IF no advertisements are available THEN the sidebar SHALL display relevant content (related posts, popular listings, etc.)
+7. WHEN advertisements or sidebar content are clicked THEN proper tracking SHALL be implemented
+8. WHEN different page types are viewed THEN sidebar content SHALL be contextually relevant (category-specific ads, related blog posts, etc.)
+
+### Requirement 11: Accessibility and Usability
 
 **User Story:** As a user with accessibility needs, I want all search and filter functionality to be keyboard navigable and screen reader friendly, so that I can use the application effectively.
 

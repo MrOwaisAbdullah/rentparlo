@@ -14,6 +14,7 @@ UnifiedSearchSystem/
 │   ├── UniversalSearchBar/
 │   ├── UnifiedListingSearch/
 │   ├── UnifiedBlogSearch/
+│   ├── UniversalPageLayout/
 │   └── FilterManager/
 ├── Page-Specific Wrappers/
 │   ├── SearchPageWrapper/
@@ -23,10 +24,14 @@ UnifiedSearchSystem/
 │   ├── FilterPanel/
 │   ├── ActiveFilters/
 │   ├── ClearFilters/
+│   ├── UniversalSidebar/
+│   ├── AdBanner/
+│   ├── RelatedContent/
 │   └── ResponsiveContainer/
 └── State Management/
     ├── SearchContext/
     ├── FilterContext/
+    ├── SidebarContext/
     └── URLStateManager/
 ```
 
@@ -105,6 +110,16 @@ interface ListingFilters {
   sortBy: string;
   priceType: string;
 }
+
+interface SearchPageFilters {
+  query: string;
+  sortBy: string;
+  minPrice: number;
+  maxPrice: number;
+  condition: string;
+  area: string;
+  availability: string;
+}
 ```
 
 ### 3. UnifiedBlogSearch Component
@@ -133,7 +148,108 @@ interface BlogFilters {
 }
 ```
 
-### 4. FilterManager Component
+### 4. UniversalPageLayout Component
+
+**Purpose**: Universal layout component for search, category, and blog pages with sidebar
+
+**Props Interface**:
+
+```typescript
+interface UniversalPageLayoutProps {
+  children: React.ReactNode;
+  pageType: "search" | "category" | "blog";
+  pageContext?: Record<string, any>;
+  showSidebar?: boolean;
+  sidebarPosition?: "left" | "right";
+  className?: string;
+}
+```
+
+**Features**:
+
+- Responsive grid layout with main content and sidebar
+- Collapsible sidebar on mobile devices
+- Context-aware sidebar content based on page type
+- Flexible sidebar positioning
+
+### 5. UniversalSidebar Component
+
+**Purpose**: Universal sidebar component for displaying contextual content
+
+**Props Interface**:
+
+```typescript
+interface UniversalSidebarProps {
+  pageType: "search" | "category" | "blog";
+  pageContext?: Record<string, any>;
+  content: SidebarContent[];
+  onContentClick?: (contentId: string, contentType: string) => void;
+  className?: string;
+}
+
+interface SidebarContent {
+  id: string;
+  type: "ad" | "related-posts" | "popular-listings" | "categories" | "custom";
+  title?: string;
+  data: any;
+  priority: number;
+  position?: "top" | "middle" | "bottom";
+}
+```
+
+### 6. AdBanner Component
+
+**Purpose**: Individual advertisement banner component
+
+**Props Interface**:
+
+```typescript
+interface AdBannerProps {
+  banner: AdBanner;
+  size?: "small" | "medium" | "large";
+  onBannerClick?: (bannerId: string) => void;
+  className?: string;
+}
+
+interface AdBanner {
+  id: string;
+  title: string;
+  imageUrl: string;
+  linkUrl: string;
+  altText: string;
+  priority: number;
+  targetAudience?: string[];
+  category?: string;
+}
+```
+
+### 7. RelatedContent Component
+
+**Purpose**: Component for displaying related posts, listings, or categories
+
+**Props Interface**:
+
+```typescript
+interface RelatedContentProps {
+  contentType: "posts" | "listings" | "categories";
+  items: RelatedItem[];
+  maxItems?: number;
+  title?: string;
+  onItemClick?: (itemId: string) => void;
+  className?: string;
+}
+
+interface RelatedItem {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  linkUrl: string;
+  description?: string;
+  metadata?: Record<string, any>;
+}
+```
+
+### 6. FilterManager Component
 
 **Purpose**: Centralized filter management with clear/reset functionality
 
@@ -212,6 +328,63 @@ interface FilterConfiguration {
     language: SelectFilter;
     featured: BooleanFilter;
     dateRange: DateRangeFilter;
+  };
+
+  search: {
+    sortBy: SelectFilter;
+    price: RangeFilter;
+    condition: SelectFilter;
+    area: SelectFilter;
+    availability: SelectFilter;
+  };
+}
+```
+
+### Sidebar State Model
+
+```typescript
+interface SidebarState {
+  // Current page context
+  pageType: "search" | "category" | "blog";
+  pageContext: Record<string, any>;
+
+  // Sidebar content
+  content: SidebarContent[];
+
+  // Loading state
+  isLoading: boolean;
+  error: string | null;
+
+  // User interactions
+  interactions: SidebarInteraction[];
+}
+
+interface SidebarInteraction {
+  contentId: string;
+  contentType: string;
+  action: "view" | "click" | "hover";
+  timestamp: Date;
+  metadata?: Record<string, any>;
+}
+
+interface SidebarContentConfig {
+  search: {
+    ads: AdContent[];
+    popularListings: ListingContent[];
+    featuredCategories: CategoryContent[];
+  };
+
+  category: {
+    ads: AdContent[];
+    relatedCategories: CategoryContent[];
+    popularInCategory: ListingContent[];
+  };
+
+  blog: {
+    ads: AdContent[];
+    relatedPosts: BlogContent[];
+    blogCategories: CategoryContent[];
+    popularPosts: BlogContent[];
   };
 }
 ```
@@ -364,6 +537,18 @@ interface FilterContextValue {
   clearAllFilters: () => void;
   getActiveFilterCount: () => number;
 }
+
+// Sidebar Context
+interface SidebarContextValue {
+  sidebarState: SidebarState;
+  loadSidebarContent: (
+    pageType: string,
+    pageContext: Record<string, any>
+  ) => Promise<void>;
+  trackInteraction: (interaction: SidebarInteraction) => void;
+  updateContent: (content: SidebarContent[]) => void;
+  clearContent: () => void;
+}
 ```
 
 ### URL State Synchronization
@@ -421,6 +606,61 @@ interface URLStateManager {
    - Dynamic import for heavy features
    - Route-based splitting
 
+## Sidebar Content Management
+
+### Content Strategy by Page Type
+
+1. **Search Page Sidebar**
+   - Primary: Advertisement banners (top priority)
+   - Secondary: Popular listings across all categories
+   - Tertiary: Featured categories for discovery
+
+2. **Category Page Sidebar**
+   - Primary: Category-specific advertisement banners
+   - Secondary: Related categories and subcategories
+   - Tertiary: Popular listings within the current category
+
+3. **Blog Page Sidebar**
+   - Primary: Blog-focused advertisement banners
+   - Secondary: Related blog posts and popular articles
+   - Tertiary: Blog categories and tag cloud
+
+### Content Prioritization System
+
+```typescript
+interface ContentPriority {
+  ads: {
+    weight: 100;
+    maxSlots: 3;
+    positions: ["top", "middle", "bottom"];
+  };
+
+  relatedContent: {
+    weight: 80;
+    maxSlots: 2;
+    positions: ["middle", "bottom"];
+  };
+
+  categories: {
+    weight: 60;
+    maxSlots: 1;
+    positions: ["bottom"];
+  };
+}
+```
+
+### Dynamic Content Loading
+
+1. **Context-Aware Loading**
+   - Load content based on current page type and context
+   - Refresh content when page context changes
+   - Cache content for performance optimization
+
+2. **Fallback Content Strategy**
+   - Display default content when specific content unavailable
+   - Graceful degradation for failed content loads
+   - Hide sidebar sections when no content available
+
 ## Accessibility Implementation
 
 ### Keyboard Navigation
@@ -437,6 +677,11 @@ interface URLStateManager {
    - Screen reader support
    - ARIA labels
 
+3. **Sidebar Components**
+   - Keyboard navigation through sidebar content
+   - Skip links for sidebar sections
+   - Focus management for interactive elements
+
 ### Screen Reader Support
 
 1. **Announcements**
@@ -444,12 +689,14 @@ interface URLStateManager {
    - Filter state changes
    - Loading states
    - Error messages
+   - Sidebar content updates
 
 2. **ARIA Implementation**
    - Proper role attributes
    - Live regions for updates
    - Descriptive labels
    - State indicators
+   - Sidebar content labeling
 
 ## Migration Strategy
 
@@ -457,29 +704,37 @@ interface URLStateManager {
 
 - Create UniversalSearchBar
 - Implement FilterManager
-- Set up SearchContext
+- Set up SearchContext and FilterContext
+- Create UniversalPageLayout and UniversalSidebar
 - Basic responsive layout
 
-### Phase 2: Listing Integration (Week 3-4)
+### Phase 2: Search Page Integration (Week 3-4)
 
-- Migrate search page
-- Update category pages
-- Implement UnifiedListingSearch
-- URL state management
+- Migrate search page with simplified filters
+- Implement sidebar with ads and popular content
+- Create AdBanner and RelatedContent components
+- URL state management for search
 
-### Phase 3: Blog Integration (Week 5-6)
+### Phase 3: Category and Blog Integration (Week 5-6)
 
-- Create UnifiedBlogSearch
-- Migrate blog pages
-- Implement blog filters
-- Cross-page consistency
+- Update category pages with UnifiedListingSearch and sidebar
+- Create UnifiedBlogSearch with sidebar integration
+- Migrate blog pages with contextual sidebar content
+- Cross-page consistency testing
 
-### Phase 4: Optimization (Week 7-8)
+### Phase 4: Universal Integration (Week 7-8)
 
-- Performance optimization
+- Integrate UniversalSearchBar into header and hero
+- Complete responsive design implementation
+- Performance optimization and caching
 - Accessibility improvements
-- Testing and bug fixes
-- Documentation updates
+
+### Phase 5: Testing and Optimization (Week 9-10)
+
+- Comprehensive testing across all pages
+- Bug fixes and edge case handling
+- Final accessibility audit
+- Documentation and cleanup
 
 ## Security Considerations
 

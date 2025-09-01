@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useSearch } from "@/contexts/search-context";
 import { useFilters } from "@/contexts/filter-context";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 
 /**
  * Combined hook that provides unified access to both search and filter functionality
@@ -17,6 +18,9 @@ export function useUnifiedSearch() {
     search.updateFilters(filters.activeFilters);
   }, [filters.activeFilters]);
 
+  // Track search operations to prevent duplicate calls
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Enhanced search function that includes current filters
   const performSearchWithFilters = useCallback(async () => {
     // Update search state with current filters before performing search
@@ -24,48 +28,49 @@ export function useUnifiedSearch() {
     await search.performSearch();
   }, [search, filters.activeFilters]);
 
-  // Enhanced query update that triggers search
-  const updateQueryAndSearch = useCallback(
-    async (query: string) => {
-      search.updateQuery(query);
-      // Small delay to allow state to update
-      setTimeout(() => {
-        performSearchWithFilters();
-      }, 0);
-    },
-    [search, performSearchWithFilters]
-  );
+  // Debounced search for query updates (300ms delay)
+  const debouncedQuerySearch = useDebouncedCallback((query: string) => {
+    search.updateQuery(query);
+    performSearchWithFilters();
+  }, 300);
 
-  // Enhanced filter update that triggers search
-  const updateFilterAndSearch = useCallback(
-    async (key: string, value: any) => {
+  // Debounced search for filter updates (100ms delay)
+  const debouncedFilterSearch = useDebouncedCallback(
+    (key: string, value: any) => {
       filters.setFilter(key, value);
-      // Small delay to allow state to update
-      setTimeout(() => {
-        performSearchWithFilters();
-      }, 0);
+      performSearchWithFilters();
     },
-    [filters, performSearchWithFilters]
+    100
   );
 
-  // Clear all filters and search
+  // Enhanced query update that triggers debounced search
+  const updateQueryAndSearch = useCallback(
+    (query: string) => {
+      debouncedQuerySearch(query);
+    },
+    [debouncedQuerySearch]
+  );
+
+  // Enhanced filter update that triggers debounced search
+  const updateFilterAndSearch = useCallback(
+    (key: string, value: any) => {
+      debouncedFilterSearch(key, value);
+    },
+    [debouncedFilterSearch]
+  );
+
+  // Clear all filters and search (immediate)
   const clearAllAndSearch = useCallback(async () => {
     filters.clearAllFilters();
     search.clearFilters();
-    // Small delay to allow state to update
-    setTimeout(() => {
-      performSearchWithFilters();
-    }, 0);
+    await performSearchWithFilters();
   }, [filters, search, performSearchWithFilters]);
 
-  // Clear specific filter and search
+  // Clear specific filter and search (immediate)
   const clearFilterAndSearch = useCallback(
     async (key: string) => {
       filters.clearFilter(key);
-      // Small delay to allow state to update
-      setTimeout(() => {
-        performSearchWithFilters();
-      }, 0);
+      await performSearchWithFilters();
     },
     [filters, performSearchWithFilters]
   );
@@ -96,12 +101,19 @@ export function useUnifiedSearch() {
     // Combined utilities
     hasActiveFilters: filters.getActiveFilterCount() > 0,
     isLoading: search.searchState.isLoading,
+    isLoadingSearch: search.isLoadingSearch?.() || false,
+    isLoadingMore: search.isLoadingMore?.() || false,
     hasError: !!search.searchState.error,
     error: search.searchState.error,
+    searchError: search.getSearchError?.() || null,
+    loadMoreError: search.getLoadMoreError?.() || null,
     hasResults: search.searchState.results.length > 0,
     resultCount: search.searchState.results.length,
     totalResults: search.searchState.pagination.total,
     canLoadMore: search.searchState.pagination.hasMore,
+
+    // Performance utilities
+    clearCache: search.clearCache || (() => {}),
   };
 }
 
@@ -128,36 +140,14 @@ export function useUnifiedSearchState() {
 }
 
 /**
- * Hook for debounced search functionality
+ * Hook for debounced search functionality (deprecated - use main hook instead)
+ * @deprecated Use useUnifiedSearch which now includes debouncing by default
  */
 export function useDebouncedSearch(delay: number = 300) {
   const { updateQueryAndSearch, updateFilterAndSearch } = useUnifiedSearch();
 
-  const debouncedUpdateQuery = useCallback(
-    debounce(updateQueryAndSearch, delay),
-    [updateQueryAndSearch, delay]
-  );
-
-  const debouncedUpdateFilter = useCallback(
-    debounce(updateFilterAndSearch, 100), // Shorter delay for filters
-    [updateFilterAndSearch]
-  );
-
   return {
-    debouncedUpdateQuery,
-    debouncedUpdateFilter,
-  };
-}
-
-// Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    debouncedUpdateQuery: updateQueryAndSearch,
+    debouncedUpdateFilter: updateFilterAndSearch,
   };
 }

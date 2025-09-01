@@ -1,9 +1,10 @@
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
-import { BlogClientWrapper } from '@/components/blog/blog-client-wrapper';
-import { Skeleton } from '@/components/ui/skeleton';
-import { BlogCategory, BlogPostSummary } from '@/types';
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { UnifiedBlogSearch } from "@/components/search/unified-blog-search";
+import { UniversalPageLayout } from "@/components/layout/universal-page-layout";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BlogCategory, BlogPostSummary } from "@/types";
 
 interface BlogCategoryPageProps {
   params: {
@@ -13,105 +14,124 @@ interface BlogCategoryPageProps {
     page?: string;
     tag?: string;
     query?: string;
+    language?: string;
+    featured?: string;
+    dateFrom?: string;
+    dateTo?: string;
   };
 }
 
 // Mock function to fetch category data
-async function getCategoryData(categorySlug: string): Promise<BlogCategory | null> {
+async function getCategoryData(
+  categorySlug: string
+): Promise<BlogCategory | null> {
   const mockCategories: Record<string, BlogCategory> = {
-    'electronics': {
-      _id: '1',
-      _type: 'category',
-      title: 'Electronics',
-      slug: { current: 'electronics' },
-      description: 'Everything about renting electronic devices in Pakistan',
-      postCount: 15
+    electronics: {
+      _id: "1",
+      _type: "category",
+      title: "Electronics",
+      slug: { current: "electronics" },
+      description: "Everything about renting electronic devices in Pakistan",
+      postCount: 15,
     },
-    'furniture': {
-      _id: '2',
-      _type: 'category',
-      title: 'Furniture',
-      slug: { current: 'furniture' },
-      description: 'Furniture rental guides and tips',
-      postCount: 12
+    furniture: {
+      _id: "2",
+      _type: "category",
+      title: "Furniture",
+      slug: { current: "furniture" },
+      description: "Furniture rental guides and tips",
+      postCount: 12,
     },
-    'market-insights': {
-      _id: '3',
-      _type: 'category',
-      title: 'Market Insights',
-      slug: { current: 'market-insights' },
-      description: 'Latest trends and insights from the Pakistani rental market',
-      postCount: 8
-    }
+    "market-insights": {
+      _id: "3",
+      _type: "category",
+      title: "Market Insights",
+      slug: { current: "market-insights" },
+      description:
+        "Latest trends and insights from the Pakistani rental market",
+      postCount: 8,
+    },
   };
 
   return mockCategories[categorySlug] || null;
 }
 
 // Mock function to fetch posts by category
-async function getPostsByCategory(categorySlug: string): Promise<BlogPostSummary[]> {
+async function getPostsByCategory(
+  categorySlug: string
+): Promise<BlogPostSummary[]> {
   const mockPosts: BlogPostSummary[] = [
     {
-      _id: '1',
-      title: 'Complete Guide to Renting Electronics in Pakistan',
-      slug: { current: 'complete-guide-renting-electronics-pakistan' },
-      excerpt: 'Everything you need to know about renting electronics in Pakistan.',
+      _id: "1",
+      title: "Complete Guide to Renting Electronics in Pakistan",
+      slug: { current: "complete-guide-renting-electronics-pakistan" },
+      excerpt:
+        "Everything you need to know about renting electronics in Pakistan.",
       mainImage: {
-        asset: { url: '/api/placeholder/600/400' },
-        alt: 'Electronics rental guide'
+        asset: { url: "/api/placeholder/600/400" },
+        alt: "Electronics rental guide",
       },
-      categories: [{ _id: '1', title: 'Electronics', slug: 'electronics' }],
-      tags: ['electronics', 'rental tips', 'technology'],
-      author: 'RentParLo Team',
+      categories: [{ _id: "1", title: "Electronics", slug: "electronics" }],
+      tags: ["electronics", "rental tips", "technology"],
+      author: "RentParLo Team",
       readingTime: 8,
-      publishedAt: '2024-01-15T10:00:00Z',
+      publishedAt: "2024-01-15T10:00:00Z",
       featured: true,
-      language: 'en'
+      language: "en",
     },
     {
-      _id: '4',
-      title: 'Best Smartphones to Rent in 2024',
-      slug: { current: 'best-smartphones-rent-2024' },
-      excerpt: 'Discover the top smartphone models available for rent this year.',
+      _id: "4",
+      title: "Best Smartphones to Rent in 2024",
+      slug: { current: "best-smartphones-rent-2024" },
+      excerpt:
+        "Discover the top smartphone models available for rent this year.",
       mainImage: {
-        asset: { url: '/api/placeholder/600/400' },
-        alt: 'Smartphone rental 2024'
+        asset: { url: "/api/placeholder/600/400" },
+        alt: "Smartphone rental 2024",
       },
-      categories: [{ _id: '1', title: 'Electronics', slug: 'electronics' }],
-      tags: ['smartphones', 'mobile', 'technology'],
-      author: 'Tech Team',
+      categories: [{ _id: "1", title: "Electronics", slug: "electronics" }],
+      tags: ["smartphones", "mobile", "technology"],
+      author: "Tech Team",
       readingTime: 6,
-      publishedAt: '2024-01-12T09:00:00Z',
+      publishedAt: "2024-01-12T09:00:00Z",
       featured: false,
-      language: 'en'
-    }
+      language: "en",
+    },
   ];
 
   // Filter posts by category (in real implementation, this would be done in the query)
-  return categorySlug === 'electronics' ? mockPosts : [];
+  return categorySlug === "electronics" ? mockPosts : [];
 }
 
-export async function generateMetadata({ params }: BlogCategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: BlogCategoryPageProps): Promise<Metadata> {
+  const category = await getCategoryData(params.category);
 
   if (!category) {
     return {
-      title: 'Category Not Found | RentParLo.pk',
-      description: 'The requested blog category could not be found.'
+      title: "Category Not Found | RentParLo.pk",
+      description: "The requested blog category could not be found.",
     };
   }
 
   return {
     title: `${category.title} Articles | RentParLo.pk Blog`,
-    description: category.description || `Read the latest articles about ${category.title.toLowerCase()} on RentParLo.pk blog.`,
+    description:
+      category.description ||
+      `Read the latest articles about ${category.title.toLowerCase()} on RentParLo.pk blog.`,
     openGraph: {
       title: `${category.title} Articles | RentParLo.pk`,
       description: category.description,
-      type: 'website'
-    }
+      type: "website",
+    },
   };
 }
 
-export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
+export default async function BlogCategoryPage({
+  params,
+  searchParams,
+}: BlogCategoryPageProps) {
   const category = await getCategoryData(params.category);
 
   if (!category) {
@@ -122,40 +142,83 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
 
   // Mock data for sidebar
   const mockCategories = [
-    { _id: '1', _type: 'category' as const, title: 'Electronics', slug: { current: 'electronics' }, postCount: 15 },
-    { _id: '2', _type: 'category' as const, title: 'Furniture', slug: { current: 'furniture' }, postCount: 12 },
-    { _id: '3', _type: 'category' as const, title: 'Market Insights', slug: { current: 'market-insights' }, postCount: 8 }
+    {
+      _id: "1",
+      _type: "category" as const,
+      title: "Electronics",
+      slug: { current: "electronics" },
+      postCount: 15,
+    },
+    {
+      _id: "2",
+      _type: "category" as const,
+      title: "Furniture",
+      slug: { current: "furniture" },
+      postCount: 12,
+    },
+    {
+      _id: "3",
+      _type: "category" as const,
+      title: "Market Insights",
+      slug: { current: "market-insights" },
+      postCount: 8,
+    },
   ];
 
   const mockPopularPosts = [
     {
-      _id: '1',
-      title: 'How to Choose the Right Camera for Events',
-      slug: { current: 'choose-right-camera-events' },
-      mainImage: { asset: { url: '/api/placeholder/400/300' }, alt: 'Camera rental' },
-      publishedAt: '2024-01-05T09:00:00Z',
-      readingTime: 6
-    }
+      _id: "1",
+      title: "How to Choose the Right Camera for Events",
+      slug: { current: "choose-right-camera-events" },
+      mainImage: {
+        asset: { url: "/api/placeholder/400/300" },
+        alt: "Camera rental",
+      },
+      publishedAt: "2024-01-05T09:00:00Z",
+      readingTime: 6,
+    },
   ];
 
-  const mockTags = ['electronics', 'smartphones', 'laptops', 'cameras', 'audio equipment'];
+  const mockTags = [
+    "electronics",
+    "smartphones",
+    "laptops",
+    "cameras",
+    "audio equipment",
+  ];
 
   const filters = {
     category: params.category,
     tag: searchParams.tag,
-    query: searchParams.query
+    query: searchParams.query,
+    language: searchParams.language as "en" | "ur" | undefined,
+    featured: searchParams.featured === "true" ? true : undefined,
+    dateFrom: searchParams.dateFrom,
+    dateTo: searchParams.dateTo,
   };
 
   const pagination = {
-    page: parseInt(searchParams.page || '1'),
+    page: parseInt(searchParams.page || "1"),
     limit: 12,
     total: posts.length,
     totalPages: Math.ceil(posts.length / 12),
-    hasMore: false
+    hasMore: false,
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <UniversalPageLayout
+      pageType="blog"
+      pageContext={{
+        categoryId: category._id,
+        categorySlug: params.category,
+        categoryTitle: category.title,
+        categoryDescription: category.description,
+        totalPosts: posts.length,
+        categories: mockCategories,
+        tags: mockTags,
+      }}
+      showSidebar={true}
+    >
       {/* Category Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight mb-4">
@@ -168,23 +231,73 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
         )}
         <div className="mt-4">
           <span className="text-sm text-muted-foreground">
-            {category.postCount} {category.postCount === 1 ? 'article' : 'articles'} in this category
+            {category.postCount}{" "}
+            {category.postCount === 1 ? "article" : "articles"} in this category
           </span>
         </div>
       </div>
 
       <Suspense fallback={<BlogGridSkeleton />}>
-        <BlogClientWrapper
+        <BlogCategoryContent
           posts={posts}
           categories={mockCategories}
-          popularPosts={mockPopularPosts}
           tags={mockTags}
-          initialFilters={filters}
-          initialPagination={pagination}
-          basePath={`/blog/category/${params.category}`}
+          filters={filters}
+          pagination={pagination}
+          categorySlug={params.category}
         />
       </Suspense>
-    </div>
+    </UniversalPageLayout>
+  );
+}
+
+// Client component for blog category content
+function BlogCategoryContent({
+  posts,
+  categories,
+  tags,
+  filters,
+  pagination,
+  categorySlug,
+}: {
+  posts: BlogPostSummary[];
+  categories: any[];
+  tags: string[];
+  filters: any;
+  pagination: any;
+  categorySlug: string;
+}) {
+  // Handle filter changes
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    // In a real implementation, this would update the URL and refetch data
+    console.log("Filters changed:", newFilters);
+  };
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    // In a real implementation, this would update the URL and refetch data
+    console.log("Page changed:", page);
+  };
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    // In a real implementation, this would update the URL and refetch data
+    console.log("Search query:", query);
+  };
+
+  return (
+    <UnifiedBlogSearch
+      posts={posts}
+      categories={categories}
+      tags={tags}
+      filters={filters}
+      pagination={pagination}
+      onFiltersChange={handleFiltersChange}
+      onPageChange={handlePageChange}
+      onSearch={handleSearch}
+      layout="top"
+      showSidebar={false} // Sidebar is handled by UniversalPageLayout
+    />
   );
 }
 
@@ -199,7 +312,7 @@ function BlogGridSkeleton() {
         </div>
         <Skeleton className="h-10 w-full max-w-md" />
       </div>
-      
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="space-y-4">
@@ -235,9 +348,14 @@ function BlogSidebarSkeleton() {
 
 // Generate static params for known categories
 export async function generateStaticParams() {
-  const categories = ['electronics', 'furniture', 'market-insights', 'rental-tips'];
+  const categories = [
+    "electronics",
+    "furniture",
+    "market-insights",
+    "rental-tips",
+  ];
 
   return categories.map((category) => ({
-    category
+    category,
   }));
 }

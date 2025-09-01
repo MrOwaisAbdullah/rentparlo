@@ -154,6 +154,12 @@ export interface SearchContextValue {
   setViewMode: (mode: "grid" | "list" | "horizontal") => void;
   setSortBy: (sortBy: string) => void;
   loadMore: () => Promise<void>;
+  // Performance utilities
+  clearCache?: () => void;
+  isLoadingSearch?: () => boolean;
+  isLoadingMore?: () => boolean;
+  getSearchError?: () => string | null;
+  getLoadMoreError?: () => string | null;
 }
 
 export interface FilterContextValue {

@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { SearchContent } from "@/components/search/search-content";
+import { UnifiedListingSearch } from "@/components/search/unified-listing-search";
+import { UnifiedSearchProvider } from "@/contexts/unified-search-provider";
+import { UniversalPageLayout } from "@/components/layout/universal-page-layout";
 import { SearchSkeleton } from "@/components/search/search-skeleton";
 import { getCategories } from "@/lib/sanity-queries";
 import { getCities } from "@/lib/supabase-queries";
@@ -13,9 +15,11 @@ interface SearchPageProps {
     q?: string;
     category?: string;
     city?: string;
+    area?: string;
     condition?: string;
     minPrice?: string;
     maxPrice?: string;
+    availability?: string;
     sortBy?: string;
     page?: string;
   }>;
@@ -87,12 +91,69 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
       getCities(),
     ]);
 
+    // Transform categories to match expected interface
+    const transformedCategories = categories.map((category) => ({
+      _id: category._id,
+      title: category.title,
+      slug:
+        typeof category.slug === "string"
+          ? category.slug
+          : category.slug.current,
+      description: category.description,
+      itemCount: category.itemCount,
+    }));
+
+    // Define limited filters for search page (simplified set)
+    const searchPageFilters = {
+      query: params.q || "",
+      sortBy: params.sortBy || "newest",
+      minPrice: params.minPrice ? parseInt(params.minPrice) : 0,
+      maxPrice: params.maxPrice ? parseInt(params.maxPrice) : 0,
+      condition: params.condition || "",
+      area: params.area || "",
+      availability: params.availability || "",
+    };
+
+    // Page context for sidebar content
+    const pageContext = {
+      searchQuery: params.q || "",
+      filters: searchPageFilters,
+      hasActiveSearch: !!(
+        params.q ||
+        params.condition ||
+        params.area ||
+        params.availability ||
+        params.minPrice ||
+        params.maxPrice
+      ),
+    };
+
     return (
-      <SearchContent
-        searchParams={params}
-        categories={categories}
-        cities={cities}
-      />
+      <UnifiedSearchProvider initialFilters={searchPageFilters}>
+        <UniversalPageLayout
+          pageType="search"
+          pageContext={pageContext}
+          showSidebar={true}
+          sidebarPosition="right"
+        >
+          <UnifiedListingSearch
+            searchParams={params}
+            categories={transformedCategories}
+            cities={cities}
+            layout="compact"
+            showSidebar={false}
+            manageURL={true}
+            limitedFilters={[
+              "sortBy",
+              "minPrice",
+              "maxPrice",
+              "condition",
+              "area",
+              "availability",
+            ]}
+          />
+        </UniversalPageLayout>
+      </UnifiedSearchProvider>
     );
   } catch (error) {
     console.error("Error loading search page data:", error);
@@ -120,10 +181,8 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
 
 export default function SearchPage({ searchParams }: SearchPageProps) {
   return (
-    <div className="min-h-screen bg-background">
-      <Suspense fallback={<SearchSkeleton />}>
-        <SearchPageContent searchParams={searchParams} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<SearchSkeleton />}>
+      <SearchPageContent searchParams={searchParams} />
+    </Suspense>
   );
 }
