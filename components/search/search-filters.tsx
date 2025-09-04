@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -71,7 +72,7 @@ interface SearchFiltersProps {
 }
 
 const CONDITIONS = [
-  { value: "", label: "All Conditions" },
+  { value: "any", label: "All Conditions" },
   { value: "new", label: "New" },
   { value: "like-new", label: "Like New" },
   { value: "good", label: "Good" },
@@ -79,15 +80,8 @@ const CONDITIONS = [
   { value: "poor", label: "Poor" },
 ];
 
-const AVAILABILITY_OPTIONS = [
-  { value: "", label: "All Availability" },
-  { value: "available", label: "Available Now" },
-  { value: "upcoming", label: "Available Soon" },
-  { value: "booked", label: "Currently Booked" },
-];
-
 const PRICE_TYPE_OPTIONS = [
-  { value: "", label: "All Price Types" },
+  { value: "any", label: "All Price Types" },
   { value: "hourly", label: "Per Hour" },
   { value: "daily", label: "Per Day" },
   { value: "weekly", label: "Per Week" },
@@ -112,18 +106,30 @@ export function SearchFilters({
   className,
   limitedFilters,
 }: SearchFiltersProps) {
+  const [localFilters, setLocalFilters] = React.useState({
+    category: currentFilters.category || "any",
+    city: currentFilters.city || "any",
+    area: currentFilters.area || "any",
+    condition: currentFilters.condition || "any",
+    minPrice: currentFilters.minPrice || 0,
+    maxPrice: currentFilters.maxPrice || 100000,
+    availability: currentFilters.availability || "any",
+    priceType: currentFilters.priceType || "any",
+  });
+  
   const [priceRange, setPriceRange] = React.useState([
     currentFilters.minPrice || 0,
     currentFilters.maxPrice || 100000,
   ]);
+  
   const [openSections, setOpenSections] = React.useState({
     category: true,
     location: true,
     condition: true,
-    availability: true,
     priceType: true,
     price: true,
   });
+  
   const [openCityPopover, setOpenCityPopover] = React.useState(false);
   const [openAreaPopover, setOpenAreaPopover] = React.useState(false);
   const [areaError, setAreaError] = React.useState<string | null>(null);
@@ -138,8 +144,11 @@ export function SearchFilters({
 
   const handlePriceRangeChange = (values: number[]) => {
     setPriceRange(values);
-    onFilterChange("minPrice", values[0]);
-    onFilterChange("maxPrice", values[1]);
+    setLocalFilters(prev => ({
+      ...prev,
+      minPrice: values[0],
+      maxPrice: values[1]
+    }));
 
     // Announce price range change
     announcer.announce(
@@ -151,8 +160,11 @@ export function SearchFilters({
   const handlePriceRangeSelect = (min: number, max: number) => {
     const newRange = max === 0 ? [min, 100000] : [min, max];
     setPriceRange(newRange);
-    onFilterChange("minPrice", min);
-    onFilterChange("maxPrice", max || 100000);
+    setLocalFilters(prev => ({
+      ...prev,
+      minPrice: min,
+      maxPrice: max || 100000
+    }));
   };
 
   const formatPrice = (price: number) => {
@@ -166,13 +178,12 @@ export function SearchFilters({
 
   const getActiveFilterCount = () => {
     let count = 0;
-    if (currentFilters.category) count++;
-    if (currentFilters.city) count++;
-    if (currentFilters.area) count++;
-    if (currentFilters.condition) count++;
-    if (currentFilters.availability) count++;
-    if (currentFilters.priceType) count++;
-    if (currentFilters.minPrice > 0 || currentFilters.maxPrice > 0) count++;
+    if (localFilters.category && localFilters.category !== "any") count++;
+    if (localFilters.city && localFilters.city !== "any") count++;
+    if (localFilters.area && localFilters.area !== "any") count++;
+    if (localFilters.condition && localFilters.condition !== "any") count++;
+    if (localFilters.priceType && localFilters.priceType !== "any") count++;
+    if (localFilters.minPrice > 0 || localFilters.maxPrice > 0) count++;
     return count;
   };
 
@@ -188,25 +199,22 @@ export function SearchFilters({
   };
 
   // Get areas for the selected city
-  const areas = getAreasForCity(currentFilters.city);
+  const areas = getAreasForCity(localFilters.city);
 
   // Check if selected city has areas defined
-  const cityHasAreas = hasAreas(currentFilters.city);
+  const cityHasAreas = hasAreas(localFilters.city);
 
   // Handle city selection with area validation
   const handleCitySelect = (cityValue: string) => {
-    onFilterChange("city", cityValue);
+    setLocalFilters(prev => ({
+      ...prev,
+      city: cityValue,
+      area: "any" // Reset area when city changes
+    }));
 
     // If the city doesn't have defined areas, clear any existing area filter
     if (!hasAreas(cityValue)) {
-      onFilterChange("area", "");
       setAreaError(null);
-    } else if (
-      currentFilters.area &&
-      !getAreasForCity(cityValue).includes(currentFilters.area)
-    ) {
-      // If the previously selected area is not valid for this city, clear it
-      onFilterChange("area", "");
     }
 
     setOpenCityPopover(false);
@@ -216,19 +224,41 @@ export function SearchFilters({
   const handleAreaSelect = (areaValue: string) => {
     // Validate that the selected area is valid for the current city
     if (
-      currentFilters.city &&
+      localFilters.city &&
       areaValue &&
-      !getAreasForCity(currentFilters.city).includes(areaValue)
+      areaValue !== "any" &&
+      !getAreasForCity(localFilters.city).includes(areaValue)
     ) {
       setAreaError(
-        `"${areaValue}" is not a valid area for ${currentFilters.city}`
+        `"${areaValue}" is not a valid area for ${localFilters.city}`
       );
       return;
     }
 
-    onFilterChange("area", areaValue);
+    setLocalFilters(prev => ({
+      ...prev,
+      area: areaValue
+    }));
+    
     setAreaError(null);
     setOpenAreaPopover(false);
+  };
+
+  // Apply all filters
+  const applyFilters = () => {
+    // Apply all local filters
+    Object.entries(localFilters).forEach(([key, value]) => {
+      // Only apply filters that are not "any"
+      if (value !== "any") {
+        onFilterChange(key, value);
+      } else {
+        // For "any" values, we pass empty string to clear the filter
+        onFilterChange(key, "");
+      }
+    });
+    
+    // Announce filter application
+    announcer.announce("Filters applied", "polite");
   };
 
   // Group cities by province
@@ -293,26 +323,22 @@ export function SearchFilters({
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 mt-2">
-                  <select
-                    value={currentFilters.category || ""}
-                    onChange={(e) => onFilterChange("category", e.target.value)}
-                    className="w-full p-2 border rounded-md text-sm min-w-0 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    aria-label={AriaUtils.createFilterLabel(
-                      "Category",
-                      currentFilters.category || "All Categories"
-                    )}
-                    aria-describedby="category-filter-description"
+                  <Select
+                    value={localFilters.category}
+                    onValueChange={(value) => setLocalFilters(prev => ({ ...prev, category: value }))}
                   >
-                    <option value="">All Categories</option>
-                    {categories.map((category) => (
-                      <option key={category._id} value={category.slug}>
-                        {category.title}
-                      </option>
-                    ))}
-                  </select>
-                  <div id="category-filter-description" className="sr-only">
-                    Filter listings by category
-                  </div>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category._id} value={category.slug}>
+                          {category.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </CollapsibleContent>
               </Collapsible>
               <Separator />
@@ -346,12 +372,12 @@ export function SearchFilters({
                         aria-haspopup="listbox"
                         aria-label={AriaUtils.createFilterLabel(
                           "City",
-                          currentFilters.city || "No city selected"
+                          localFilters.city !== "any" ? localFilters.city : "No city selected"
                         )}
                         className="w-full justify-between focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       >
-                        {currentFilters.city
-                          ? currentFilters.city
+                        {localFilters.city && localFilters.city !== "any"
+                          ? localFilters.city
                           : "Select city..."}
                         <ChevronDown
                           className="ml-2 h-4 w-4 shrink-0 opacity-50"
@@ -369,6 +395,21 @@ export function SearchFilters({
                         <CommandList className="max-h-60 overflow-y-auto">
                           <CommandEmpty>No city found.</CommandEmpty>
                           <CommandGroup>
+                            <CommandItem
+                              onSelect={() => handleCitySelect("any")}
+                              className="text-sm"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4 flex-shrink-0",
+                                  localFilters.city === "any"
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                                aria-hidden="true"
+                              />
+                              <span className="truncate">All Cities</span>
+                            </CommandItem>
                             {Object.entries(citiesByProvince).map(
                               ([province, provinceCities]) => (
                                 <React.Fragment key={province}>
@@ -383,13 +424,13 @@ export function SearchFilters({
                                       className="text-sm"
                                       role="option"
                                       aria-selected={
-                                        currentFilters.city === city.name
+                                        localFilters.city === city.name
                                       }
                                     >
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4 flex-shrink-0",
-                                          currentFilters.city === city.name
+                                          localFilters.city === city.name
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
@@ -410,7 +451,7 @@ export function SearchFilters({
                   </Popover>
 
                   {/* Area Filter - only show if city has areas */}
-                  {currentFilters.city && (
+                  {localFilters.city && localFilters.city !== "any" && (
                     <>
                       <Label className="text-sm mt-3">Area</Label>
                       {cityHasAreas ? (
@@ -425,8 +466,8 @@ export function SearchFilters({
                               aria-expanded={openAreaPopover}
                               className="w-full justify-between"
                             >
-                              {currentFilters.area
-                                ? currentFilters.area
+                              {localFilters.area && localFilters.area !== "any"
+                                ? localFilters.area
                                 : "Select area..."}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -441,14 +482,13 @@ export function SearchFilters({
                                 <CommandEmpty>No area found.</CommandEmpty>
                                 <CommandGroup>
                                   <CommandItem
-                                    value=""
-                                    onSelect={() => handleAreaSelect("")}
+                                    onSelect={() => handleAreaSelect("any")}
                                     className="text-sm"
                                   >
                                     <Check
                                       className={cn(
                                         "mr-2 h-4 w-4 flex-shrink-0",
-                                        currentFilters.area === ""
+                                        localFilters.area === "any"
                                           ? "opacity-100"
                                           : "opacity-0"
                                       )}
@@ -458,14 +498,13 @@ export function SearchFilters({
                                   {areas.map((area, index) => (
                                     <CommandItem
                                       key={index}
-                                      value={area}
                                       onSelect={handleAreaSelect}
                                       className="text-sm"
                                     >
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4 flex-shrink-0",
-                                          currentFilters.area === area
+                                          localFilters.area === area
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
@@ -482,7 +521,7 @@ export function SearchFilters({
                         <Alert>
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            No specific areas defined for {currentFilters.city}.
+                            No specific areas defined for {localFilters.city}.
                             Showing results for the entire city.
                           </AlertDescription>
                         </Alert>
@@ -517,52 +556,23 @@ export function SearchFilters({
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 mt-2">
-                  <select
-                    value={currentFilters.condition || ""}
-                    onChange={(e) =>
-                      onFilterChange("condition", e.target.value)
+                  <Select
+                    value={localFilters.condition}
+                    onValueChange={(value) =>
+                      setLocalFilters(prev => ({ ...prev, condition: value }))
                     }
-                    className="w-full p-2 border rounded-md text-sm min-w-0 overflow-hidden"
                   >
-                    {CONDITIONS.map((condition) => (
-                      <option key={condition.value} value={condition.value}>
-                        {condition.label}
-                      </option>
-                    ))}
-                  </select>
-                </CollapsibleContent>
-              </Collapsible>
-              <Separator />
-            </>
-          )}
-
-          {/* Availability Filter */}
-          {shouldShowFilter("availability") && (
-            <>
-              <Collapsible
-                open={openSections.availability}
-                onOpenChange={() => toggleSection("availability")}
-              >
-                <CollapsibleTrigger className="flex items-center justify-between w-full py-2">
-                  <Label className="text-sm font-semibold">Availability</Label>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${openSections.availability ? "rotate-180" : ""}`}
-                  />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2">
-                  <select
-                    value={currentFilters.availability || ""}
-                    onChange={(e) =>
-                      onFilterChange("availability", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md text-sm min-w-0 overflow-hidden"
-                  >
-                    {AVAILABILITY_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Conditions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CONDITIONS.map((condition) => (
+                        <SelectItem key={condition.value} value={condition.value}>
+                          {condition.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </CollapsibleContent>
               </Collapsible>
               <Separator />
@@ -583,19 +593,23 @@ export function SearchFilters({
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 mt-2">
-                  <select
-                    value={currentFilters.priceType || ""}
-                    onChange={(e) =>
-                      onFilterChange("priceType", e.target.value)
+                  <Select
+                    value={localFilters.priceType}
+                    onValueChange={(value) =>
+                      setLocalFilters(prev => ({ ...prev, priceType: value }))
                     }
-                    className="w-full p-2 border rounded-md text-sm min-w-0 overflow-hidden"
                   >
-                    {PRICE_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Price Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRICE_TYPE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </CollapsibleContent>
               </Collapsible>
               <Separator />
@@ -636,10 +650,10 @@ export function SearchFilters({
                         size="sm"
                         className={cn(
                           "justify-start text-left h-auto py-2 w-full min-w-0 overflow-hidden",
-                          currentFilters.minPrice === range.min &&
-                            (currentFilters.maxPrice === range.max ||
+                          localFilters.minPrice === range.min &&
+                            (localFilters.maxPrice === range.max ||
                               (range.max === 0 &&
-                                currentFilters.maxPrice >= 50000))
+                                localFilters.maxPrice >= 50000))
                             ? "bg-primary text-primary-foreground"
                             : ""
                         )}
@@ -695,7 +709,7 @@ export function SearchFilters({
                             const value = parseInt(e.target.value) || 0;
                             const newRange = [value, priceRange[1]];
                             setPriceRange(newRange);
-                            onFilterChange("minPrice", value);
+                            setLocalFilters(prev => ({ ...prev, minPrice: value }));
                           }}
                           placeholder="0"
                           className="text-sm w-full"
@@ -712,7 +726,7 @@ export function SearchFilters({
                             const value = parseInt(e.target.value) || 100000;
                             const newRange = [priceRange[0], value];
                             setPriceRange(newRange);
-                            onFilterChange("maxPrice", value);
+                            setLocalFilters(prev => ({ ...prev, maxPrice: value }));
                           }}
                           placeholder="100000"
                           className="text-sm w-full"
@@ -724,6 +738,11 @@ export function SearchFilters({
               </Collapsible>
             </>
           ) : null}
+          
+          {/* Apply Button */}
+          <Button className="w-full" onClick={applyFilters}>
+            Apply Filters
+          </Button>
         </CardContent>
       </Card>
     </ResponsiveContainer>

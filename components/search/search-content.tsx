@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, Filter, SlidersHorizontal, X, MapPin, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,7 @@ interface SearchContentProps {
 export function SearchContent({ searchParams, categories, cities }: SearchContentProps) {
   const router = useRouter();
   const currentSearchParams = useSearchParams();
+  const pathname = usePathname();
   
   // Search state
   const [searchQuery, setSearchQuery] = React.useState(searchParams.q || '');
@@ -86,10 +87,14 @@ export function SearchContent({ searchParams, categories, cities }: SearchConten
     const params = new URLSearchParams(currentSearchParams.toString());
     
     Object.entries(newParams).forEach(([key, value]) => {
-      if (value === '' || value === 0 || value === 1) {
+      // Ensure value is properly converted to string
+      const stringValue = value !== undefined && value !== null ? 
+        typeof value === 'string' ? value : value.toString() : '';
+      
+      if (stringValue === '' || stringValue === '0' || (key === 'page' && stringValue === '1')) {
         params.delete(key);
       } else {
-        params.set(key, value.toString());
+        params.set(key, stringValue);
       }
     });
 
@@ -98,8 +103,12 @@ export function SearchContent({ searchParams, categories, cities }: SearchConten
       params.delete('page');
     }
 
-    router.push(`/search?${params.toString()}`, { scroll: false });
-  }, [currentSearchParams, router]);
+    // Construct the full URL with current pathname
+    const path = typeof pathname === 'string' && pathname ? pathname : '/search';
+    const searchParamsString = params.toString();
+    const newUrl = searchParamsString ? `${path}?${searchParamsString}` : path;
+    router.push(newUrl, { scroll: false });
+  }, [currentSearchParams, router, pathname]);
 
   // Handle search input
   const handleSearchSubmit = React.useCallback((e: React.FormEvent) => {
@@ -122,8 +131,8 @@ export function SearchContent({ searchParams, categories, cities }: SearchConten
   // Handle clear filters
   const handleClearFilters = React.useCallback(() => {
     setSearchQuery('');
-    router.push('/search');
-  }, [router]);
+    router.push(pathname);
+  }, [router, pathname]);
 
   // Auto-search when debounced query changes
   React.useEffect(() => {
@@ -426,9 +435,6 @@ export function SearchContent({ searchParams, categories, cities }: SearchConten
               isFetchingNextPage={isFetchingNextPage}
               onLoadMore={fetchNextPage}
               totalResults={totalResults}
-              currentPage={currentFilters.page}
-              totalPages={Math.ceil((totalResults || 0) / 20)}
-              onPageChange={(page) => handleFilterChange('page', page)}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
             />

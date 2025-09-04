@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { UnifiedBlogSearch } from "@/components/search/unified-blog-search";
+import { BlogCategoryContent } from "@/components/blog/blog-category-content";
 import { UniversalPageLayout } from "@/components/layout/universal-page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlogCategory, BlogPostSummary } from "@/types";
@@ -13,7 +13,7 @@ interface BlogCategoryPageProps {
   searchParams: {
     page?: string;
     tag?: string;
-    query?: string;
+    q?: string;
     language?: string;
     featured?: string;
     dateFrom?: string;
@@ -71,7 +71,7 @@ async function getPostsByCategory(
         asset: { url: "/api/placeholder/600/400" },
         alt: "Electronics rental guide",
       },
-      categories: [{ _id: "1", title: "Electronics", slug: "electronics" }],
+      categories: [{ _id: "1", title: "Electronics", slug: { current: "electronics" } }],
       tags: ["electronics", "rental tips", "technology"],
       author: "RentParLo Team",
       readingTime: 8,
@@ -89,7 +89,7 @@ async function getPostsByCategory(
         asset: { url: "/api/placeholder/600/400" },
         alt: "Smartphone rental 2024",
       },
-      categories: [{ _id: "1", title: "Electronics", slug: "electronics" }],
+      categories: [{ _id: "1", title: "Electronics", slug: { current: "electronics" } }],
       tags: ["smartphones", "mobile", "technology"],
       author: "Tech Team",
       readingTime: 6,
@@ -141,24 +141,24 @@ export default async function BlogCategoryPage({
   const posts = await getPostsByCategory(params.category);
 
   // Mock data for sidebar
-  const mockCategories = [
+  const mockCategories: BlogCategory[] = [
     {
       _id: "1",
-      _type: "category" as const,
+      _type: "category",
       title: "Electronics",
       slug: { current: "electronics" },
       postCount: 15,
     },
     {
       _id: "2",
-      _type: "category" as const,
+      _type: "category",
       title: "Furniture",
       slug: { current: "furniture" },
       postCount: 12,
     },
     {
       _id: "3",
-      _type: "category" as const,
+      _type: "category",
       title: "Market Insights",
       slug: { current: "market-insights" },
       postCount: 8,
@@ -190,7 +190,7 @@ export default async function BlogCategoryPage({
   const filters = {
     category: params.category,
     tag: searchParams.tag,
-    query: searchParams.query,
+    query: searchParams.q,
     language: searchParams.language as "en" | "ur" | undefined,
     featured: searchParams.featured === "true" ? true : undefined,
     dateFrom: searchParams.dateFrom,
@@ -248,56 +248,6 @@ export default async function BlogCategoryPage({
         />
       </Suspense>
     </UniversalPageLayout>
-  );
-}
-
-// Client component for blog category content
-function BlogCategoryContent({
-  posts,
-  categories,
-  tags,
-  filters,
-  pagination,
-  categorySlug,
-}: {
-  posts: BlogPostSummary[];
-  categories: any[];
-  tags: string[];
-  filters: any;
-  pagination: any;
-  categorySlug: string;
-}) {
-  // Handle filter changes
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log("Filters changed:", newFilters);
-  };
-
-  // Handle page changes
-  const handlePageChange = (page: number) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log("Page changed:", page);
-  };
-
-  // Handle search
-  const handleSearch = (query: string) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log("Search query:", query);
-  };
-
-  return (
-    <UnifiedBlogSearch
-      posts={posts}
-      categories={categories}
-      tags={tags}
-      filters={filters}
-      pagination={pagination}
-      onFiltersChange={handleFiltersChange}
-      onPageChange={handlePageChange}
-      onSearch={handleSearch}
-      layout="top"
-      showSidebar={false} // Sidebar is handled by UniversalPageLayout
-    />
   );
 }
 

@@ -1,71 +1,82 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Grid3X3, List, ChevronLeft, ChevronRight, SortAsc } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { ListingCard } from '@/components/cards/listing-card'; // Import the ListingCard component
-import { Listing } from '@/types'; // Import the proper Listing type
+import React from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Grid3X3,
+  List,
+  ChevronLeft,
+  ChevronRight,
+  SortAsc,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ListingCard } from "@/components/cards/listing-card"; // Import the ListingCard component
+import { Listing } from "@/types"; // Import the proper Listing type
 
 interface CategoryListingsProps {
   listings: Listing[];
   totalCount: number;
-  currentPage: number;
-  totalPages: number;
   categorySlug: string;
   currentFilters: any;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }
 
 const sortOptions = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'oldest', label: 'Oldest First' },
-  { value: 'price-low', label: 'Price: Low to High' },
-  { value: 'price-high', label: 'Price: High to Low' },
-  { value: 'popular', label: 'Most Popular' },
-  { value: 'rating', label: 'Highest Rated' },
-  { value: 'featured', label: 'Featured First' }
+  { value: "newest", label: "Newest First" },
+  { value: "oldest", label: "Oldest First" },
+  { value: "price-low", label: "Price: Low to High" },
+  { value: "price-high", label: "Price: High to Low" },
+  { value: "popular", label: "Most Popular" },
+  { value: "rating", label: "Highest Rated" },
+  { value: "featured", label: "Featured First" },
 ];
 
 export function CategoryListings({
   listings,
   totalCount,
-  currentPage,
-  totalPages,
   categorySlug,
-  currentFilters
+  currentFilters,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }: CategoryListingsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
 
   const updateSearchParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams);
-    
+
     Object.entries(updates).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
+      if (value && value !== "undefined") {
+        // Ensure value is a string and not an object
+        const stringValue = typeof value === "string" ? value : String(value);
+        params.set(key, stringValue);
       } else {
         params.delete(key);
       }
     });
 
-    router.push(`/category/${categorySlug}?${params.toString()}`);
+    const newUrl = `/category/${categorySlug}${params.toString() ? `?${params.toString()}` : ""}`;
+    router.push(newUrl);
   };
 
   const handleSortChange = (sort: string) => {
-    updateSearchParams({ sort, page: undefined });
+    // Ensure sort is a string, not an object
+    const sortValue = typeof sort === "string" ? sort : String(sort);
+    updateSearchParams({ sort: sortValue });
   };
-
-  const handlePageChange = (page: number) => {
-    updateSearchParams({ page: page.toString() });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const startItem = (currentPage - 1) * 20 + 1;
-  const endItem = Math.min(currentPage * 20, totalCount);
 
   if (listings.length === 0) {
     return (
@@ -74,12 +85,11 @@ export function CategoryListings({
           <div className="text-6xl mb-4">🔍</div>
           <h3 className="text-xl font-semibold mb-2">No listings found</h3>
           <p className="text-muted-foreground mb-6">
-            We couldn't find any listings matching your criteria. Try adjusting your filters.
+            We couldn't find any listings matching your criteria. Try adjusting
+            your filters.
           </p>
           <Button asChild>
-            <Link href={`/category/${categorySlug}`}>
-              Reset Filters
-            </Link>
+            <Link href={`/category/${categorySlug}`}>Reset Filters</Link>
           </Button>
         </div>
       </div>
@@ -92,23 +102,24 @@ export function CategoryListings({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            Showing {startItem}-{endItem} of {totalCount.toLocaleString()} results
+            Showing {listings.length} of {totalCount.toLocaleString()}{" "}
+            results
           </p>
-          
+
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 border rounded-md p-1">
             <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className="h-8 w-8 p-0"
             >
               <Grid3X3 className="w-4 h-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className="h-8 w-8 p-0"
             >
               <List className="w-4 h-4" />
@@ -119,7 +130,10 @@ export function CategoryListings({
         {/* Sort Selector */}
         <div className="flex items-center gap-2">
           <SortAsc className="w-4 h-4 text-muted-foreground" />
-          <Select value={currentFilters.sort || 'newest'} onValueChange={handleSortChange}>
+          <Select
+            value={currentFilters.sort || "newest"}
+            onValueChange={handleSortChange}
+          >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -135,14 +149,16 @@ export function CategoryListings({
       </div>
 
       {/* Active Filters */}
-      {Object.entries(currentFilters).some(([key, value]) => 
-        value && key !== 'sort' && key !== 'limit' && key !== 'offset'
+      {Object.entries(currentFilters).some(
+        ([key, value]) =>
+          value && key !== "sort" && key !== "limit" && key !== "offset"
       ) && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">Active filters:</span>
           {Object.entries(currentFilters).map(([key, value]) => {
-            if (!value || key === 'sort' || key === 'limit' || key === 'offset') return null;
-            
+            if (!value || key === "sort" || key === "limit" || key === "offset")
+              return null;
+
             return (
               <Badge
                 key={key}
@@ -150,7 +166,9 @@ export function CategoryListings({
                 className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
                 onClick={() => updateSearchParams({ [key]: undefined })}
               >
-                <span>{key}: {String(value)}</span>
+                <span>
+                  {key}: {String(value)}
+                </span>
                 <span className="ml-1">×</span>
               </Badge>
             );
@@ -167,80 +185,43 @@ export function CategoryListings({
       )}
 
       {/* Listings Grid */}
-      <div className={
-        viewMode === 'grid' 
-          ? "gap-6"
-          : "space-y-4"
-      }>
-        {viewMode === 'grid' ? (
+      <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+        {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
-              <ListingCard 
-                key={listing._id} 
-                listing={listing} 
-                variant="category" 
+              <ListingCard
+                key={listing._id}
+                listing={listing}
+                variant="category"
               />
             ))}
           </div>
         ) : (
           <div className="space-y-4">
             {listings.map((listing) => (
-              <ListingCard 
-                key={listing._id} 
-                listing={listing} 
-                variant="list" 
-              />
+              <ListingCard key={listing._id} listing={listing} variant="list" />
             ))}
           </div>
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-8">
+      {/* Load More Button */}
+      {hasNextPage && onLoadMore && (
+        <div className="text-center pt-8">
           <Button
+            onClick={onLoadMore}
+            disabled={isFetchingNextPage}
             variant="outline"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
+            size="lg"
           >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Previous
-          </Button>
-
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? 'secondary' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePageChange(pageNum)}
-                  className="w-10 h-10 p-0"
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-
-          <Button
-            variant="outline"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-          >
-            Next
-            <ChevronRight className="w-4 h-4 ml-1" />
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading more...
+              </>
+            ) : (
+              "Load More Results"
+            )}
           </Button>
         </div>
       )}

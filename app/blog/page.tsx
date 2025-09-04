@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { UnifiedBlogSearch } from "@/components/search/unified-blog-search";
+import { BlogPageContent } from "@/components/blog/blog-page-content";
 import { UniversalPageLayout } from "@/components/layout/universal-page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlogPostSummary, BlogCategory } from "@/types";
 
 export const metadata: Metadata = {
   title: "Blog | RentParLo.pk - Rental Tips & Market Insights",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 // Mock data - Replace with actual data fetching
-const mockPosts = [
+const mockPosts: BlogPostSummary[] = [
   {
     _id: "1",
     title: "Complete Guide to Renting Electronics in Pakistan",
@@ -28,13 +29,13 @@ const mockPosts = [
       asset: { url: "/placeholder-blog-new.svg" },
       alt: "Electronics rental guide",
     },
-    categories: [{ _id: "1", title: "Electronics", slug: "electronics" }],
+    categories: [{ _id: "1", title: "Electronics", slug: { current: "electronics" } }],
     tags: ["electronics", "rental tips", "technology"],
     author: "RentParLo Team",
     readingTime: 8,
     publishedAt: "2024-01-15T10:00:00Z",
     featured: true,
-    language: "en" as const,
+    language: "en",
   },
   {
     _id: "2",
@@ -47,70 +48,45 @@ const mockPosts = [
       alt: "Popular rental items in Karachi",
     },
     categories: [
-      { _id: "2", title: "Market Insights", slug: "market-insights" },
+      { _id: "2", title: "Market Insights", slug: { current: "market-insights" } },
     ],
     tags: ["karachi", "trends", "popular items"],
     author: "Sarah Ahmed",
     readingTime: 5,
     publishedAt: "2024-01-10T14:30:00Z",
     featured: false,
-    language: "en" as const,
+    language: "en",
   },
 ];
 
-const mockCategories = [
+const mockCategories: BlogCategory[] = [
   {
     _id: "1",
-    _type: "category" as const,
+    _type: "category",
     title: "Electronics",
     slug: { current: "electronics" },
     postCount: 15,
   },
   {
     _id: "2",
-    _type: "category" as const,
+    _type: "category",
     title: "Furniture",
     slug: { current: "furniture" },
     postCount: 12,
   },
   {
     _id: "3",
-    _type: "category" as const,
+    _type: "category",
     title: "Market Insights",
     slug: { current: "market-insights" },
     postCount: 8,
   },
   {
     _id: "4",
-    _type: "category" as const,
+    _type: "category",
     title: "Rental Tips",
     slug: { current: "rental-tips" },
     postCount: 10,
-  },
-];
-
-const mockPopularPosts = [
-  {
-    _id: "1",
-    title: "How to Choose the Right Camera for Events",
-    slug: { current: "choose-right-camera-events" },
-    mainImage: {
-      asset: { url: "/placeholder-blog-new.svg" },
-      alt: "Camera rental",
-    },
-    publishedAt: "2024-01-05T09:00:00Z",
-    readingTime: 6,
-  },
-  {
-    _id: "2",
-    title: "Wedding Decor Rental: Complete Checklist",
-    slug: { current: "wedding-decor-rental-checklist" },
-    mainImage: {
-      asset: { url: "/placeholder-blog-new.svg" },
-      alt: "Wedding decor",
-    },
-    publishedAt: "2024-01-01T11:00:00Z",
-    readingTime: 10,
   },
 ];
 
@@ -128,34 +104,31 @@ const mockTags = [
 ];
 
 interface BlogPageProps {
-  searchParams: Promise<{
+  searchParams: {
     page?: string;
     category?: string;
     tag?: string;
-    query?: string;
+    q?: string;
     language?: string;
     featured?: string;
     dateFrom?: string;
     dateTo?: string;
-  }>;
+  };
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
-  // Await searchParams before accessing properties
-  const params = await searchParams;
-
   const filters = {
-    query: params.query,
-    category: params.category,
-    tag: params.tag,
-    language: params.language as "en" | "ur" | undefined,
-    featured: params.featured === "true" ? true : undefined,
-    dateFrom: params.dateFrom,
-    dateTo: params.dateTo,
+    query: searchParams.q || "",
+    category: searchParams.category,
+    tag: searchParams.tag,
+    language: searchParams.language as "en" | "ur" | undefined,
+    featured: searchParams.featured === "true" ? true : undefined,
+    dateFrom: searchParams.dateFrom,
+    dateTo: searchParams.dateTo,
   };
 
   const pagination = {
-    page: parseInt(params.page || "1"),
+    page: parseInt(searchParams.page || "1"),
     limit: 12,
     total: mockPosts.length,
     totalPages: Math.ceil(mockPosts.length / 12),
@@ -195,54 +168,6 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         />
       </Suspense>
     </UniversalPageLayout>
-  );
-}
-
-// Client component for blog page content
-function BlogPageContent({
-  posts,
-  categories,
-  tags,
-  filters,
-  pagination,
-}: {
-  posts: typeof mockPosts;
-  categories: typeof mockCategories;
-  tags: string[];
-  filters: any;
-  pagination: any;
-}) {
-  // Handle filter changes
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log("Filters changed:", newFilters);
-  };
-
-  // Handle page changes
-  const handlePageChange = (page: number) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log("Page changed:", page);
-  };
-
-  // Handle search
-  const handleSearch = (query: string) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log("Search query:", query);
-  };
-
-  return (
-    <UnifiedBlogSearch
-      posts={posts}
-      categories={categories}
-      tags={tags}
-      filters={filters}
-      pagination={pagination}
-      onFiltersChange={handleFiltersChange}
-      onPageChange={handlePageChange}
-      onSearch={handleSearch}
-      layout="top"
-      showSidebar={false} // Sidebar is handled by UniversalPageLayout
-    />
   );
 }
 

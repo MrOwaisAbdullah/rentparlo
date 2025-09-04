@@ -90,6 +90,9 @@ interface UnifiedListingSearchProps {
     availability?: string;
     priceType?: string;
   };
+  // Initial listings data (for server-side rendered pages)
+  initialListings?: any[];
+  initialTotalResults?: number;
 }
 
 export function UnifiedListingSearch({
@@ -104,6 +107,8 @@ export function UnifiedListingSearch({
   manageURL = true,
   limitedFilters,
   searchParams: externalSearchParams,
+  initialListings = [],
+  initialTotalResults = 0,
 }: UnifiedListingSearchProps) {
   const router = useRouter();
   const currentSearchParams = useSearchParams();
@@ -132,7 +137,7 @@ export function UnifiedListingSearch({
   const [isFilterLoading, setIsFilterLoading] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<
     "grid" | "list" | "horizontal"
-  >("grid");
+  >("list");
 
   // Accessibility utilities
   const announcer = ScreenReaderAnnouncer.getInstance();
@@ -188,6 +193,11 @@ export function UnifiedListingSearch({
     page: searchParams.page ? parseInt(searchParams.page) : 1,
   };
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log("Search filters:", searchFilters);
+  }, [searchFilters]);
+
   const {
     data,
     isLoading,
@@ -197,7 +207,32 @@ export function UnifiedListingSearch({
     isFetchingNextPage,
     totalResults,
     pagination,
-  } = useSearchListings(searchFilters);
+  } = useSearchListings(searchFilters, {
+    enabled: true,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
+  });
+
+  // Use initial data if search results are empty and we have initial data
+  const displayData = React.useMemo(() => {
+    if (data && data.length > 0) {
+      return data;
+    }
+    if (initialListings && initialListings.length > 0 && !isLoading) {
+      return initialListings;
+    }
+    return data || [];
+  }, [data, initialListings, isLoading]);
+
+  const displayTotalResults = React.useMemo(() => {
+    if (totalResults > 0) {
+      return totalResults;
+    }
+    if (initialTotalResults > 0 && (!data || data.length === 0)) {
+      return initialTotalResults;
+    }
+    return totalResults || 0;
+  }, [totalResults, initialTotalResults, data]);
 
   // Update URL with new search parameters
   const updateSearchParams = React.useCallback(
@@ -212,10 +247,13 @@ export function UnifiedListingSearch({
       const params = new URLSearchParams(currentSearchParams.toString());
 
       Object.entries(newParams).forEach(([key, value]) => {
+        // Map 'query' to 'q' for URL
+        const urlKey = key === "query" ? "q" : key;
+
         if (value === "" || value === 0 || (key === "page" && value === 1)) {
-          params.delete(key);
+          params.delete(urlKey);
         } else {
-          params.set(key, value.toString());
+          params.set(urlKey, value.toString());
         }
       });
 
@@ -524,7 +562,7 @@ export function UnifiedListingSearch({
       {/* Search Header */}
       {layout !== "compact" && (
         <div className="bg-white border-b sticky top-0 z-40">
-          <div className="container mx-auto px-4 py-4">
+          <div className="px-4 py-4">
             {/* Search Bar */}
             <form
               id={searchFormId}
@@ -681,7 +719,7 @@ export function UnifiedListingSearch({
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="py-6">
         <div className="flex gap-6">
           {/* Sidebar Filters */}
           {showSidebar && (
@@ -766,7 +804,7 @@ export function UnifiedListingSearch({
                       placeholder="Search for rental items..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 h-12 text-base"
+                      className="pl-10 pr-4 h-10 text-base"
                     />
                     {searchQuery && (
                       <button
@@ -819,10 +857,33 @@ export function UnifiedListingSearch({
               </h2>
               <div id={`${resultsId}-description`} className="sr-only">
                 {AriaUtils.createSearchResultsDescription(
-                  totalResults || 0,
+                  displayTotalResults || 0,
                   currentFilters.query
                 )}
               </div>
+
+              {/* Debug Information - Only in development */}
+              {/* {process.env.NODE_ENV === "development" && (
+                <div className="mb-4 p-4 bg-gray-100 rounded text-sm">
+                  <strong>Debug Info:</strong>
+                  <br />
+                  Loading: {isLoading.toString()}
+                  <br />
+                  Error: {error?.message || "None"}
+                  <br />
+                  Data length: {data?.length || 0}
+                  <br />
+                  Display data length: {displayData?.length || 0}
+                  <br />
+                  Total results: {totalResults || 0}
+                  <br />
+                  Display total results: {displayTotalResults || 0}
+                  <br />
+                  Initial listings: {initialListings?.length || 0}
+                  <br />
+                  Current filters: {JSON.stringify(currentFilters, null, 2)}
+                </div>
+              )} */}
 
               {error ? (
                 <ErrorState
@@ -833,9 +894,9 @@ export function UnifiedListingSearch({
                   }
                   onRetry={() => window.location.reload()}
                 />
-              ) : isLoading && (!data || data.length === 0) ? (
+              ) : isLoading && (!displayData || displayData.length === 0) ? (
                 <SearchResultsLoading count={6} viewMode={viewMode} />
-              ) : data && data.length === 0 ? (
+              ) : displayData && displayData.length === 0 ? (
                 <EmptyState
                   title="No listings found"
                   message="Try adjusting your search criteria or clearing some filters."
@@ -852,29 +913,15 @@ export function UnifiedListingSearch({
               ) : (
                 <>
                   <SearchResults
-                    listings={data || []}
+                    listings={displayData || []}
                     isLoading={isLoading}
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
                     onLoadMore={fetchNextPage}
-                    totalResults={totalResults}
-                    currentPage={pagination?.currentPage || 1}
-                    totalPages={pagination?.totalPages || 1}
-                    onPageChange={(page) => handleFilterChange("page", page)}
+                    totalResults={displayTotalResults}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
                   />
-
-                  {/* Load More Button */}
-                  {hasNextPage && (
-                    <LoadMoreButton
-                      onLoadMore={fetchNextPage}
-                      isLoading={isFetchingNextPage}
-                      hasMore={hasNextPage}
-                      error={error?.message || null}
-                      onRetry={() => fetchNextPage()}
-                    />
-                  )}
                 </>
               )}
             </div>

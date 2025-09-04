@@ -73,7 +73,7 @@ export const CATEGORIES: Category[] = [
     description: "Rent advertising equipment and materials",
     order: 9,
     popular: true,
-  },
+  }
 ];
 
 export async function getCategories(): Promise<Category[]> {
@@ -82,5 +82,5 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export function getCategoryBySlug(slug: string): Category | undefined {
-  return CATEGORIES.find(category => category.slug === slug);
+  return CATEGORIES.find((category) => category.slug === slug);
 }

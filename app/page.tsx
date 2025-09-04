@@ -91,45 +91,55 @@ async function HomepageContent() {
         </section>
 
         {/* Trending Products Swiper */}
-        <ProductSwiper
-          title="🔥 Trending Now"
-          category="all"
-          limit={12}
-          trending={true}
-          listings={allListings} // Pass the listings prop
-        />
+        <div className="overflow-hidden">
+          <ProductSwiper
+            title="🔥 Trending Now"
+            category="all"
+            limit={12}
+            trending={true}
+            listings={allListings} // Pass the listings prop
+          />
+        </div>
 
         {/* Camera & Electronics Swiper */}
-        <ProductSwiper
-          title="📷 Camera & Electronics"
-          category="camera"
-          limit={10}
-          listings={allListings} // Pass the listings prop
-        />
+        <div className="overflow-hidden">
+          <ProductSwiper
+            title="📷 Camera & Electronics"
+            category="camera"
+            limit={10}
+            listings={allListings} // Pass the listings prop
+          />
+        </div>
 
         {/* Automobiles Swiper */}
-        <ProductSwiper
-          title="🚗 Automobiles"
-          category="automobiles"
-          limit={10}
-          listings={allListings} // Pass the listings prop
-        />
+        <div className="overflow-hidden">
+          <ProductSwiper
+            title="🚗 Automobiles"
+            category="automobiles"
+            limit={10}
+            listings={allListings} // Pass the listings prop
+          />
+        </div>
 
         {/* Home & Living Swiper */}
-        <ProductSwiper
-          title="🏠 Home & Living"
-          category="construction-equipment"
-          limit={10}
-          listings={allListings} // Pass the listings prop
-        />
+        <div className="overflow-hidden">
+          <ProductSwiper
+            title="🏠 Home & Living"
+            category="construction-equipment"
+            limit={10}
+            listings={allListings} // Pass the listings prop
+          />
+        </div>
 
         {/* Sports & Recreation Swiper */}
-        <ProductSwiper
-          title="⚽ Sports & Recreation"
-          category="events"
-          limit={8}
-          listings={allListings} // Pass the listings prop
-        />
+        <div className="overflow-hidden">
+          <ProductSwiper
+            title="⚽ Sports & Recreation"
+            category="events"
+            limit={8}
+            listings={allListings} // Pass the listings prop
+          />
+        </div>
 
         {/* Ad Banner */}
         <section className="py-8">
@@ -139,12 +149,14 @@ async function HomepageContent() {
         </section>
 
         {/* Medical Equipment Swiper */}
-        <ProductSwiper
-          title="🏥 Medical Equipment"
-          category="medical-equipment"
-          limit={8}
-          listings={allListings} // Pass the listings prop
-        />
+        <div className="overflow-hidden">
+          <ProductSwiper
+            title="🏥 Medical Equipment"
+            category="medical-equipment"
+            limit={8}
+            listings={allListings} // Pass the listings prop
+          />
+        </div>
 
         {/* Top Sellers Section */}
         {topSellers.length > 0 && (

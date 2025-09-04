@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSidebar, SidebarContent } from "@/contexts/sidebar-context";
 import { AdBanner } from "./ad-banner";
 import { RelatedContent } from "./related-content";
+import { CategoryFilters } from "@/components/category/category-filters";
 
 export interface UniversalSidebarProps {
   pageType: "search" | "category" | "blog";
@@ -33,7 +34,7 @@ export function UniversalSidebar({
   }, [pageType, pageContext, loadSidebarContent]);
 
   // Handle content interactions
-  const handleContentClick = (contentId: string, contentType: string) => {
+  const handleContentClick = React.useCallback((contentId: string, contentType: string) => {
     // Track the interaction
     trackInteraction({
       contentId,
@@ -45,9 +46,9 @@ export function UniversalSidebar({
 
     // Call external handler if provided
     onContentClick?.(contentId, contentType);
-  };
+  }, [trackInteraction, pageType, pageContext, onContentClick]);
 
-  const handleContentView = (contentId: string, contentType: string) => {
+  const handleContentView = React.useCallback((contentId: string, contentType: string) => {
     trackInteraction({
       contentId,
       contentType,
@@ -55,7 +56,7 @@ export function UniversalSidebar({
       timestamp: new Date(),
       metadata: { pageType, pageContext },
     });
-  };
+  }, [trackInteraction, pageType, pageContext]);
 
   if (sidebarState.isLoading) {
     return (
@@ -181,6 +182,23 @@ function SidebarContentRenderer({
           maxItems={content.data.limit || 5}
           onItemClick={(itemId) => onContentClick(itemId, content.type)}
         />
+      );
+
+    case "filters":
+      // Render category filters for category and search pages
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>{content.title || "Filters"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CategoryFilters
+              slug={content.data.slug || "search"}
+              currentFilters={content.data.currentFilters || {}}
+              subcategories={content.data.subcategories || []}
+            />
+          </CardContent>
+        </Card>
       );
 
     case "custom":

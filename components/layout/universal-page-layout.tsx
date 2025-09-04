@@ -44,12 +44,12 @@ export function UniversalPageLayout({
         >
           <div className="py-4 sm:py-6 lg:py-8">
             <ResponsiveFlex
-              direction="col"
+              direction={sidebarPosition === "left" ? "col" : "col"}
               gap="default"
               className={cn(
                 // Desktop layout: side-by-side
                 "lg:flex-row",
-                // Reverse order for left sidebar on desktop only
+                // When sidebar is on the left, we use flex-row-reverse visually
                 sidebarPosition === "left" && "lg:flex-row-reverse"
               )}
               preventOverflow={true}
@@ -71,12 +71,15 @@ export function UniversalPageLayout({
                 <div
                   className={cn(
                     // Mobile: full width, appears after content
-                    "w-full order-2",
+                    "w-full",
+                    // Default order: content first, sidebar second (right sidebar)
+                    sidebarPosition === "right" ? "order-2 lg:order-2" : "order-2 lg:order-1",
                     // Tablet and up: fixed width sidebar
                     "sm:w-full md:w-80 lg:w-80 xl:w-96",
-                    // Desktop: maintain order based on position
+                    // Desktop: maintain flex shrink behavior
                     "lg:flex-shrink-0",
-                    sidebarPosition === "left" && "lg:order-first",
+                    // When sidebar is on the left, it should appear first on desktop
+                    sidebarPosition === "left" && "lg:order-1",
                     sidebarClassName
                   )}
                 >

@@ -19,8 +19,10 @@ interface BlogGridProps {
   pagination: BlogPagination;
   loading?: boolean;
   onFiltersChange: (filters: BlogFilters) => void;
-  onPageChange: (page: number) => void;
   className?: string;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -394,44 +396,23 @@ export function BlogGrid({
         </div>
       )}
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2">
+      {/* Load More Button */}
+      {hasNextPage && onLoadMore && (
+        <div className="text-center pt-8">
           <Button
+            onClick={onLoadMore}
+            disabled={isFetchingNextPage}
             variant="outline"
-            size="sm"
-            onClick={() => onPageChange(pagination.page - 1)}
-            disabled={pagination.page === 1}
+            size="lg"
           >
-            Previous
-          </Button>
-
-          {/* Page numbers */}
-          <div className="flex space-x-1">
-            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-              const pageNum = i + 1;
-              const isActive = pageNum === pagination.page;
-              
-              return (
-                <Button
-                  key={pageNum}
-                  variant={isActive ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onPageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(pagination.page + 1)}
-            disabled={pagination.page === pagination.totalPages}
-          >
-            Next
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading more...
+              </>
+            ) : (
+              "Load More Posts"
+            )}
           </Button>
         </div>
       )}

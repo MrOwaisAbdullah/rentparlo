@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Search,
   Filter,
@@ -53,16 +54,15 @@ interface UnifiedBlogSearchProps {
   filters: BlogFilters;
   pagination: BlogPagination;
   loading?: boolean;
-  onFiltersChange: (filters: BlogFilters) => void;
-  onPageChange: (page: number) => void;
-  onSearch: (query: string) => void;
   layout?: "sidebar" | "top" | "inline";
   showSidebar?: boolean;
   className?: string;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }
 
 type ViewMode = "grid" | "list";
-type SortBy = "newest" | "oldest" | "popular" | "title" | "featured";
 
 export function UnifiedBlogSearch({
   posts,
@@ -71,15 +71,14 @@ export function UnifiedBlogSearch({
   filters,
   pagination,
   loading = false,
-  onFiltersChange,
-  onPageChange,
-  onSearch,
   layout = "top",
   showSidebar = true,
   className,
+  hasNextPage,
+  isFetchingNextPage = false,
+  onLoadMore,
 }: UnifiedBlogSearchProps) {
   const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
-  const [sortBy, setSortBy] = React.useState<SortBy>("newest");
   const [searchQuery, setSearchQuery] = React.useState(filters.query || "");
   const [showFilters, setShowFilters] = React.useState(false);
   const [isSearching, setIsSearching] = React.useState(false);
@@ -95,20 +94,30 @@ export function UnifiedBlogSearch({
   const filtersId = React.useRef(AriaUtils.generateId("blog-filters")).current;
   const resultsId = React.useRef(AriaUtils.generateId("blog-results")).current;
 
+  // Router and search params for URL management
+  const router = useRouter();
+  const currentSearchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // URL parameter key mapping (ensures consistency with main search bar)
+  const paramKeyMap: Record<string, string> = {
+    query: "q",
+    minPrice: "minprice",
+    maxPrice: "maxprice",
+    priceType: "pricetype",
+    dateFrom: "datefrom",
+    dateTo: "dateto",
+    featured: "featured",
+    category: "category",
+    tag: "tag",
+    language: "language",
+  };
+
   // Debounced search handler
   const debouncedSearch = useDebouncedCallback((query: string) => {
     setIsSearching(false);
-    onSearch(query);
+    updateSearchParams({ query });
   }, 300);
-
-  // Debounced filter handler
-  const debouncedFilterChange = useDebouncedCallback(
-    (newFilters: BlogFilters) => {
-      setIsFilterLoading(false);
-      onFiltersChange(newFilters);
-    },
-    100
-  );
 
   // Handle search input with debounce and loading state
   React.useEffect(() => {
@@ -138,24 +147,54 @@ export function UnifiedBlogSearch({
       pagination.total
     );
 
-    const newFilters = {
-      ...filters,
-      [key]: value,
-    };
-    debouncedFilterChange(newFilters);
+    // Update URL parameters
+    updateSearchParams({ [key]: value });
+    
+    // Reset loading state after a short delay
+    setTimeout(() => setIsFilterLoading(false), 100);
   };
+
+  // Update URL with new search parameters
+  const updateSearchParams = React.useCallback(
+    (newParams: Partial<BlogFilters>) => {
+      const params = new URLSearchParams(currentSearchParams.toString());
+
+      // Map internal filter keys to URL parameter names
+      Object.entries(newParams).forEach(([key, value]) => {
+        // Map the key to the correct URL parameter name
+        const urlParamKey = paramKeyMap[key] || key;
+        
+        // Ensure value is properly converted to string
+        const stringValue = value !== undefined && value !== null ? 
+          typeof value === 'string' ? value : value.toString() : '';
+        
+        if (stringValue === "" || stringValue === "0" || (key === "page" && stringValue === "1")) {
+          params.delete(urlParamKey);
+        } else {
+          params.set(urlParamKey, stringValue);
+        }
+      });
+
+      // Reset page when filters change (except when explicitly setting page)
+      if (!("page" in newParams)) {
+        params.delete("page");
+      }
+
+      // Construct the full URL with current pathname
+      const path = typeof pathname === 'string' && pathname ? pathname : '/blog';
+      const searchParamsString = params.toString();
+      const newUrl = searchParamsString ? `${path}?${searchParamsString}` : path;
+      router.push(newUrl, { scroll: false });
+    },
+    [router, currentSearchParams, paramKeyMap, pathname]
+  );
 
   const clearFilter = (key: keyof BlogFilters) => {
     // Announce filter clearing
     announcer.announceFilterCleared(key, pagination.total);
 
-    const newFilters = { ...filters };
-    delete newFilters[key];
-    // Only pass defined values to avoid undefined properties
-    const cleanFilters = Object.fromEntries(
-      Object.entries(newFilters).filter(([_, value]) => value !== undefined)
-    ) as BlogFilters;
-    onFiltersChange(cleanFilters);
+    // Update URL to clear this specific filter
+    updateSearchParams({ [key]: undefined });
   };
 
   const clearAllFilters = () => {
@@ -164,15 +203,8 @@ export function UnifiedBlogSearch({
     // Announce all filters cleared
     announcer.announceAllFiltersCleared(pagination.total);
 
-    onFiltersChange({
-      query: "",
-      category: undefined,
-      tag: undefined,
-      language: undefined,
-      featured: undefined,
-      dateFrom: undefined,
-      dateTo: undefined,
-    });
+    // Update URL to clear all parameters
+    router.push(pathname);
   };
 
   const activeFiltersCount = [
@@ -184,15 +216,6 @@ export function UnifiedBlogSearch({
     filters.dateTo,
     filters.query,
   ].filter(Boolean).length;
-
-  const handleSortChange = (newSortBy: SortBy) => {
-    setSortBy(newSortBy);
-
-    // Announce sort change
-    announcer.announce(`Sort order changed to ${newSortBy}`, "polite");
-
-    // You can implement actual sorting logic here or pass it to parent
-  };
 
   if (loading) {
     return (
@@ -273,23 +296,6 @@ export function UnifiedBlogSearch({
               <SelectItem value="any">All languages</SelectItem>
               <SelectItem value="en">English</SelectItem>
               <SelectItem value="ur">Urdu</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Sort By */}
-        <div>
-          <label className="text-sm font-medium mb-2 block">Sort by</label>
-          <Select value={sortBy} onValueChange={handleSortChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-              <SelectItem value="popular">Most popular</SelectItem>
-              <SelectItem value="featured">Featured first</SelectItem>
-              <SelectItem value="title">Title A-Z</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -468,7 +474,7 @@ export function UnifiedBlogSearch({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(pagination.page - 1)}
+          onClick={() => updateSearchParams({ page: (pagination.page - 1).toString() })}
           disabled={pagination.page === 1}
         >
           Previous
@@ -486,7 +492,7 @@ export function UnifiedBlogSearch({
                   key={pageNum}
                   variant={isActive ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onPageChange(pageNum)}
+                  onClick={() => updateSearchParams({ page: pageNum.toString() })}
                 >
                   {pageNum}
                 </Button>
@@ -498,7 +504,7 @@ export function UnifiedBlogSearch({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(pagination.page + 1)}
+          onClick={() => updateSearchParams({ page: (pagination.page + 1).toString() })}
           disabled={pagination.page === pagination.totalPages}
         >
           Next
@@ -603,7 +609,12 @@ export function UnifiedBlogSearch({
             id={`${searchFormId}-input`}
             placeholder="Search blog posts..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              setSearchQuery(newValue);
+              // Update URL with new search query
+              updateSearchParams({ query: newValue });
+            }}
             className="pl-10 pr-10"
             aria-label={AriaUtils.createFilterLabel(
               "Search blog posts",
@@ -677,8 +688,26 @@ export function UnifiedBlogSearch({
         </div>
       )}
 
-      {/* Pagination */}
-      {renderPagination()}
+      {/* Load More Button */}
+      {(hasNextPage ?? false) && onLoadMore && (
+        <div className="text-center pt-8">
+          <Button
+            onClick={onLoadMore}
+            disabled={isFetchingNextPage}
+            variant="outline"
+            size="lg"
+          >
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading more...
+              </>
+            ) : (
+              "Load More Posts"
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

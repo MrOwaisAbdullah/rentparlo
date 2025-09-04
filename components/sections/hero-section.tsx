@@ -298,13 +298,6 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
           placeholder="e.g., Camera, Car, Wedding Hall..."
           showLocationFilter={true}
           size="lg"
-          onSearch={(searchQuery, filters) => {
-            const searchParams = new URLSearchParams();
-            if (searchQuery) searchParams.set("q", searchQuery);
-            if (filters.city) searchParams.set("city", filters.city);
-            if (filters.area) searchParams.set("area", filters.area);
-            window.location.href = `/search?${searchParams.toString()}`;
-          }}
           className="max-w-4xl mx-auto"
         />
       </div>

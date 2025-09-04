@@ -51,9 +51,6 @@ interface SearchResultsProps {
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
   totalResults?: number;
-  currentPage?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
   viewMode?: "grid" | "list" | "horizontal";
   onViewModeChange?: (mode: "grid" | "list" | "horizontal") => void;
   className?: string;
@@ -145,32 +142,10 @@ export function SearchResults({
   isFetchingNextPage,
   onLoadMore,
   totalResults = 0,
-  currentPage = 1,
-  totalPages = 1,
-  onPageChange,
   viewMode = "grid",
   onViewModeChange,
   className,
 }: SearchResultsProps) {
-  // Generate pagination pages
-  const getPaginationPages = () => {
-    const pages = [];
-    const maxPages = 5;
-
-    let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(totalPages, startPage + maxPages - 1);
-
-    if (endPage - startPage < maxPages - 1) {
-      startPage = Math.max(1, endPage - maxPages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return pages;
-  };
-
   const formatResultsText = () => {
     if (totalResults === 0) return "No results found";
     if (totalResults === 1) return "1 result found";
@@ -209,11 +184,6 @@ export function SearchResults({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold">{formatResultsText()}</h2>
-          {totalPages > 1 && (
-            <Badge variant="outline">
-              Page {currentPage} of {totalPages}
-            </Badge>
-          )}
         </div>
 
         {onViewModeChange && (
@@ -240,7 +210,7 @@ export function SearchResults({
 
       {/* Results Grid/List */}
       {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {listings.map((listing) => (
             <ListingCard
               key={listing._id}
@@ -264,9 +234,8 @@ export function SearchResults({
         </div>
       )}
 
-      {/* Load More / Pagination */}
+      {/* Load More Button */}
       <div className="mt-8 space-y-4">
-        {/* Infinite Scroll Load More */}
         {hasNextPage && onLoadMore && (
           <div className="text-center">
             <Button
@@ -283,43 +252,6 @@ export function SearchResults({
               ) : (
                 "Load More Results"
               )}
-            </Button>
-          </div>
-        )}
-
-        {/* Page-based Pagination */}
-        {totalPages > 1 && onPageChange && (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </Button>
-
-            {getPaginationPages().map((page) => (
-              <Button
-                key={page}
-                variant={page === currentPage ? "primary" : "outline"}
-                size="sm"
-                onClick={() => onPageChange(page)}
-                className="min-w-[40px]"
-              >
-                {page}
-              </Button>
-            ))}
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         )}
@@ -341,7 +273,7 @@ function SearchResultsSkeleton({
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-8 w-20" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <Skeleton className="h-48 w-full" />

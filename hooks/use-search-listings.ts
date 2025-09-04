@@ -1,9 +1,12 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { searchEnhancedListingsClient, trackSearchQueryClient } from '@/lib/data-integration-client';
-import { ItemCondition, SearchResults } from '@/types';
+import React from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  searchEnhancedListingsClient,
+  trackSearchQueryClient,
+} from "@/lib/data-integration-client";
+import { ItemCondition, SearchResults } from "@/types";
 
 interface SearchFilters {
   query: string;
@@ -31,41 +34,56 @@ interface SearchResultsPage {
 }
 
 export function useSearchListings(
-  filters: SearchFilters, 
+  filters: SearchFilters,
   options: UseSearchListingsOptions = {}
 ) {
   const {
     enabled = true,
     keepPreviousData = true,
-    refetchOnWindowFocus = false
+    refetchOnWindowFocus = false,
   } = options;
 
   // Convert filters to search parameters
-  const searchParams = React.useMemo(() => ({
-    query: filters.query || '',
-    category: filters.category || '',
-    city: filters.city || '',
-    area: filters.area || '',
-    condition: filters.condition as ItemCondition || undefined,
-    minPrice: filters.minPrice || 0,
-    maxPrice: filters.maxPrice || 0,
-    offset: 0,
-    limit: 20,
-    sortBy: filters.sortBy || 'newest'
-  }), [filters]);
+  const searchParams = React.useMemo(
+    () => ({
+      query: filters.query || "",
+      category: filters.category || "",
+      city: filters.city || "",
+      area: filters.area || "",
+      condition: (filters.condition as ItemCondition) || undefined,
+      minPrice: filters.minPrice || 0,
+      maxPrice: filters.maxPrice || 0,
+      offset: 0,
+      limit: 20,
+      sortBy: filters.sortBy || "newest",
+    }),
+    [filters]
+  );
 
-  // Create cache key that includes all relevant filters
-  const queryKey = React.useMemo(() => [
-    'search-listings',
-    searchParams.query,
-    searchParams.category,
-    searchParams.city,
-    searchParams.area,
-    searchParams.condition,
-    searchParams.minPrice,
-    searchParams.maxPrice,
-    searchParams.sortBy
-  ], [searchParams]);
+  // Create cache key that includes all relevant filters (stable dependencies)
+  const queryKey = React.useMemo(
+    () => [
+      "search-listings",
+      searchParams.query || "",
+      searchParams.category || "",
+      searchParams.city || "",
+      searchParams.area || "",
+      searchParams.condition || "",
+      searchParams.minPrice || 0,
+      searchParams.maxPrice || 0,
+      searchParams.sortBy || "newest",
+    ],
+    [
+      searchParams.query,
+      searchParams.category,
+      searchParams.city,
+      searchParams.area,
+      searchParams.condition,
+      searchParams.minPrice,
+      searchParams.maxPrice,
+      searchParams.sortBy,
+    ]
+  );
 
   // Use infinite query for pagination
   const query = useInfiniteQuery<SearchResultsPage>({
@@ -74,17 +92,18 @@ export function useSearchListings(
       const params = {
         ...searchParams,
         offset: pageParam as number,
-        limit: 20
+        limit: 20,
       };
 
       const result = await searchEnhancedListingsClient(params);
-      
-      // Track search query if it's a new search (offset 0)
-      if (pageParam === 0 && searchParams.query) {
+
+      // Track search query if it's a new search (offset 0) - throttled
+      if (pageParam === 0 && searchParams.query && Math.random() < 0.1) {
+        // Only track 10% of searches
         try {
           await trackSearchQueryClient(searchParams.query, undefined, params);
         } catch (error) {
-          console.error('Failed to track search query:', error);
+          console.error("Failed to track search query:", error);
         }
       }
 
@@ -92,7 +111,7 @@ export function useSearchListings(
         results: result.results,
         total: result.total,
         hasMore: result.results.length === params.limit,
-        nextOffset: (pageParam as number) + params.limit
+        nextOffset: (pageParam as number) + params.limit,
       };
     },
     getNextPageParam: (lastPage: SearchResultsPage) => {
@@ -121,14 +140,14 @@ export function useSearchListings(
     const itemsPerPage = 20;
     const total = query.data?.pages[0]?.total || 0;
     const totalPages = Math.ceil(total / itemsPerPage);
-    
+
     return {
       currentPage,
       totalPages,
       itemsPerPage,
       totalResults: total,
       hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1
+      hasPreviousPage: currentPage > 1,
     };
   }, [query.data?.pages?.[0]?.total, filters.page]);
 
@@ -137,68 +156,81 @@ export function useSearchListings(
     data: listings,
     totalResults,
     pagination,
-    
+
     // Status
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
-    
+
     // Infinite scroll
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
-    
+
     // Cache management
-    refetch: query.refetch
+    refetch: query.refetch,
   };
 }
 
 // Hook for simple search without infinite scroll
-export function useSimpleSearch(filters: SearchFilters, options: UseSearchListingsOptions = {}) {
+export function useSimpleSearch(
+  filters: SearchFilters,
+  options: UseSearchListingsOptions = {}
+) {
   const {
     enabled = true,
     keepPreviousData = true,
-    refetchOnWindowFocus = false
+    refetchOnWindowFocus = false,
   } = options;
 
-  const searchParams = React.useMemo(() => ({
-    query: filters.query || '',
-    category: filters.category || '',
-    city: filters.city || '',
-    area: filters.area || '',
-    condition: filters.condition as ItemCondition || undefined,
-    minPrice: filters.minPrice || 0,
-    maxPrice: filters.maxPrice || 0,
-    offset: ((filters.page || 1) - 1) * 20,
-    limit: 20,
-    sortBy: filters.sortBy || 'newest'
-  }), [filters]);
+  const searchParams = React.useMemo(
+    () => ({
+      query: filters.query || "",
+      category: filters.category || "",
+      city: filters.city || "",
+      area: filters.area || "",
+      condition: (filters.condition as ItemCondition) || undefined,
+      minPrice: filters.minPrice || 0,
+      maxPrice: filters.maxPrice || 0,
+      offset: ((filters.page || 1) - 1) * 20,
+      limit: 20,
+      sortBy: filters.sortBy || "newest",
+    }),
+    [filters]
+  );
 
-  const queryKey = React.useMemo(() => [
-    'simple-search-listings',
-    searchParams.query,
-    searchParams.category,
-    searchParams.city,
-    searchParams.area,
-    searchParams.condition,
-    searchParams.minPrice,
-    searchParams.maxPrice,
-    searchParams.sortBy,
-    searchParams.offset
-  ], [searchParams]);
+  const queryKey = React.useMemo(
+    () => [
+      "simple-search-listings",
+      searchParams.query,
+      searchParams.category,
+      searchParams.city,
+      searchParams.area,
+      searchParams.condition,
+      searchParams.minPrice,
+      searchParams.maxPrice,
+      searchParams.sortBy,
+      searchParams.offset,
+    ],
+    [searchParams]
+  );
 
   const query = useQuery<SearchResults>({
     queryKey,
     queryFn: async () => {
       const result = await searchEnhancedListingsClient(searchParams);
-      
+
       // Track search query
       if (searchParams.offset === 0 && searchParams.query) {
         try {
-          await trackSearchQueryClient(searchParams.query, undefined, searchParams);
+          await trackSearchQueryClient(
+            searchParams.query,
+            undefined,
+            searchParams
+          );
         } catch (error) {
-          console.error('Failed to track search query:', error);
+          console.error("Failed to track search query:", error);
         }
       }
 
@@ -214,14 +246,14 @@ export function useSimpleSearch(filters: SearchFilters, options: UseSearchListin
     const currentPage = filters.page || 1;
     const itemsPerPage = 20;
     const totalPages = Math.ceil((query.data?.total || 0) / itemsPerPage);
-    
+
     return {
       currentPage,
       totalPages,
       itemsPerPage,
       totalResults: query.data?.total || 0,
       hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1
+      hasPreviousPage: currentPage > 1,
     };
   }, [query.data, filters.page]);
 
@@ -230,14 +262,14 @@ export function useSimpleSearch(filters: SearchFilters, options: UseSearchListin
     data: query.data?.results || [],
     totalResults: query.data?.total || 0,
     pagination,
-    
+
     // Status
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
-    
+
     // Cache management
-    refetch: query.refetch
+    refetch: query.refetch,
   };
 }

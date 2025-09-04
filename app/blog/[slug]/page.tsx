@@ -4,9 +4,9 @@ import { BlogPostContent } from '@/components/blog/blog-post-content';
 import { BlogPost, BlogPostSummary } from '@/types';
 
 interface BlogPostPageProps {
-  params: Promise<{
+  params: {
     slug: string;
-  }>;
+  };
 }
 
 // Mock function to fetch blog post - replace with actual data fetching
@@ -110,7 +110,7 @@ async function getRelatedPosts(postId: string): Promise<BlogPostSummary[]> {
         asset: { url: '/api/placeholder/400/300' },
         alt: 'Popular rental items in Karachi'
       },
-      categories: [{ _id: '2', title: 'Market Insights', slug: 'market-insights' }],
+      categories: [{ _id: '2', title: 'Market Insights', slug: { current: 'market-insights' } }],
       tags: ['karachi', 'trends', 'popular items'],
       author: 'Sarah Ahmed',
       readingTime: 5,
@@ -127,7 +127,7 @@ async function getRelatedPosts(postId: string): Promise<BlogPostSummary[]> {
         asset: { url: '/api/placeholder/400/300' },
         alt: 'Safe online electronics rental'
       },
-      categories: [{ _id: '1', title: 'Electronics', slug: 'electronics' }],
+      categories: [{ _id: '1', title: 'Electronics', slug: { current: 'electronics' } }],
       tags: ['safety', 'online rental', 'electronics'],
       author: 'Ahmed Khan',
       readingTime: 7,
@@ -141,8 +141,7 @@ async function getRelatedPosts(postId: string): Promise<BlogPostSummary[]> {
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const resolvedParams = await params;
-  const post = await getBlogPost(resolvedParams.slug);
+  const post = await getBlogPost(params.slug);
 
   if (!post) {
     return {
@@ -182,15 +181,13 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       images: [socialImage]
     },
     alternates: {
-      canonical: `/blog/${resolvedParams.slug}`
+      canonical: `/blog/${params.slug}`
     }
   };
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  // Await params before accessing properties
-  const resolvedParams = await params;
-  const post = await getBlogPost(resolvedParams.slug);
+  const post = await getBlogPost(params.slug);
 
   if (!post) {
     notFound();
@@ -221,7 +218,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     dateModified: post._updatedAt,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://rentparlo.pk/blog/${resolvedParams.slug}`
+      '@id': `https://rentparlo.pk/blog/${params.slug}`
     }
   };
 

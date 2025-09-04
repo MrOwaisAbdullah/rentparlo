@@ -233,16 +233,16 @@ export function UniversalSearchBar({
     200
   );
 
-  // Update suggestions when query changes with loading state
+  // Update suggestions when debounced query changes
   useEffect(() => {
-    if (query !== debouncedQuery) {
-      setIsLoading(true);
-      debouncedSuggestionUpdate(debouncedQuery);
-    } else {
-      const newSuggestions = generateSuggestions(debouncedQuery);
-      setSuggestions(newSuggestions);
-    }
-  }, [debouncedQuery, generateSuggestions, debouncedSuggestionUpdate, query]);
+    const newSuggestions = generateSuggestions(debouncedQuery);
+    setSuggestions(newSuggestions);
+  }, [debouncedQuery, generateSuggestions]);
+
+  // Handle loading state
+  useEffect(() => {
+    setIsLoading(query !== debouncedQuery);
+  }, [query, debouncedQuery]);
 
   // Handle search submission with accessibility announcements
   const handleSearch = useCallback(

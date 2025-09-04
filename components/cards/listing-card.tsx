@@ -339,7 +339,10 @@ export function ListingCard({
             
             <div className="mb-1 flex-1">
               <div className="font-bold text-base sm:text-lg text-gray-900 mb-1">
-                PKR {listing?.price?.toLocaleString() || "0"}/day
+                <div className="flex items-baseline">
+                  <span className="text-black">PKR {listing?.price?.toLocaleString() || "0"}</span>
+                  <span className="text-blue-500 text-sm font-medium ml-1">/day</span>
+                </div>
               </div>
               <h3 className="font-semibold text-gray-800 line-clamp-2 mb-2 text-sm leading-tight">
                 {listing?.title}
@@ -407,11 +410,6 @@ export function ListingCard({
                   Featured
                 </Badge>
               )}
-              {listing?.availability && (
-                <Badge className={`text-xs ${listing.availability.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {listing.availability.isAvailable ? 'Available' : 'Not Available'}
-                </Badge>
-              )}
             </div>
           </div>
 
@@ -422,9 +420,16 @@ export function ListingCard({
                 <Badge variant="outline" className="text-xs">
                   {listing?.category?.title || 'Uncategorized'}
                 </Badge>
-                <span className="text-lg font-bold text-primary">
-                  {formatPrice(effectivePrice || 0, effectivePriceType || 'daily')}
-                </span>
+                <div className="text-right">
+                  <div className="flex items-baseline">
+                    <span className="text-lg font-bold text-black">
+                      PKR {effectivePrice?.toLocaleString() || '0'}
+                    </span>
+                    <span className="text-xs text-blue-500 font-medium ml-1">
+                      /{effectivePriceType === 'hourly' ? 'hr' : effectivePriceType === 'daily' ? 'day' : effectivePriceType === 'weekly' ? 'week' : 'month'}
+                    </span>
+                  </div>
+                </div>
               </div>
               
               <Link href={`/listing/${listing?.slug?.current || effectiveId}`}>
@@ -454,16 +459,16 @@ export function ListingCard({
               </p>
             )}
 
-            {/* Bottom section with condition and seller */}
+            {/* Bottom section with condition */}
             <div className="mt-auto pt-4 border-t">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Condition:</span>
                   <Badge className={`text-xs ${
-                    listing?.condition === 'new' ? 'bg-green-100 text-green-800' :
-                    listing?.condition === 'like-new' ? 'bg-green-100 text-green-700' :
-                    listing?.condition === 'good' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
+                listing?.condition === 'new' ? 'bg-green-100 text-green-700' :
+                listing?.condition === 'like-new' ? 'bg-blue-100 text-blue-700' :
+                listing?.condition === 'good' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
                   }`}>
                     {listing?.condition === 'like-new' ? 'Like New' : listing?.condition?.charAt(0).toUpperCase() + (listing?.condition?.slice(1) || '')}
                   </Badge>
@@ -519,11 +524,6 @@ export function ListingCard({
                   Featured
                 </Badge>
               )}
-              {listing?.availability && (
-                <Badge className={`text-xs ${listing.availability.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {listing.availability.isAvailable ? 'Available' : 'Not Available'}
-                </Badge>
-              )}
             </div>
 
           </div>
@@ -567,26 +567,31 @@ export function ListingCard({
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm text-muted-foreground">Condition:</span>
               <Badge className={`text-xs ${
-                listing?.condition === 'new' ? 'bg-green-100 text-green-800' :
-                listing?.condition === 'like-new' ? 'bg-green-100 text-green-700' :
-                listing?.condition === 'good' ? 'bg-blue-100 text-blue-700' :
-                'bg-yellow-100 text-yellow-700'
+                listing?.condition === 'new' ? 'bg-green-100 text-green-700' :
+                listing?.condition === 'like-new' ? 'bg-blue-100 text-blue-700' :
+                listing?.condition === 'good' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
               }`}>
                 {listing?.condition === 'like-new' ? 'Like New' : listing?.condition?.charAt(0).toUpperCase() + (listing?.condition?.slice(1) || '')}
               </Badge>
             </div>
 
             {/* Price */}
-            <div className="flex items-center justify-between mb-3 mt-auto">
-              <div>
-                <span className="text-xl font-bold text-primary">
-                  {formatPrice(effectivePrice || 0, effectivePriceType || 'daily')}
-                </span>
+              <div className="flex items-center justify-between mb-3 mt-auto">
+                <div>
+                  <div className="flex items-baseline">
+                    <span className="text-2xl font-bold text-black">
+                      PKR {effectivePrice?.toLocaleString() || '0'}
+                    </span>
+                    <span className="text-sm text-blue-500 font-medium ml-1">
+                      /{effectivePriceType === 'hourly' ? 'hr' : effectivePriceType === 'daily' ? 'day' : effectivePriceType === 'weekly' ? 'week' : 'month'}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
 
             {/* Seller info */}
-            <div className="flex items-center justify-between pt-3 border-t">
+            {/* <div className="flex items-center justify-between pt-3 border-t">
               {effectiveSeller && listing?.seller?.profile && (
                 <Link href={`/seller/${listing.seller.profile.username}`} className="flex items-center gap-2 hover:opacity-80">
                   <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
@@ -621,7 +626,7 @@ export function ListingCard({
               )}
               
 
-            </div>
+            </div> */}
           </div>
         </div>
       </Card>
@@ -631,16 +636,15 @@ export function ListingCard({
   // List variant specific rendering
   if (variant === "list") {
     return (
-      <div className={cn("bg-background border rounded-lg p-4 hover:shadow-md transition-shadow py-0", className)}>
-        <div className="flex gap-4">
-          <div className="w-24 h-24 flex-shrink-0">
+      <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-md py-0", className)}>
+        <div className="flex flex-row h-40 sm:h-56">
+          <div className="relative min-w-[40%] h-full overflow-hidden">
             {effectiveImage ? (
               <Image
                 src={imageUrl}
                 alt={effectiveTitle}
-                width={96}
-                height={96}
-                className="w-full h-full object-cover rounded"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105 m-auto"
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
                   const target = e.target as HTMLImageElement;
@@ -648,66 +652,98 @@ export function ListingCard({
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-muted rounded flex items-center justify-center">
-                <span className="text-muted-foreground text-xs">No image</span>
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                <span className="text-muted-foreground">No image</span>
+              </div>
+            )}
+            {listing?.isFeatured && (
+              <div className="absolute top-1 left-1 sm:top-2 sm:left-2">
+                <Badge className="bg-yellow-500 text-white text-xs py-0.5 px-1 sm:py-1 sm:px-2">
+                  <Star className="w-2 h-2 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Featured</span>
+                </Badge>
               </div>
             )}
           </div>
-          <div className="flex-1">
-            <div className="flex justify-between items-start mb-2">
-              <Link href={`/listing/${listing?.slug?.current || effectiveId}`}>
-                <h3 className="font-semibold hover:text-primary transition-colors">
+
+          <div className="flex-1 p-2 sm:p-3 min-w-0">
+            <div className="flex flex-col h-full">
+              <div className="flex flex-wrap gap-1 mb-1">
+                <Badge variant="outline" className="text-xs py-0.5 px-1">
+                  {listing?.category?.title || 'Uncategorized'}
+                </Badge>
+                <Badge variant="outline" className={`text-xs py-0.5 px-1 ${
+                  listing?.condition === 'new' ? 'bg-green-100 text-green-700' :
+                  listing?.condition === 'like-new' ? 'bg-blue-100 text-blue-700' :
+                  listing?.condition === 'good' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {listing?.condition === 'like-new' ? 'Like New' : listing?.condition?.charAt(0).toUpperCase() + (listing?.condition?.slice(1) || '')}
+                </Badge>
+              </div>
+
+              <Link href={`/listing/${listing?.slug?.current || effectiveId}`} className="min-w-0">
+                <h3 className="text-sm font-semibold mb-1 line-clamp-1 group-hover:text-primary transition-colors break-words">
                   {effectiveTitle}
                 </h3>
               </Link>
-              <div className="text-right">
-                <p className="font-bold text-lg text-primary">
-                  {formatPrice(effectivePrice || 0, effectivePriceType || 'daily')}
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-              {listing?.description && Array.isArray(listing.description) 
-                ? listing.description
-                    .filter((block: any) => block._type === 'block')
-                    .map((block: any) => block.children?.map((child: any) => child.text).join(''))
-                    .join(' ')
-                : typeof listing?.description === 'string' 
-                  ? listing.description 
-                  : ''}
-            </p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {listing?.condition || 'N/A'}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {listing?.location?.city || effectiveLocation}
-                </span>
-              </div>
-              {effectiveSeller && listing?.seller?.profile && (
-                <Link href={`/seller/${listing.seller.profile.username}`} className="text-sm text-primary hover:underline">
-                  @{listing.seller.profile.username}
-                </Link>
-              )}
-            </div>
 
-            
+              {/* Description - hidden on mobile, visible on desktop */}
+              {listing?.description && (
+                <p className="text-muted-foreground mb-2 line-clamp-2 flex-grow text-xs hidden sm:block">
+                  {Array.isArray(listing.description) 
+                    ? listing.description
+                        .filter((block: any) => block._type === 'block')
+                        .map((block: any) => block.children?.map((child: any) => child.text).join(''))
+                        .join(' ')
+                    : typeof listing.description === 'string' 
+                      ? listing.description 
+                      : ''}
+                </p>
+              )}
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mt-auto">
+                <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs text-muted-foreground min-w-0">
+                  <div className="flex items-center min-w-0">
+                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate text-xs">{listing?.location?.area ? `${listing.location.area}, ` : ''}{listing?.location?.city || effectiveLocation || 'Unknown Location'}</span>
+                  </div>
+                  {/* Time - hidden on mobile, visible on desktop */}
+                  {listing?.createdAt && (
+                    <div className="flex items-center hidden sm:flex">
+                      <Clock className="w-3 h-3 mr-1" />
+                      <span className="text-xs">{formatTimeAgo(listing.createdAt)}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="text-right flex-shrink-0">
+                  <div className="flex items-baseline justify-end">
+                    <span className="text-base font-bold text-black">
+                      PKR {effectivePrice?.toLocaleString() || '0'}
+                    </span>
+                    <span className="text-xs text-blue-500 font-medium ml-1">
+                      /{effectivePriceType === 'hourly' ? 'hr' : effectivePriceType === 'daily' ? 'day' : effectivePriceType === 'weekly' ? 'week' : 'month'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Contact Buttons */}
-              <div className="flex space-x-1">
-                <Button size="sm" variant="outline" className="h-8 px-2 bg-transparent">
-                  <Phone className="h-3 w-3 mr-1" />
-                  Call
+              <div className="flex space-x-1 mt-2">
+                <Button size="sm" variant="outline" className="h-8 px-2 bg-transparent flex-1 min-h-[36px]">
+                  <Phone className="h-3 w-3 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline text-xs">Call</span>
                 </Button>
-                <Button size="sm" className="h-8 px-2 bg-green-600 hover:bg-green-700">
-                  <MessageCircle className="h-3 w-3 mr-1" />
-                  WhatsApp
+                <Button size="sm" className="h-8 px-2 bg-green-600 hover:bg-green-700 flex-1 min-h-[36px]">
+                  <MessageCircle className="h-3 w-3 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline text-xs">WhatsApp</span>
                 </Button>
               </div>
-            
+            </div>
           </div>
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -789,8 +825,14 @@ export function ListingCard({
           {/* Price */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-lg font-bold text-primary">PKR {effectivePrice.toLocaleString()}</span>
-              <span className="text-sm text-muted-foreground ml-1">{priceLabel[effectivePriceType]}</span>
+              <div className="flex items-baseline">
+                <span className="text-lg font-bold text-black">
+                  PKR {effectivePrice?.toLocaleString() || '0'}
+                </span>
+                <span className="text-sm text-blue-500 font-medium ml-1">
+                  /{effectivePriceType === 'hourly' ? 'hr' : effectivePriceType === 'daily' ? 'day' : effectivePriceType === 'weekly' ? 'week' : 'month'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -826,13 +868,13 @@ export function ListingCard({
 
               {/* Contact Buttons */}
               <div className="flex space-x-1">
-                <Button size="sm" variant="outline" className="h-8 px-2 bg-transparent">
+                <Button size="sm" variant="outline" className="h-8 px-2 bg-transparent flex-1">
                   <Phone className="h-3 w-3 mr-1" />
-                  Call
+                  <span className="hidden sm:inline">Call</span>
                 </Button>
-                <Button size="sm" className="h-8 px-2 bg-green-600 hover:bg-green-700">
+                <Button size="sm" className="h-8 px-2 bg-green-600 hover:bg-green-700 flex-1">
                   <MessageCircle className="h-3 w-3 mr-1" />
-                  WhatsApp
+                  <span className="hidden sm:inline">WhatsApp</span>
                 </Button>
               </div>
             </div>

@@ -1,6 +1,5 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 // Route configuration
 const publicRoutes = [
@@ -76,9 +75,9 @@ async function getUserRole(supabase: any, userId: string): Promise<string | null
   }
 }
 
-export default async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Skip middleware for API routes, static files, and Next.js internals
   if (
     pathname.startsWith('/api') ||
@@ -90,7 +89,6 @@ export default async function middleware(request: NextRequest) {
   }
 
   try {
-    // Create Supabase SSR client
     let response = NextResponse.next({
       request: {
         headers: request.headers,
@@ -105,7 +103,8 @@ export default async function middleware(request: NextRequest) {
           get(name: string) {
             return request.cookies.get(name)?.value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: CookieOptions) {
+            // If the cookie is set, update the request cookies as well.
             request.cookies.set({
               name,
               value,
@@ -122,40 +121,45 @@ export default async function middleware(request: NextRequest) {
               ...options,
             });
           },
-          remove(name: string, options: any) {
-            request.cookies.delete(name);
+          remove(name: string, options: CookieOptions) {
+            // If the cookie is removed, update the request cookies as well.
+            request.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
             response = NextResponse.next({
               request: {
                 headers: request.headers,
               },
             });
-            response.cookies.delete(name);
+            response.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
           },
         },
       }
     );
-    
-    // Get the current session
+
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
+
     if (sessionError) {
       console.error('Session error:', sessionError);
     }
 
     const user = session?.user;
     const isAuthenticated = !!user;
-    
-    // Public routes - allow access
+
     if (matchesRoute(pathname, publicRoutes)) {
-      // If user is authenticated and trying to access auth pages, redirect to dashboard
       if (isAuthenticated && pathname.startsWith('/auth/') && !pathname.includes('/confirm')) {
         const dashboardUrl = new URL('/dashboard', request.url);
         return NextResponse.redirect(dashboardUrl);
       }
       return response;
     }
-    
-    // Protected routes - require authentication
+
     if (matchesRoute(pathname, protectedRoutes)) {
       if (!isAuthenticated) {
         const loginUrl = new URL('/auth/login', request.url);
@@ -164,67 +168,54 @@ export default async function middleware(request: NextRequest) {
       }
       return response;
     }
-    
-    // Admin routes - require admin role
+
     if (matchesRoute(pathname, adminRoutes)) {
       if (!isAuthenticated) {
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('redirectTo', pathname);
         return NextResponse.redirect(loginUrl);
       }
-      
+
       const userRole = await getUserRole(supabase, user.id);
       if (userRole !== 'admin') {
         const unauthorizedUrl = new URL('/unauthorized', request.url);
         return NextResponse.redirect(unauthorizedUrl);
       }
-      
+
       return response;
     }
-    
-    // Seller routes - require seller role
+
     if (matchesRoute(pathname, sellerRoutes)) {
       if (!isAuthenticated) {
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('redirectTo', pathname);
         return NextResponse.redirect(loginUrl);
       }
-      
+
       const userRole = await getUserRole(supabase, user.id);
       if (userRole !== 'seller' && userRole !== 'admin') {
         const unauthorizedUrl = new URL('/unauthorized', request.url);
         return NextResponse.redirect(unauthorizedUrl);
       }
-      
+
       return response;
     }
-    
-    // Default: allow access
+
     return response;
-    
   } catch (error) {
     console.error('Middleware error:', error);
-    
-    // On error, allow access to public routes but redirect protected routes to login
+
     if (matchesRoute(pathname, [...protectedRoutes, ...adminRoutes, ...sellerRoutes])) {
       const loginUrl = new URL('/auth/login', request.url);
       return NextResponse.redirect(loginUrl);
     }
-    
+
     return NextResponse.next();
   }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public assets
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\.).*)',
   ],
 };

@@ -118,6 +118,7 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
     const pageContext = {
       searchQuery: params.q || "",
       filters: searchPageFilters,
+      categories: transformedCategories,
       hasActiveSearch: !!(
         params.q ||
         params.condition ||
