@@ -59,7 +59,7 @@ export function UniversalPageLayout({
                 className={cn(
                   "flex-1 min-w-0 w-full", // min-w-0 prevents flex item from overflowing
                   // Ensure content takes full width on mobile
-                  "order-1",
+                  sidebarPosition === "right" ? "order-1 lg:order-1" : "order-1 lg:order-2",
                   contentClassName
                 )}
               >
