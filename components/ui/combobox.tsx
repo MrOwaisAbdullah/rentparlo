@@ -56,7 +56,7 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className={cn("w-full p-0", "z-[99999]")}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
@@ -70,6 +70,7 @@ export function Combobox({
                     onValueChange(currentValue === value ? "" : currentValue);
                     setOpen(false);
                   }}
+                  className="combobox-item-clickable"
                 >
                   <Check
                     className={cn(

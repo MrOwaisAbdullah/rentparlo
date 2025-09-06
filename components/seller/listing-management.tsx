@@ -321,7 +321,7 @@ export function ListingManagement({ listings, maxListings }: ListingManagementPr
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/listing/${listing._id}`} className="flex items-center gap-2">
+                            <Link href={`/listing/${listing?.slug?.current || listing?._id}`} className="flex items-center gap-2">
                               <ExternalLink className="w-4 h-4" />
                               View Public Page
                             </Link>

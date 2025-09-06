@@ -4,7 +4,7 @@ import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SafetyNoticeModalProps {
   open: boolean;
@@ -93,7 +93,7 @@ export function SafetyNoticeModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-yellow-600" />
@@ -106,29 +106,42 @@ export function SafetyNoticeModal({
             <p className="text-muted-foreground mb-4">{getMessage()}</p>
           </div>
           
-          <Card>
-            <CardContent className="p-4">
-              <h4 className="font-semibold mb-3 text-center">Safety Tips / حفاظتی ہدایات</h4>
-              <div className="space-y-3">
-                <ul className="space-y-2 text-sm text-muted-foreground">
+          {/* Responsive cards - side by side on desktop, stacked on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* English Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center">Safety Tips</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <ul className="space-y-3">
                   {safetyTips.map((tip, index) => (
                     <li key={`en-${index}`} className="flex items-start gap-2">
-                      <span className="text-yellow-600 mt-1">•</span>
-                      <span>{tip}</span>
+                      <span className="text-yellow-600 mt-1 flex-shrink-0">•</span>
+                      <span className="text-sm text-muted-foreground">{tip}</span>
                     </li>
                   ))}
                 </ul>
-                <ul className="space-y-2 text-sm text-muted-foreground mt-4">
+              </CardContent>
+            </Card>
+            
+            {/* Urdu Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center text-right">حفاظتی ہدایات</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <ul className="space-y-3">
                   {safetyTipsUrdu.map((tip, index) => (
                     <li key={`ur-${index}`} className="flex items-start gap-2">
-                      <span className="text-yellow-600 mt-1">•</span>
-                      <span className="text-right flex-1">{tip}</span>
+                      <span className="text-yellow-600 mt-1 flex-shrink-0">•</span>
+                      <span className="text-sm text-muted-foreground text-right flex-1" dir="rtl">{tip}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { toast } from "sonner"
 import { 
   Heart, Share2, 
   // Flag,
@@ -137,22 +138,36 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
 
   const handleShare = async () => {
     const url = window.location.href;
+    let copied = false;
+    
     if (navigator.share) {
-      await navigator.share({
-        title: listing.title,
-        text: Array.isArray(listing.description) 
-          ? listing.description
-              .filter((block: any) => block._type === 'block' && block.children)
-              .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
-              .join(' ')
-          : typeof listing.description === 'string' 
-            ? listing.description 
-            : '',
-        url
-      });
+      try {
+        await navigator.share({
+          title: listing.title,
+          text: Array.isArray(listing.description) 
+            ? listing.description
+                .filter((block: any) => block._type === 'block' && block.children)
+                .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
+                .join(' ')
+            : typeof listing.description === 'string' 
+              ? listing.description 
+              : '',
+          url
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(url);
+        copied = true;
+      }
     } else {
       await navigator.clipboard.writeText(url);
-      // Show toast notification
+      copied = true;
+    }
+    
+    // Show toast notification
+    if (copied) {
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -288,7 +303,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
               Home
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href={`/category/${listing.category?._ref}`} className="hover:text-foreground transition-colors">
+            <Link href={`/category/${typeof listing.category?.slug === 'string' ? listing.category.slug : listing.category?.slug?.current || listing.category?._id}`} className="hover:text-foreground transition-colors">
               {listing.category?.title}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -733,29 +748,20 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
               </div>
               <div className="flex gap-2">
                 <Button 
-                  size="lg" 
+                  className="w-12 h-12 p-0"
                   onClick={handleCallSeller}
                   disabled={!getSellerPhone() || listing.availability?.isAvailable === false}
                 >
                   <Phone className="w-6 h-6" />
                 </Button>
                 {listing.seller?.phone && (
-                  <button 
-                    className="p-2 bg-[#25D366] rounded-md hover:bg-[#128C7E] cursor-pointer"
-                    onClick={() => {
-                      // Open WhatsApp directly
-                      window.open(`https://wa.me/${listing.seller?.phone?.replace(/\D/g, '')}`, '_blank');
-                    }}
-                  >
-                    <div className="relative w-12 h-6">
-                      <Image
-                        src="/whatsapp.png"
-                        alt="WhatsApp"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  </button>
+                  <div className="p-1 bg-[#25D366] rounded-md hover:bg-[#128C7E] cursor-pointer">
+                    <WhatsAppButton
+                      phoneNumber={listing.seller.phone}
+                      sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
+                      size="compact"
+                    />
+                  </div>
                 )}
               </div>
             </div>

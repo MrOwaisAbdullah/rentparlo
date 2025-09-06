@@ -76,7 +76,7 @@ function ProductGrid({ listings }: ProductGridProps) {
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {currentListings.map((listing) => (
-          <Link key={listing.id} href={`/listing/${listing.id}`}>
+          <Link key={listing.id} href={`/listing/${listing?.slug?.current || listing?.id}`}>
             <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
               <div className="relative">
                 <div className="aspect-[4/3] relative overflow-hidden">

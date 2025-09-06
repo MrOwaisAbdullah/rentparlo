@@ -36,7 +36,7 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
           <Menu className="h-7 w-7" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-80 p-0 z-50">
+      <SheetContent side="right" className="w-full max-w-xs sm:max-w-sm md:max-w-md p-0 z-50">
         <div className="flex flex-col h-full">
           {/* Sheet Header */}
           <div className="p-6 border-b flex items-center justify-between">

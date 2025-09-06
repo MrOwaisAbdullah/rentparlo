@@ -14,7 +14,7 @@ import { ProfileImageUpload } from '@/components/forms/profile-image-upload';
 import { RoleSelector } from './role-selector';
 import { signUp, signInWithGoogle } from '@/lib/auth-actions';
 import { uploadProfileImage } from '@/app/auth/upload-image/actions';
-import { registrationSchema, type RegistrationFormData } from '@/lib/validations/auth';
+import { type RegistrationFormData, getRegistrationSchema } from '@/lib/validations/auth';
 import { sanitizeFormData } from '@/lib/security/sanitization';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +52,6 @@ export function RegisterForm({
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
   const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
   const [completedSteps, setCompletedSteps] = React.useState<Set<number>>(new Set());
   const [validationState, setValidationState] = React.useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({});
@@ -67,7 +66,7 @@ export function RegisterForm({
     clearErrors,
     control
   } = useForm<RegistrationFormData>({
-    resolver: zodResolver(registrationSchema),
+    resolver: zodResolver(getRegistrationSchema()),
     mode: 'onBlur',
     defaultValues: {
       role: 'user',
@@ -145,11 +144,9 @@ export function RegisterForm({
     setValidationState(prev => ({ ...prev, [field]: 'validating' }));
     
     try {
-      // Use trigger to validate individual fields through React Hook Form
       const isValid = await trigger(field);
       if (isValid) {
         setValidationState(prev => ({ ...prev, [field]: 'valid' }));
-        setFieldErrors(prev => ({ ...prev, [field]: '' }));
         clearErrors(field);
       } else {
         setValidationState(prev => ({ ...prev, [field]: 'invalid' }));
@@ -157,7 +154,6 @@ export function RegisterForm({
     } catch (error: any) {
       setValidationState(prev => ({ ...prev, [field]: 'invalid' }));
       const message = error?.message || 'Invalid value';
-      setFieldErrors(prev => ({ ...prev, [field]: message }));
       setFormError(field, { message });
     }
   }, [touchedFields, setFormError, clearErrors, trigger]);
@@ -210,7 +206,6 @@ export function RegisterForm({
     if (isStepValid && currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
       setError(null);
-      setFieldErrors({});
     }
   };
 
@@ -218,7 +213,6 @@ export function RegisterForm({
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
       setError(null);
-      setFieldErrors({});
     }
   };
 
@@ -226,7 +220,6 @@ export function RegisterForm({
     if (stepIndex < currentStep || completedSteps.has(stepIndex)) {
       setCurrentStep(stepIndex);
       setError(null);
-      setFieldErrors({});
     } else if (stepIndex === currentStep + 1) {
       await handleNext();
     }
@@ -237,7 +230,6 @@ export function RegisterForm({
     try {
       setIsLoading(true);
       setError(null);
-      setFieldErrors({});
 
       // Sanitize input data
       const sanitizedData = sanitizeFormData(data);
@@ -354,7 +346,7 @@ export function RegisterForm({
                   label="Full Name"
                   placeholder="Enter your full name"
                   value={formData.name}
-                  error={fieldErrors.name || errors.name?.message}
+                  error={errors.name?.message}
                   required
                   disabled={isLoading}
                   icon={User}
@@ -380,7 +372,7 @@ export function RegisterForm({
                   type="email"
                   placeholder="Enter your email"
                   value={formData.email}
-                  error={fieldErrors.email || errors.email?.message}
+                  error={errors.email?.message}
                   required
                   disabled={isLoading}
                   icon={Mail}
@@ -407,7 +399,7 @@ export function RegisterForm({
                   type="tel"
                   placeholder="03XX XXXXXXX"
                   value={formData.phone}
-                  error={fieldErrors.phone || errors.phone?.message}
+                  error={errors.phone?.message}
                   required
                   disabled={isLoading}
                   description="Pakistani mobile number format"
@@ -432,7 +424,7 @@ export function RegisterForm({
                   type="select"
                   options={pakistaniCities}
                   value={formData.city}
-                  error={fieldErrors.city || errors.city?.message}
+                  error={errors.city?.message}
                   required
                   disabled={isLoading}
                   icon={MapPin}
@@ -495,7 +487,7 @@ export function RegisterForm({
                   label="Business Name"
                   placeholder="Enter your business name (optional)"
                   value={formData.businessName || ''}
-                  error={(errors as any).businessName?.message || fieldErrors.businessName}
+                  error={(errors as any).businessName?.message}
                   onChange={(value) => setValue('businessName', value as any)}
                 />
 
@@ -506,7 +498,7 @@ export function RegisterForm({
                     label="CNIC Number"
                     placeholder="XXXXX-XXXXXXX-X"
                     value={formData.cnic || ''}
-                    error={(errors as any).cnic?.message || fieldErrors.cnic}
+                    error={(errors as any).cnic?.message}
                     description="Required for seller verification"
                     onChange={(value) => setValue('cnic', value as any)}
                   />
@@ -519,7 +511,7 @@ export function RegisterForm({
                       type="textarea"
                       placeholder="Enter your complete business address"
                       value={formData.address || ''}
-                      error={(errors as any).address?.message || fieldErrors.address}
+                      error={(errors as any).address?.message}
                       onChange={(value) => setValue('address', value as any)}
                     />
                   </div>
@@ -645,7 +637,7 @@ export function RegisterForm({
     >
       <form onSubmit={handleSubmit(onSubmit as any)}>
         <AnimatePresence>
-          {(error || Object.keys(fieldErrors).length > 0) && (
+          {(error || Object.keys(errors).length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: -10, height: 0 }}
               animate={{ opacity: 1, y: 0, height: 'auto' }}

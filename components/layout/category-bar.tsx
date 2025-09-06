@@ -108,7 +108,7 @@ export function CategoryBar() {
   }
 
   return (
-    <div className="border-b bg-white/60 backdrop-blur-xl z-20 relative">
+    <div className="border-b bg-white/60 backdrop-blur-xl relative">
       <div className="container mx-auto px-4">
         <div className="relative py-3">
           {/* Left Arrow - Always visible but enabled/disabled based on scroll */}

@@ -22,9 +22,24 @@ const pakistaniCities = [
 ] as const;
 
 /**
- * Base validation schema for common user fields
+ * Sign-in form validation schema
  */
-const baseUserSchema = z.object({
+export const signInSchema = z.object({
+  email: z.string()
+    .email('Invalid email address')
+    .toLowerCase(),
+  
+  password: z.string()
+    .min(1, 'Password is required'),
+  
+  rememberMe: z.boolean()
+});
+
+/**
+ * User registration schema
+ */
+export const userRegistrationSchema = z.object({
+  role: z.literal('user'),
   name: z.string()
     .min(2, 'Name must be at least 2 characters')
     .max(50, 'Name must be less than 50 characters')
@@ -46,28 +61,8 @@ const baseUserSchema = z.object({
   
   city: z.enum(pakistaniCities, {
     errorMap: () => ({ message: 'Please select a valid Pakistani city' })
-  })
-});
-
-/**
- * Sign-in form validation schema
- */
-export const signInSchema = z.object({
-  email: z.string()
-    .email('Invalid email address')
-    .toLowerCase(),
+  }),
   
-  password: z.string()
-    .min(1, 'Password is required'),
-  
-  rememberMe: z.boolean()
-});
-
-/**
- * User registration schema
- */
-export const userRegistrationSchema = baseUserSchema.extend({
-  role: z.literal('user'),
   confirmPassword: z.string(),
   terms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions')
 }).refine(data => data.password === data.confirmPassword, {
@@ -78,8 +73,31 @@ export const userRegistrationSchema = baseUserSchema.extend({
 /**
  * Seller registration schema with additional business fields
  */
-export const sellerRegistrationSchema = baseUserSchema.extend({
+export const sellerRegistrationSchema = z.object({
   role: z.literal('seller'),
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
+    .transform(val => val.trim()),
+  
+  email: z.string()
+    .email('Invalid email address')
+    .toLowerCase()
+    .refine(email => !email.includes('+'), 'Email aliases not allowed'),
+  
+  phone: z.string()
+    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani phone number format (03XXXXXXXXX)')
+    .transform(val => val.replace(/\s+/g, '')), // Remove spaces
+  
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  
+  city: z.enum(pakistaniCities, {
+    errorMap: () => ({ message: 'Please select a valid Pakistani city' })
+  }),
+  
   confirmPassword: z.string(),
   businessName: z.string()
     .min(2, 'Business name must be at least 2 characters')
@@ -104,7 +122,7 @@ export const sellerRegistrationSchema = baseUserSchema.extend({
 /**
  * Multi-step registration schema that handles both user and seller types
  */
-export const registrationSchema = z.discriminatedUnion('role', [
+export const getRegistrationSchema = () => z.union([
   userRegistrationSchema,
   sellerRegistrationSchema
 ]);
@@ -138,7 +156,7 @@ export const contactFormSchema = z.object({
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type UserRegistrationFormData = z.infer<typeof userRegistrationSchema>;
 export type SellerRegistrationFormData = z.infer<typeof sellerRegistrationSchema>;
-export type RegistrationFormData = z.infer<typeof registrationSchema>;
+export type RegistrationFormData = z.infer<ReturnType<typeof getRegistrationSchema>>;
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 
 /**

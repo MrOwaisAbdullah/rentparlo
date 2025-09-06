@@ -149,7 +149,7 @@ export function ListingCardCompact({
   return (
     <Card className={cn("group hover:shadow-md transition-all duration-300", className)}>
       <CardContent className="p-0">
-        <Link href={`/listing/${listing._id}`} className="block">
+        <Link href={`/listing/${listing?.slug?.current || listing?._id}`} className="block">
           <div className="flex gap-4 p-4">
             {/* Image */}
             <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">

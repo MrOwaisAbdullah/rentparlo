@@ -488,9 +488,9 @@ export function UniversalSearchBar({
       case "inline":
         return {
           wrapper: "bg-background border rounded-md",
-          form: "p-2",
+          form: "p-2 flex-col sm:flex-row",
           inputWrapper: "flex-1",
-          locationWrapper: "w-48",
+          locationWrapper: "w-full sm:w-48",
           searchWrapper: "flex-1",
           buttonWrapper: "shrink-0",
         };
@@ -623,7 +623,7 @@ export function UniversalSearchBar({
               <div
                 ref={suggestionsRef}
                 id={suggestionsId}
-                className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto"
+                className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-[99999] max-h-80 overflow-y-auto"
                 role="listbox"
                 aria-label={`Search suggestions, ${suggestions.length} available`}
               >
@@ -693,7 +693,7 @@ export function UniversalSearchBar({
               className={cn(
                 sizeClasses.button,
                 "bg-primary hover:bg-primary/90 transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                variant === "hero" ? "w-full" : "shrink-0"
+                variant === "hero" || variant === "inline" ? "w-full" : "shrink-0 sm:w-auto"
               )}
               disabled={isSearching}
               aria-label={

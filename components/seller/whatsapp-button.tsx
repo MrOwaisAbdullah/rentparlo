@@ -10,6 +10,7 @@ interface WhatsAppButtonProps {
   sellerName?: string;
   className?: string;
   onClick?: () => void;
+  size?: 'default' | 'compact';
 }
 
 export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>(({
@@ -17,7 +18,8 @@ export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>
   message = 'Hi, I found your profile on RentParLo.pk and I\'m interested in your rental items.', 
   sellerName = 'Seller',
   className = '',
-  onClick 
+  onClick,
+  size = 'default'
 }, ref) => {
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   
@@ -40,17 +42,19 @@ export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>
       <button
         ref={ref}
         onClick={handleButtonClick}
-        className={`relative flex items-center justify-center gap-5 w-full overflow-hidden rounded-xl bg-[#25D366] p-3 font-medium text-white transition-all after:absolute after:inset-0 after:bg-gradient-to-r after:from-white/0 after:to-white/10 hover:shadow-lg hover:shadow-[#25D366]/20 active:scale-[0.98] h-12 ${className}`}
+        className={`relative flex items-center justify-center overflow-hidden rounded-xl bg-[#25D366] font-medium text-white transition-all after:absolute after:inset-0 after:bg-gradient-to-r after:from-white/0 after:to-white/10 hover:shadow-lg hover:shadow-[#25D366]/20 active:scale-[0.98] ${size === 'compact' ? 'w-16 h-12 p-2' : 'w-full gap-5 p-3 h-12'} ${className}`}
         data-whatsapp-button
       >
         <Image
-          className="absolute left-3 p-1"
+          className={size === 'compact' ? 'p-1' : 'absolute left-3 p-1'}
           src="/whatsapp.png"
           alt="Message on WhatsApp"
-          width={40}
-          height={40}
+          width={size === 'compact' ? 32 : 40}
+          height={size === 'compact' ? 32 : 40}
         />
-        <span className="pl-12">Message on WhatsApp</span>
+        {size !== 'compact' && (
+          <span className="pl-12">Message on WhatsApp</span>
+        )}
       </button>
       
       <SafetyNoticeModal

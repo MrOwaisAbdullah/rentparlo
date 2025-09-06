@@ -38,6 +38,9 @@ interface Listing {
       city?: string;
     };
   };
+  slug?: {
+    current: string;
+  };
   _createdAt?: string; // Add _createdAt field
   createdAt: string;
   views?: number;
@@ -112,7 +115,7 @@ const transformToListingType = (listing: Listing): FullListing => {
     _type: "listing",
     _createdAt: createdAt,
     title: listing.title,
-    slug: { current: listing._id },
+    slug: listing.slug || { current: listing._id },
     description: listing.description || "", // Keep as simple string, not array
     price: listing.price,
     priceType: mapPriceType(listing.priceType),

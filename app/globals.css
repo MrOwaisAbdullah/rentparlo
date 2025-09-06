@@ -277,3 +277,7 @@
     }
   }
 }
+
+.combobox-item-clickable {
+  pointer-events: auto !important;
+}

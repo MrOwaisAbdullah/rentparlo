@@ -33,7 +33,7 @@ export function MapButton({
     <>
       <button
         onClick={handleButtonClick}
-        className={`flex items-center justify-center gap-2 w-full rounded-xl bg-purple-600 p-3 font-medium text-white hover:bg-purple-700 ${className}`}
+        className={`flex items-center justify-center gap-2 w-full rounded-xl bg-purple-600 p-4 sm:p-3 font-medium text-white hover:bg-purple-700 ${className}`}
       >
         <MapPin className="w-4 h-4" />
         View Location

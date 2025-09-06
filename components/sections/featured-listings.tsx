@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Listing } from '@/types';
 import { ListingCard } from '@/components/cards/listing-card'; // Import the ListingCard component
+import { toast } from "sonner"
 
 interface FeaturedListingsProps {
   listings: Listing[];
@@ -60,10 +61,37 @@ export function FeaturedListings({ listings, className }: FeaturedListingsProps)
                 size="sm"
                 variant="secondary"
                 className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  // Share functionality
+                  const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
+                  
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: listing?.title,
+                        text: Array.isArray(listing?.description) 
+                          ? listing.description
+                              .filter((block: any) => block._type === 'block' && block.children)
+                              .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
+                              .join(' ')
+                          : typeof listing?.description === 'string' 
+                            ? listing.description 
+                            : '',
+                        url
+                      });
+                    } catch (error) {
+                      console.error('Error sharing:', error);
+                      // Fallback to clipboard
+                      await navigator.clipboard.writeText(url);
+                    }
+                  } else {
+                    // Fallback to clipboard
+                    await navigator.clipboard.writeText(url);
+                  }
+                  
+                  // Show toast notification
+                  toast.success("Link copied to clipboard!");
                 }}
               >
                 <Share2 className="w-4 h-4" />

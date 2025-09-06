@@ -296,7 +296,7 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [] }: Ca
                   : "Select city..."}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
+            <PopoverContent className={cn("w-full p-0", "z-[9999]")}>
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandList>
@@ -306,6 +306,7 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [] }: Ca
                       onSelect={() => {
                         setLocalFilters(prev => ({ ...prev, location: 'any', open: false }));
                       }}
+                      className="combobox-item-clickable"
                     >
                       <span>Any location</span>
                     </CommandItem>
@@ -315,6 +316,7 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [] }: Ca
                         onSelect={() => {
                           setLocalFilters(prev => ({ ...prev, location: city, open: false }));
                         }}
+                        className="combobox-item-clickable"
                       >
                         <Check
                           className={cn(

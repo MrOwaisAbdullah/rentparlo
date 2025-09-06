@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from '@/utils/supabase/server'
-import { signInSchema, registrationSchema } from '@/lib/validations/auth'
+import { signInSchema, getRegistrationSchema } from '@/lib/validations/auth'
 import { sanitizeFormData, createRateLimiter } from '@/lib/security/sanitization'
 import { headers } from 'next/headers'
 
@@ -162,6 +162,7 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
     const sanitizedData = sanitizeFormData(cleanedData);
 
     // Validate with Zod schema
+    const registrationSchema = getRegistrationSchema();
     const validationResult = registrationSchema.safeParse(sanitizedData);
     if (!validationResult.success) {
       const errors = validationResult.error.errors.map(err => err.message).join(', ');

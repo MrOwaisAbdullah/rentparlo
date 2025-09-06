@@ -40,9 +40,7 @@ export default async function RootLayout({
       >
         <QueryProvider>
           <Header user={user} />
-          <div className="sticky top-0 z-50">
-            <CategoryBarWrapper />
-          </div>
+          <CategoryBarWrapper />
           {children}
           <Footer />
         </QueryProvider>

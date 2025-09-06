@@ -1,13 +1,15 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { MapPin, Star, Phone, MessageCircle, Heart, Share2, Eye, Clock, Settings, Calendar, Zap, Award, Tag, Percent, Leaf, MapPinHouse } from "lucide-react"
+import { MapPin, Star, Phone, Heart, Share2, Eye, Clock, Settings, Calendar, Zap, Award, Tag, Percent, Leaf, MapPinHouse } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { getSanityImageUrl } from "@/sanity/lib/image"
-import { Listing, ListingImage, ListingBadge } from "@/types" // Import the proper Listing type and ListingImage
+import { Listing, ListingImage, ListingBadge } from "@/types"
+import { WhatsAppButton } from "@/components/seller/whatsapp-button"
 
 interface ListingCardProps {
   // Original individual props
@@ -401,7 +403,52 @@ export function ListingCard({
             )}
             
             {/* Overlay actions passed as prop */}
-            {overlayActions}
+            {overlayActions || (
+              <div className="absolute top-3 right-3 flex gap-2">
+                <Button size="sm" variant="secondary" className="w-8 h-8 p-0 bg-white/90 hover:bg-white">
+                  <Heart className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
+                    
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: listing?.title,
+                          text: Array.isArray(listing?.description) 
+                            ? listing.description
+                                .filter((block: any) => block._type === 'block' && block.children)
+                                .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
+                                .join(' ')
+                            : typeof listing?.description === 'string' 
+                              ? listing.description 
+                              : '',
+                          url
+                        });
+                      } catch (error) {
+                        console.error('Error sharing:', error);
+                        // Fallback to clipboard
+                        await navigator.clipboard.writeText(url);
+                      }
+                    } else {
+                      // Fallback to clipboard
+                      await navigator.clipboard.writeText(url);
+                    }
+                    
+                    // Show toast notification
+                    toast.success("Link copied to clipboard!");
+                  }}
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
             
             {/* Status badges */}
             <div className="absolute top-3 left-3 flex gap-2">
@@ -512,7 +559,42 @@ export function ListingCard({
               <Button size="sm" variant="secondary" className="w-8 h-8 p-0 bg-white/90 hover:bg-white">
                 <Heart className="w-4 h-4" />
               </Button>
-              <Button size="sm" variant="secondary" className="w-8 h-8 p-0 bg-white/90 hover:bg-white">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
+                  
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: listing?.title,
+                        text: Array.isArray(listing?.description) 
+                          ? listing.description
+                              .filter((block: any) => block._type === 'block' && block.children)
+                              .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
+                              .join(' ')
+                          : typeof listing?.description === 'string' 
+                            ? listing.description 
+                            : '',
+                        url
+                      });
+                    } catch (error) {
+                      console.error('Error sharing:', error);
+                      // Fallback to clipboard
+                      await navigator.clipboard.writeText(url);
+                    }
+                  } else {
+                    // Fallback to clipboard
+                    await navigator.clipboard.writeText(url);
+                  }
+                  
+                  // Show toast notification
+                  toast.success("Link copied to clipboard!");
+                }}
+              >
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
@@ -731,14 +813,28 @@ export function ListingCard({
 
               {/* Contact Buttons */}
               <div className="flex space-x-1 mt-2">
-                <Button size="sm" variant="outline" className="h-8 px-2 bg-transparent flex-1 min-h-[36px]">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-8 px-2 bg-transparent flex-1 min-h-[36px]"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Handle call action
+                  }}
+                >
                   <Phone className="h-3 w-3 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline text-xs">Call</span>
                 </Button>
-                <Button size="sm" className="h-8 px-2 bg-green-600 hover:bg-green-700 flex-1 min-h-[36px]">
-                  <MessageCircle className="h-3 w-3 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline text-xs">WhatsApp</span>
-                </Button>
+                {listing?.seller?.phone && (
+                  <div className="flex-1 min-h-[36px]">
+                    <WhatsAppButton
+                      phoneNumber={listing.seller.phone}
+                      sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
+                      className="h-8 px-2 w-full"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -751,7 +847,7 @@ export function ListingCard({
   return (
     <Card className={cn("group overflow-hidden hover:shadow-lg transition-all duration-300 py-0", className)}>
       <div className="relative">
-        <Link href={`/listing/${effectiveId}`}>
+        <Link href={`/listing/${listing?.slug?.current || effectiveId}`}>
           <div
             className={cn(
               "relative overflow-hidden"
@@ -785,7 +881,43 @@ export function ListingCard({
               <Button size="icon" variant="secondary" className="h-8 w-8">
                 <Heart className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="secondary" className="h-8 w-8">
+              <Button 
+                size="icon" 
+                variant="secondary" 
+                className="h-8 w-8"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
+                  
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: listing?.title,
+                        text: Array.isArray(listing?.description) 
+                          ? listing.description
+                              .filter((block: any) => block._type === 'block' && block.children)
+                              .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
+                              .join(' ')
+                          : typeof listing?.description === 'string' 
+                            ? listing.description 
+                            : '',
+                        url
+                      });
+                    } catch (error) {
+                      console.error('Error sharing:', error);
+                      // Fallback to clipboard
+                      await navigator.clipboard.writeText(url);
+                    }
+                  } else {
+                    // Fallback to clipboard
+                    await navigator.clipboard.writeText(url);
+                  }
+                  
+                  // Show toast notification
+                  toast.success("Link copied to clipboard!");
+                }}
+              >
                 <Share2 className="h-4 w-4" />
               </Button>
             </div>
@@ -797,7 +929,7 @@ export function ListingCard({
         <div className="space-y-3">
           {/* Title and Rating */}
           <div>
-            <Link href={`/listing/${effectiveId}`}>
+            <Link href={`/listing/${listing?.slug?.current || effectiveId}`}>
               <h3
                 className={cn(
                   "font-semibold line-clamp-2 group-hover:text-primary transition-colors"
@@ -868,14 +1000,28 @@ export function ListingCard({
 
               {/* Contact Buttons */}
               <div className="flex space-x-1">
-                <Button size="sm" variant="outline" className="h-8 px-2 bg-transparent flex-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-8 px-2 bg-transparent flex-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Handle call action
+                  }}
+                >
                   <Phone className="h-3 w-3 mr-1" />
                   <span className="hidden sm:inline">Call</span>
                 </Button>
-                <Button size="sm" className="h-8 px-2 bg-green-600 hover:bg-green-700 flex-1">
-                  <MessageCircle className="h-3 w-3 mr-1" />
-                  <span className="hidden sm:inline">WhatsApp</span>
-                </Button>
+                {listing?.seller?.phone && (
+                  <div className="flex-1">
+                    <WhatsAppButton
+                      phoneNumber={listing.seller.phone}
+                      sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
+                      className="h-8 px-2 w-full"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}

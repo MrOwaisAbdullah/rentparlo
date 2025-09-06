@@ -210,8 +210,9 @@ export interface Listing {
   priceWeekly?: number;
   priceMonthly?: number;
   category: {
-    _ref: string;
+    _id: string;
     title: string;
+    slug: string | { current: string };
   };
   images: ListingImage[];
   location: Location;
