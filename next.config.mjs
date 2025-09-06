@@ -1,9 +1,6 @@
-import path from "path";
-import fs from "fs";
+/** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  distDir: "dist",
-  productionBrowserSourceMaps: process.env.NODE_ENV === "production",
   reactStrictMode: false,
   typescript: {
     ignoreBuildErrors: true,
@@ -29,7 +26,7 @@ const nextConfig = {
       process.env.NODE_ENV === "production" ? "source-map" : false;
     config.optimization = {
       ...config.optimization,
-      minimize: false,
+      minimize: true,
     };
     config.plugins = config.plugins || [];
     config.module = config.module || { rules: [] };
