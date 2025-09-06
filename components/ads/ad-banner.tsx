@@ -13,24 +13,24 @@ interface AdBannerProps {
 
 // Mock banner data for demonstration
 const MOCK_BANNERS: Record<BannerPlacement, AdBannerType> = {
-  "homepage-top": {
-    _id: "1",
-    _type: "adBanner",
-    title: "Premium Camera Rentals",
-    placement: "homepage-top",
-    size: "leaderboard",
-    image: {
-      asset: {
-        url: "/camera-rental-banner.png"
-      }
+    "homepage-top": {
+      _id: "1",
+      _type: "adBanner",
+      title: "Premium Camera Rentals",
+      placement: "homepage-top",
+      size: "leaderboard",
+      image: {
+        asset: {
+          url: "/camera-rental-banner.png"
+        }
+      },
+      targetUrl: "/category/camera",
+      targetUserType: "all",
+      startDate: new Date().toISOString(),
+      isActive: true,
+      displayOrder: 0,
+      clicks: 0
     },
-    targetUrl: "/category/camera",
-    targetUserType: "all",
-    startDate: new Date().toISOString(),
-    isActive: true,
-    displayOrder: 0,
-    clicks: 0
-  },
   "homepage-middle": {
     _id: "2",
     _type: "adBanner",
@@ -138,7 +138,25 @@ const MOCK_BANNERS: Record<BannerPlacement, AdBannerType> = {
     isActive: true,
     displayOrder: 0,
     clicks: 0
-  }
+  },
+  "seller-profile": {
+    _id: "1",
+    _type: "adBanner",
+    title: "Premium Camera Rentals",
+    placement: "seller-profile",
+    size: "leaderboard",
+    image: {
+      asset: {
+        url: "/camera-rental-banner.png"
+      }
+    },
+    targetUrl: "/category/camera",
+    targetUserType: "all",
+    startDate: new Date().toISOString(),
+    isActive: true,
+    displayOrder: 0,
+    clicks: 0
+  },
 }
 
 export function AdBanner({ placement, size, className = "", fallbackText }: AdBannerProps) {
@@ -180,6 +198,8 @@ export function AdBanner({ placement, size, className = "", fallbackText }: AdBa
   const getBannerSizeClasses = () => {
     const bannerSize = size || banner?.size || "leaderboard"
     switch (bannerSize) {
+      case "large-banner":
+        return "w-full max-w-[1400px] h-[400px]"
       case "leaderboard":
         return "w-full max-w-[1300px] h-[200px]"
       case "medium-rectangle":
@@ -209,7 +229,7 @@ export function AdBanner({ placement, size, className = "", fallbackText }: AdBa
   }
 
   return (
-    <div className={`relative cursor-pointer ${getBannerSizeClasses()} ${className}`} onClick={handleClick}>
+    <div className={`relative cursor-pointer mx-auto ${getBannerSizeClasses()} ${className}`} onClick={handleClick}>
       <Image
         src={banner.image?.asset?.url || "/placeholder.svg"}
         alt={banner.title}

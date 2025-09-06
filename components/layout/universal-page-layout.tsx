@@ -44,22 +44,19 @@ export function UniversalPageLayout({
         >
           <div className="py-4 sm:py-6 lg:py-8">
             <ResponsiveFlex
-              direction={sidebarPosition === "left" ? "col" : "col"}
+              direction="col"
               gap="default"
-              className={cn(
-                // Desktop layout: side-by-side
-                "lg:flex-row",
-                // When sidebar is on the left, we use flex-row-reverse visually
-                sidebarPosition === "left" && "lg:flex-row-reverse"
-              )}
+              className="lg:flex-row"
               preventOverflow={true}
             >
               {/* Main Content */}
               <div
                 className={cn(
                   "flex-1 min-w-0 w-full", // min-w-0 prevents flex item from overflowing
-                  // Ensure content takes full width on mobile
-                  sidebarPosition === "right" ? "order-1 lg:order-1" : "order-1 lg:order-2",
+                  // Mobile: content always first
+                  "order-1",
+                  // Desktop: order based on sidebar position
+                  sidebarPosition === "left" ? "lg:order-2" : "lg:order-1",
                   contentClassName
                 )}
               >
@@ -72,14 +69,14 @@ export function UniversalPageLayout({
                   className={cn(
                     // Mobile: full width, appears after content
                     "w-full",
-                    // Default order: content first, sidebar second (right sidebar)
-                    sidebarPosition === "right" ? "order-2 lg:order-2" : "order-2 lg:order-1",
+                    // Mobile: sidebar always second
+                    "order-2",
+                    // Desktop: order based on sidebar position
+                    sidebarPosition === "left" ? "lg:order-1" : "lg:order-2",
                     // Tablet and up: fixed width sidebar
                     "sm:w-full md:w-80 lg:w-80 xl:w-96",
                     // Desktop: maintain flex shrink behavior
                     "lg:flex-shrink-0",
-                    // When sidebar is on the left, it should appear first on desktop
-                    sidebarPosition === "left" && "lg:order-1",
                     sidebarClassName
                   )}
                 >

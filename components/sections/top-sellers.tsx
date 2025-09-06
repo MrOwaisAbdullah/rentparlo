@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Star, MapPin, CheckCircle, Award, TrendingUp } from 'lucide-react';
+import { Star, MapPin, Award, TrendingUp } from 'lucide-react';
+import { VerifiedBadge } from '@/components/seller/verified-badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -96,10 +97,9 @@ export function TopSellers({ sellers, className }: TopSellersProps) {
                 </AvatarFallback>
               </Avatar>
               
-              {/* Verification badge */}
-              {seller.is_verified && (
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-3 h-3 text-white" />
+              {seller.profile.is_verified && (
+                <div className="absolute -bottom-1 -right-1">
+                  <VerifiedBadge size="sm" />
                 </div>
               )}
 

@@ -97,8 +97,8 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
       title: category.title,
       slug:
         typeof category.slug === "string"
-          ? category.slug
-          : category.slug.current,
+        ? category.slug
+        : category.slug.current,
       description: category.description,
       itemCount: category.itemCount,
     }));
@@ -107,26 +107,20 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
     const searchPageFilters = {
       query: params.q || "",
       sortBy: params.sortBy || "newest",
-      minPrice: params.minPrice ? parseInt(params.minPrice) : 0,
-      maxPrice: params.maxPrice ? parseInt(params.maxPrice) : 0,
-      condition: params.condition || "",
-      area: params.area || "",
-      availability: params.availability || "",
+      minPrice: 0,
+      maxPrice: 0,
+      condition: "",
+      area: "",
+      availability: "",
     };
 
-    // Page context for sidebar content
+    // Page context for sidebar content - exclude filters to prevent them from showing
     const pageContext = {
       searchQuery: params.q || "",
       filters: searchPageFilters,
       categories: transformedCategories,
-      hasActiveSearch: !!(
-        params.q ||
-        params.condition ||
-        params.area ||
-        params.availability ||
-        params.minPrice ||
-        params.maxPrice
-      ),
+      hasActiveSearch: !!(params.q),
+      hideFilters: true, // Flag to hide filters in the sidebar
     };
 
     return (
@@ -144,14 +138,7 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
             layout="compact"
             showSidebar={false}
             manageURL={true}
-            limitedFilters={[
-              "sortBy",
-              "minPrice",
-              "maxPrice",
-              "condition",
-              "area",
-              "availability",
-            ]}
+            limitedFilters={[]}
           />
         </UniversalPageLayout>
       </UnifiedSearchProvider>

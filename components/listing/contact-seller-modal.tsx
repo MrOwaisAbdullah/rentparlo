@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { X, Send, Phone, Mail, MessageCircle, User, Shield, Star, AlertTriangle } from 'lucide-react';
+import { X, Send, Phone, Mail, User, Shield, Star, AlertTriangle } from 'lucide-react';
+import { WhatsAppButton } from '@/components/seller/whatsapp-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
+import { VerifiedBadge } from '@/components/seller/verified-badge';
 
 interface Listing {
   _id: string;
@@ -58,7 +60,7 @@ const contactTemplates = [
 ];
 
 export function ContactSellerModal({ listing, seller, onClose }: ContactSellerModalProps) {
-  const [contactMethod, setContactMethod] = React.useState<'message' | 'phone' | 'email'>('message');
+  const [contactMethod, setContactMethod] = React.useState<'phone' | 'email'>('phone');
   const [formData, setFormData] = React.useState({
     name: '',
     phone: '',
@@ -230,7 +232,7 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
                   {seller.profile?.business_name || seller.username}
                 </h4>
                 {seller.isVerified && (
-                  <Shield className="w-4 h-4 text-green-600" />
+                  <VerifiedBadge size="sm" />
                 )}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -257,15 +259,6 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
 
           {/* Contact Method Tabs */}
           <div className="flex gap-2 p-1 bg-muted rounded-lg">
-            <Button
-              variant={contactMethod === 'message' ? 'default' : 'ghost'}
-              size="sm"
-              className="flex-1"
-              onClick={() => setContactMethod('message')}
-            >
-              <MessageCircle className="w-4 h-4 mr-1" />
-              Message
-            </Button>
             {seller.profile?.phone && (
               <Button
                 variant={contactMethod === 'phone' ? 'default' : 'ghost'}
@@ -291,7 +284,31 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
           </div>
 
           {/* Contact Forms */}
-          {contactMethod === 'message' && (
+          {contactMethod === 'phone' && seller.profile?.phone && (
+            <div className="text-center py-8 space-y-4">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                <Phone className="w-8 h-8" />
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Call {seller.profile?.business_name || seller.username}</h4>
+                <p className="text-2xl font-bold text-primary mb-4">{seller.profile?.phone}</p>
+                <Button onClick={handlePhoneCall} className="w-full max-w-xs">
+                  <Phone className="w-4 h-4 mr-2" />
+                  Call Now
+                </Button>
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Or message on WhatsApp:</p>
+                  <WhatsAppButton 
+                    phoneNumber={seller.profile.phone} 
+                    sellerName={seller.profile?.business_name || seller.username}
+                    className="w-full max-w-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {contactMethod === 'email' && seller.profile?.email && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -349,53 +366,23 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
               </div>
 
               <div>
-                <Label htmlFor="message">Message *</Label>
+                <Label htmlFor="message">Your Message *</Label>
                 <Textarea
                   id="message"
                   value={formData.message}
                   onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                   required
-                  rows={4}
-                  placeholder="Type your message here..."
-                  className="resize-none"
+                  placeholder="Enter your message..."
+                  className="min-h-[120px]"
                 />
               </div>
 
-              {/* Rental Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="start-date">Preferred Start Date</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={formData.rentalDates.start}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      rentalDates: { ...prev.rentalDates, start: e.target.value }
-                    }))}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="end-date">Preferred End Date</Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={formData.rentalDates.end}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      rentalDates: { ...prev.rentalDates, end: e.target.value }
-                    }))}
-                    min={formData.rentalDates.start || new Date().toISOString().split('T')[0]}
-                  />
-                </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>By sending this message, you agree to our Terms of Service and Privacy Policy.</span>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isSubmitting || listing.availability !== 'available'}
-              >
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -409,22 +396,6 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
                 )}
               </Button>
             </form>
-          )}
-
-          {contactMethod === 'phone' && (
-            <div className="text-center py-8 space-y-4">
-              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
-                <Phone className="w-8 h-8" />
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Call {seller.profile?.business_name || seller.username}</h4>
-                <p className="text-2xl font-bold text-primary mb-4">{seller.profile?.phone}</p>
-                <Button onClick={handlePhoneCall} className="w-full max-w-xs">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Call Now
-                </Button>
-              </div>
-            </div>
           )}
 
           {contactMethod === 'email' && (

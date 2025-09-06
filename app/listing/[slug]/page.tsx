@@ -8,6 +8,8 @@ import { ListingDetailSkeleton } from '@/components/listing/listing-detail-skele
 import { ClientRetryButton } from '@/components/listing/client-retry-button';
 import { headers } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 interface ListingPageProps {
   params: Promise<{
     slug: string;

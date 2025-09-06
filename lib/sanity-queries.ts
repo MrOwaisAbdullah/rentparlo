@@ -637,7 +637,7 @@ export async function searchListings(params: {
   category?: string
   city?: string
   area?: string
-  condition?: string
+  condition?: string | string[]
   minPrice?: number
   maxPrice?: number
   offset?: number
@@ -648,38 +648,74 @@ export async function searchListings(params: {
     category = '',
     city = '',
     area = '',
-    condition = '',
+    condition: conditionParam = '',
     minPrice = 0,
     maxPrice = 0,
     offset = 0,
     limit = 20
   } = params
 
-  // Ensure all parameters are properly typed for Sanity client
-  // Renaming 'query' to 'searchQuery' to avoid conflict with Sanity's internal query property
-  const queryParams: {
-    searchQuery: string
-    category: string
-    city: string
-    area: string
-    condition: string
-    minPrice: number
-    maxPrice: number
-    offset: number
-    limit: number
-  } = {
-    searchQuery,
-    category,
-    city,
-    area,
-    condition,
-    minPrice,
-    maxPrice,
-    offset,
-    limit
-  };
+  // Handle condition parameter - ensure it's never null
+  const condition = conditionParam ?? '';
 
-  return await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+  // Handle condition parameter - if it's an array or comma-separated string, make multiple queries
+  if (Array.isArray(condition) || (typeof condition === 'string' && condition.includes(','))) {
+    const conditions = Array.isArray(condition) 
+      ? condition 
+      : condition.split(',').filter(Boolean);
+    
+    // Make separate queries for each condition and combine results
+    const allResults: Listing[] = [];
+    const uniqueListings = new Map<string, Listing>();
+    
+    for (const cond of conditions) {
+      const queryParams = {
+        searchQuery,
+        category,
+        city,
+        area,
+        condition: cond.trim(),
+        minPrice,
+        maxPrice,
+        offset: 0, // We'll handle pagination after combining
+        limit: offset + limit // Get enough results to handle pagination
+      };
+      
+      const results = await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+      // Add to unique listings map to avoid duplicates
+      results.forEach(listing => {
+        uniqueListings.set(listing._id, listing);
+      });
+    }
+    
+    // Convert map back to array and apply pagination
+    const combinedResults = Array.from(uniqueListings.values());
+    
+    // Sort by featured and creation date (same as original query)
+    combinedResults.sort((a, b) => {
+      if (a.isFeatured && !b.isFeatured) return -1;
+      if (!a.isFeatured && b.isFeatured) return 1;
+      return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
+    });
+    
+    // Apply pagination
+    return combinedResults.slice(offset, offset + limit);
+  } else {
+    // Single condition case - use original query
+    const queryParams = {
+      searchQuery,
+      category,
+      city,
+      area,
+      condition: Array.isArray(condition) ? condition[0] : condition,
+      minPrice,
+      maxPrice,
+      offset,
+      limit
+    };
+    
+    return await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+  }
 }
 
 // Helper function to get count of search results
@@ -688,7 +724,7 @@ export async function searchListingsCount(params: {
   category?: string
   city?: string
   area?: string
-  condition?: string
+  condition?: string | string[]
   minPrice?: number
   maxPrice?: number
 }): Promise<number> {
@@ -697,32 +733,60 @@ export async function searchListingsCount(params: {
     category = '',
     city = '',
     area = '',
-    condition = '',
+    condition: conditionParam = '',
     minPrice = 0,
     maxPrice = 0
   } = params
 
-  // Ensure all parameters are properly typed for Sanity client
-  // Renaming 'query' to 'searchQuery' to avoid conflict with Sanity's internal query property
-  const queryParams: {
-    searchQuery: string
-    category: string
-    city: string
-    area: string
-    condition: string
-    minPrice: number
-    maxPrice: number
-  } = {
-    searchQuery,
-    category,
-    city,
-    area,
-    condition,
-    minPrice,
-    maxPrice
-  };
+  // Handle condition parameter - ensure it's never null
+  const condition = conditionParam ?? '';
 
-  return await client.fetch(SEARCH_LISTINGS_COUNT_QUERY, queryParams);
+  // Handle condition parameter - if it's an array or comma-separated string, make multiple queries
+  if (Array.isArray(condition) || (typeof condition === 'string' && condition.includes(','))) {
+    const conditions = Array.isArray(condition) 
+      ? condition 
+      : condition.split(',').filter(Boolean);
+    
+    // Make separate queries for each condition and count unique results
+    const uniqueListingIds = new Set<string>();
+    
+    for (const cond of conditions) {
+      const queryParams = {
+        searchQuery,
+        category,
+        city,
+        area,
+        condition: cond.trim(),
+        minPrice,
+        maxPrice
+      };
+      
+      // Get actual listings to count unique ones
+      const listings = await client.fetch(SEARCH_LISTINGS_QUERY, {
+        ...queryParams,
+        offset: 0,
+        limit: 1000 // Get a reasonable number of listings to count
+      });
+      
+      // Add listing IDs to set to ensure uniqueness
+      listings.forEach(listing => uniqueListingIds.add(listing._id));
+    }
+    
+    return uniqueListingIds.size;
+  } else {
+    // Single condition case - use original query
+    const queryParams = {
+      searchQuery,
+      category,
+      city,
+      area,
+      condition: Array.isArray(condition) ? condition[0] : condition,
+      minPrice,
+      maxPrice
+    };
+    
+    return await client.fetch(SEARCH_LISTINGS_COUNT_QUERY, queryParams);
+  }
 }
 
 // Helper function to fetch blog posts

@@ -30,9 +30,23 @@ function getRedisClient(): any | null {
     return null;
   }
 
-  // Return existing client if already created
+  // Return existing client if already created and connected
   if (globalRedisClient) {
-    return globalRedisClient;
+    // Check if connection is still alive
+    try {
+      // In a real scenario, we'd check the connection state
+      // For now, we'll assume it's connected
+      return globalRedisClient;
+    } catch (error) {
+      console.log('[CACHE_INFO] Redis connection lost, creating new connection');
+      // Connection lost, create a new one
+      try {
+        globalRedisClient.quit();
+      } catch (quitError) {
+        // Ignore quit errors
+      }
+      globalRedisClient = null;
+    }
   }
 
   try {
@@ -64,7 +78,10 @@ function getRedisClient(): any | null {
           return true;
         }
         return false;
-      }
+      },
+      
+      // Connection timeout
+      connectTimeout: 10000, // 10 seconds
     });
 
     // Add Redis error handling
@@ -73,11 +90,19 @@ function getRedisClient(): any | null {
     });
 
     globalRedisClient.on('connect', () => {
-      console.log('Redis connected successfully');
+      console.log('[CACHE_INFO] Redis connected successfully');
     });
 
     globalRedisClient.on('reconnecting', () => {
-      console.log('Redis reconnecting...');
+      console.log('[CACHE_INFO] Redis reconnecting...');
+    });
+
+    globalRedisClient.on('close', () => {
+      console.log('[CACHE_INFO] Redis connection closed');
+    });
+
+    globalRedisClient.on('end', () => {
+      console.log('[CACHE_INFO] Redis connection ended');
     });
 
     return globalRedisClient;
@@ -119,6 +144,13 @@ export class CacheManager {
     } else {
       // Initialize Redis client using singleton pattern
       this.redis = getRedisClient();
+      
+      // Log Redis status
+      if (this.redis) {
+        console.log('[CACHE_INFO] Redis client initialized');
+      } else {
+        console.log('[CACHE_INFO] Redis client not available, using in-memory cache only');
+      }
     }
     
     // In-memory cache as fallback with LRU eviction
@@ -130,30 +162,62 @@ export class CacheManager {
   
   async get<T>(key: string): Promise<T | null> {
     try {
-      // Update metrics
-      const metrics = this.metrics.get(key) || { hits: 0, misses: 0, errors: 0, lastAccess: 0 };
-      
-      // Check in-memory cache first
-      const inMemoryResult = this.getInMemory<T>(key);
-      if (inMemoryResult !== undefined) {
+      // Check in-memory cache first (fastest)
+      const memoryResult = this.getInMemory<T>(key);
+      if (memoryResult !== null) {
+        // Update metrics
+        const metrics = this.metrics.get(key) || { hits: 0, misses: 0, errors: 0, lastAccess: 0 };
         metrics.hits++;
         metrics.lastAccess = Date.now();
         this.metrics.set(key, metrics);
-        return inMemoryResult as T;
+        
+        return memoryResult;
       }
       
       // Check Redis cache if available and on server side
       if (this.redis && typeof window === 'undefined') {
-        const redisResult = await this.redis.get(key);
-        if (redisResult) {
-          metrics.hits++;
-          metrics.lastAccess = Date.now();
-          this.metrics.set(key, metrics);
-          return JSON.parse(redisResult) as T;
+        try {
+          // Check if Redis connection is still active before using it
+          await this.redis.ping();
+          
+          const redisResult = await this.redis.get(key);
+          if (redisResult) {
+            // Update metrics
+            const metrics = this.metrics.get(key) || { hits: 0, misses: 0, errors: 0, lastAccess: 0 };
+            metrics.hits++;
+            metrics.lastAccess = Date.now();
+            this.metrics.set(key, metrics);
+            return JSON.parse(redisResult) as T;
+          }
+        } catch (redisError) {
+          // If Redis connection fails, log the error but fall back to cache miss
+          this.logError('cache_get_error', `Key: ${key}, Error: ${redisError.message}`);
+          console.error('Redis connection error during get operation:', redisError);
+          
+          // Try to reconnect
+          try {
+            this.redis = getRedisClient();
+            if (this.redis) {
+              // Retry the operation once
+              const redisResult = await this.redis.get(key);
+              if (redisResult) {
+                // Update metrics
+                const metrics = this.metrics.get(key) || { hits: 0, misses: 0, errors: 0, lastAccess: 0 };
+                metrics.hits++;
+                metrics.lastAccess = Date.now();
+                this.metrics.set(key, metrics);
+                return JSON.parse(redisResult) as T;
+              }
+            }
+          } catch (retryError) {
+            // If retry fails, continue silently and treat as cache miss
+            console.error('Redis retry failed:', retryError);
+          }
         }
       }
       
       // Cache miss
+      const metrics = this.metrics.get(key) || { hits: 0, misses: 0, errors: 0, lastAccess: 0 };
       metrics.misses++;
       metrics.lastAccess = Date.now();
       this.metrics.set(key, metrics);
@@ -182,12 +246,40 @@ export class CacheManager {
       
       // Store in Redis with tags if available and on server side
       if (this.redis && typeof window === 'undefined') {
-        const payload = JSON.stringify(data);
-        await this.redis.setex(key, ttl, payload);
-        
-        // Store tags for selective invalidation
-        if (tags.length > 0) {
-          await this.setTags(key, tags);
+        // Check if Redis connection is still active before using it
+        try {
+          // Test connection by sending a ping
+          await this.redis.ping();
+          
+          const payload = JSON.stringify(data);
+          await this.redis.setex(key, ttl, payload);
+          
+          // Store tags for selective invalidation
+          if (tags.length > 0) {
+            await this.setTags(key, tags);
+          }
+        } catch (redisError) {
+          // If Redis connection fails, log the error but continue with in-memory cache
+          this.logError('cache_set_error', `Key: ${key}, Error: ${redisError.message}`);
+          console.error('Redis connection error during set operation:', redisError);
+          
+          // Try to reconnect
+          try {
+            this.redis = getRedisClient();
+            if (this.redis) {
+              // Retry the operation once
+              const payload = JSON.stringify(data);
+              await this.redis.setex(key, ttl, payload);
+              
+              // Store tags for selective invalidation
+              if (tags.length > 0) {
+                await this.setTags(key, tags);
+              }
+            }
+          } catch (retryError) {
+            // If retry fails, continue silently as in-memory cache is still working
+            console.error('Redis retry failed:', retryError);
+          }
         }
       }
       

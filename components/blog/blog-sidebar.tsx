@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils';
 import { BlogCategory, PopularPost, BlogPostSummary } from '@/types';
 
 interface BlogSidebarProps {
-  categories: BlogCategory[];
   popularPosts: PopularPost[];
   recentPosts: BlogPostSummary[];
   tags: string[];
@@ -26,7 +25,6 @@ interface BlogSidebarProps {
 }
 
 export function BlogSidebar({
-  categories,
   popularPosts,
   recentPosts,
   tags,
@@ -89,37 +87,7 @@ export function BlogSidebar({
         </CardContent>
       </Card>
 
-      {/* Categories Widget */}
-      {categories.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
-              <BookOpen className="w-5 h-5 mr-2" />
-              Categories
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2">
-              {categories.map((category, index) => (
-                <div key={category._id}>
-                  <Link
-                    href={`/blog/category/${category.slug.current}`}
-                    className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted transition-colors group"
-                  >
-                    <span className="font-medium group-hover:text-primary transition-colors">
-                      {category.title}
-                    </span>
-                    <Badge variant="secondary" size="sm">
-                      {category.postCount || 0}
-                    </Badge>
-                  </Link>
-                  {index < categories.length - 1 && <Separator />}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Categories Widget - Removed since there's no category option in Sanity database for blogs */}
 
       {/* Popular Posts Widget */}
       {popularPosts.length > 0 && (

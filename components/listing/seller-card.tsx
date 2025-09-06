@@ -1,8 +1,10 @@
 import Image from "next/image"
-import { Phone, MessageCircle, Star, Shield } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Star } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import SellerTierBadge from "@/components/seller/seller-tier-badge"
+import { VerifiedBadge } from "@/components/seller/verified-badge"
+import { WhatsAppButton } from "@/components/seller/whatsapp-button"
+import { CallButton } from "@/components/seller/call-button"
 
 interface Owner {
   name: string
@@ -13,6 +15,7 @@ interface Owner {
   verified: boolean
   responseTime: string
   joinedDate: string
+  phone?: string
 }
 
 interface SellerCardProps {
@@ -35,8 +38,8 @@ export default function SellerCard({ owner, isMobile = false }: SellerCardProps)
                 className="rounded-full object-cover"
               />
               {owner.verified && (
-                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-                  <Shield className="h-3 w-3 text-white" />
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
+                  <VerifiedBadge size="sm" />
                 </div>
               )}
             </div>
@@ -73,10 +76,10 @@ export default function SellerCard({ owner, isMobile = false }: SellerCardProps)
               className="rounded-full object-cover"
             />
             {owner.verified && (
-              <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-                <Shield className="h-4 w-4 text-white" />
-              </div>
-            )}
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
+                  <VerifiedBadge size="sm" />
+                </div>
+              )}
           </div>
 
           <div className="space-y-2">
@@ -98,14 +101,25 @@ export default function SellerCard({ owner, isMobile = false }: SellerCardProps)
           </div>
 
           <div className="space-y-2">
-            <Button className="w-full" size="sm">
-              <Phone className="h-4 w-4 mr-2" />
-              Call Seller
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" size="sm">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Chat
-            </Button>
+            {owner.phone ? (
+              <div className="space-y-2">
+                <WhatsAppButton 
+                  phoneNumber={owner.phone} 
+                  sellerName={owner.name}
+                />
+                <CallButton 
+                  phoneNumber={owner.phone} 
+                  sellerName={owner.name}
+                />
+              </div>
+            ) : (
+              <button 
+                className="relative flex items-center md:justify-center gap-5 w-full overflow-hidden rounded-xl bg-gray-300 p-3 font-medium text-gray-500 cursor-not-allowed"
+                disabled
+              >
+                <span className="pl-4">Contact Unavailable</span>
+              </button>
+            )}
           </div>
         </div>
       </CardContent>

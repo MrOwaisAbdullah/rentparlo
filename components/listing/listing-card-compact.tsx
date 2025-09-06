@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Clock, Eye, Heart, Shield, Star, Phone } from 'lucide-react';
+import { VerifiedBadge } from '@/components/seller/verified-badge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -258,7 +258,7 @@ export function ListingCardCompact({
                             {listing.seller.business_name || listing.seller.username}
                           </span>
                           {listing.seller.isVerified && (
-                            <Shield className="w-3 h-3 text-green-600 flex-shrink-0" />
+                            <VerifiedBadge size="sm" />
                           )}
                         </div>
                         <div className="flex items-center gap-1">
@@ -277,18 +277,16 @@ export function ListingCardCompact({
 
                   {/* Contact Button */}
                   {listing.seller?.profile?.phone && (
-                    <Button
-                      size="sm"
+                    <div className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 h-auto rounded-md cursor-pointer"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         handleContact();
                       }}
-                      className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 h-auto"
                     >
-                      <Phone className="w-3 h-3 mr-1" />
+                      <Phone className="w-3 h-3 mr-1 inline" />
                       Contact
-                    </Button>
+                    </div>
                   )}
                 </div>
               </div>

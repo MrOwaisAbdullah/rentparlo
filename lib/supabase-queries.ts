@@ -203,6 +203,7 @@ export async function getSellerProfileByUsername(username: string): Promise<Sell
   // The users data is nested under data.users due to the join
   const seller: Seller = {
     ...(data.users || {}),
+    guest_id: data.users?.guest_id || null,
     profile: data
   }
 

@@ -172,7 +172,9 @@ export function UnifiedListingSearch({
       category: searchParams.category || initialFilters.category || "",
       city: searchParams.city || initialFilters.city || "",
       area: searchParams.area || initialFilters.area || "",
-      condition: searchParams.condition || initialFilters.condition || "",
+      condition: Array.isArray(searchParams.condition) 
+        ? searchParams.condition[0] || "" 
+        : searchParams.condition || initialFilters.condition || "",
       minPrice: searchParams.minPrice
         ? parseInt(searchParams.minPrice)
         : initialFilters.minPrice || 0,
@@ -180,7 +182,7 @@ export function UnifiedListingSearch({
         ? parseInt(searchParams.maxPrice)
         : initialFilters.maxPrice || 0,
       availability:
-        searchParams.availability || initialFilters.availability || "",
+        searchParams.availability ?? initialFilters.availability ?? "",
       sortBy: searchParams.sortBy || initialFilters.sortBy || "newest",
       priceType: searchParams.priceType || initialFilters.priceType || "",
     }),
@@ -244,16 +246,31 @@ export function UnifiedListingSearch({
         return;
       }
 
-      const params = new URLSearchParams(currentSearchParams.toString());
-
+      // Create a new URLSearchParams object to avoid duplicates
+      const params = new URLSearchParams();
+      
+      // First, add all existing parameters except the ones we're updating
+      const existingParams = new URLSearchParams(currentSearchParams.toString());
+      const updatedKeys = Object.keys(newParams).map(key => 
+        key === "query" ? "q" : key
+      );
+      
+      // Add existing parameters that are not being updated
+      for (const [key, value] of existingParams.entries()) {
+        if (!updatedKeys.includes(key)) {
+          params.append(key, value);
+        }
+      }
+      
+      // Then add the new parameters
       Object.entries(newParams).forEach(([key, value]) => {
         // Map 'query' to 'q' for URL
         const urlKey = key === "query" ? "q" : key;
 
-        if (value === "" || value === 0 || (key === "page" && value === 1)) {
-          params.delete(urlKey);
-        } else {
+        if (value !== "" && value !== 0 && !(key === "page" && value === 1)) {
           params.set(urlKey, value.toString());
+        } else {
+          params.delete(urlKey);
         }
       });
 
@@ -509,7 +526,7 @@ export function UnifiedListingSearch({
     return (
       <div className={cn("space-y-4", className)}>
         {/* Search Bar Only */}
-        <form onSubmit={handleSearchSubmit} className="flex gap-3">
+        {/* <form onSubmit={handleSearchSubmit} className="flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
@@ -537,7 +554,7 @@ export function UnifiedListingSearch({
           >
             {isSearching ? "Searching..." : "Search"}
           </Button>
-        </form>
+        </form> */}
 
         {/* Results */}
         <SearchResults
@@ -547,9 +564,6 @@ export function UnifiedListingSearch({
           isFetchingNextPage={isFetchingNextPage}
           onLoadMore={fetchNextPage}
           totalResults={totalResults}
-          currentPage={pagination?.currentPage || 1}
-          totalPages={pagination?.totalPages || 1}
-          onPageChange={(page) => handleFilterChange("page", page)}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />

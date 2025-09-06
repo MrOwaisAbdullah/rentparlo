@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { contactFormSchema } from '@/lib/validations/auth';
 import { sanitizeFormData, createRateLimiter, applySecurityHeaders } from '@/lib/security/sanitization';

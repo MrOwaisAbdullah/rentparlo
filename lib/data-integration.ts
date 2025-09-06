@@ -153,7 +153,8 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
               },
               created_at: seller.created_at || new Date().toISOString(),
               updated_at: seller.created_at || new Date().toISOString(),
-              listing_count: 0
+              listing_count: 0,
+              is_top_seller: false
             };
           }
           
@@ -175,14 +176,33 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
               },
               created_at: seller.created_at || new Date().toISOString(),
               updated_at: seller.created_at || new Date().toISOString(),
-              listing_count: 0
+              listing_count: 0,
+            is_top_seller: false
             };
           }
 
           // Combine data
           enhancedSeller = {
             ...seller,
-            profile: sellerProfile
+            guest_id: null,
+            profile: sellerProfile || {
+              id: seller.id,
+              username: seller.email,
+              is_verified: false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              listing_count: 0,
+            is_top_seller: false
+            }
           }
         } else {
           console.log('No seller found for listing with supabaseId:', listing.supabaseId); // Debugging
@@ -197,8 +217,8 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
             email: 'unknown@example.com',
             role: 'seller',
             is_verified: false,
+            guest_id: null,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
             active: true,
             email_verified: false,
             country: 'Pakistan',
@@ -219,7 +239,8 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
               },
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              listing_count: 0
+              listing_count: 0,
+              is_top_seller: false
             }
           };
         } catch (minimalProfileError) {
@@ -279,6 +300,7 @@ export async function getEnhancedListings(limit?: number): Promise<Listing[]> {
             contactClicks: analytics.contactClicks,
             seller: sellerProfile ? {
               ...seller,
+              guest_id: seller.guest_id || null,
               profile: sellerProfile
             } : undefined
           }
@@ -351,6 +373,7 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
               ...listing,
               seller: sellerProfile ? {
                 ...seller,
+                guest_id: seller.guest_id || null,
                 profile: sellerProfile
               } : undefined
             };
@@ -944,25 +967,37 @@ export async function getCategoryWithListings(slug: string, filters: any) {
       }
     }
 
-    // Get listings for this category with filters
-    const searchParams = {
-      query: '',
-      category: slug,
-      city: filters.location || '',
-      condition: filters.condition || '',
-      minPrice: filters.priceRange ? parseInt(filters.priceRange.split('-')[0]) : undefined,
-      maxPrice: filters.priceRange ? parseInt(filters.priceRange.split('-')[1]) : undefined,
-      availability: filters.availability || 'available',
-      priceType: filters.priceType,
-      featured: filters.featured === 'true',
-      verified: filters.verified === 'true',
-      hasImages: filters.hasImages === 'true',
-      sort: filters.sort || 'newest',
+    // Get listings for this category with filters using search function
+    // Only include non-empty parameters to avoid filtering out results
+    const searchParams: any = {
+      category: category._id, // Use category ID instead of slug for proper filtering
       offset: filters.offset || 0,
       limit: filters.limit || 20
-    }
+    };
+    
+    // Only add filters if they have actual values
+    if (filters.q && filters.q.trim()) searchParams.query = filters.q.trim();
+    if (filters.location && filters.location.trim()) searchParams.city = filters.location.trim();
+    if (filters.area && filters.area.trim()) searchParams.area = filters.area.trim();
+    if (filters.condition && filters.condition.trim()) searchParams.condition = filters.condition.trim();
+    if (filters.minPrice && parseInt(String(filters.minPrice)) > 0) searchParams.minPrice = parseInt(String(filters.minPrice));
+    if (filters.maxPrice && parseInt(String(filters.maxPrice)) > 0) searchParams.maxPrice = parseInt(String(filters.maxPrice));
 
-    const listings = await getListingsByCategory(category._id);
+    // Use searchListings which properly filters by category ID
+    const listings = await searchListings(searchParams);
+    
+    // Get total count for pagination
+    const countParams: any = { category: category._id }; // Use category ID
+    
+    // Only add filters if they have actual values
+    if (filters.q && filters.q.trim()) countParams.query = filters.q.trim();
+    if (filters.location && filters.location.trim()) countParams.city = filters.location.trim();
+    if (filters.area && filters.area.trim()) countParams.area = filters.area.trim();
+    if (filters.condition && filters.condition.trim()) countParams.condition = filters.condition.trim();
+    if (filters.minPrice && parseInt(String(filters.minPrice)) > 0) countParams.minPrice = parseInt(String(filters.minPrice));
+    if (filters.maxPrice && parseInt(String(filters.maxPrice)) > 0) countParams.maxPrice = parseInt(String(filters.maxPrice));
+    
+    const totalCount = await searchListingsCount(countParams);
     
     // Get subcategories (if any)
     const subcategories = await getCategories()
@@ -970,44 +1005,9 @@ export async function getCategoryWithListings(slug: string, filters: any) {
       sub.parent && sub.parent._ref === category._id
     );
 
-    // Apply filters to listings
-    let filteredListings = [...listings];
-    
-    // Filter by city if provided
-    if (searchParams.city) {
-      filteredListings = filteredListings.filter(listing => 
-        listing.location.city === searchParams.city
-      );
-    }
-    
-    // Filter by condition if provided
-    if (searchParams.condition) {
-      filteredListings = filteredListings.filter(listing => 
-        listing.condition === searchParams.condition
-      );
-    }
-    
-    // Filter by price range if provided
-    if (searchParams.minPrice) {
-      filteredListings = filteredListings.filter(listing => 
-        listing.price >= searchParams.minPrice!
-      );
-    }
-    
-    if (searchParams.maxPrice) {
-      filteredListings = filteredListings.filter(listing => 
-        listing.price <= searchParams.maxPrice!
-      );
-    }
-    
-    // Apply pagination
-    const startIndex = searchParams.offset || 0;
-    const limit = searchParams.limit || 20;
-    filteredListings = filteredListings.slice(startIndex, startIndex + limit);
-
     // Enhance listings with seller information (limited batch processing)
     const enhancedListings = await Promise.all(
-      listings.slice(0, 50).map(async (listing) => {
+      listings.map(async (listing) => {
         try {
           const seller = await getUserById(listing.supabaseId)
           if (!seller) return listing
@@ -1024,7 +1024,8 @@ export async function getCategoryWithListings(slug: string, filters: any) {
               username: sellerProfile?.username || seller.email,
               tier: sellerProfile?.tier || 'basic',
               isVerified: seller.is_verified || false,
-              rating: undefined // SellerProfile doesn't have a rating field
+              rating: undefined, // SellerProfile doesn't have a rating field
+              is_top_seller: sellerProfile?.is_top_seller || false
             }
           }
         } catch (error) {
@@ -1037,7 +1038,7 @@ export async function getCategoryWithListings(slug: string, filters: any) {
     const result = {
       category,
       listings: enhancedListings,
-      totalCount: listings.length,
+      totalCount: totalCount,
       subcategories: categorySubcategories.map(sub => ({
         _id: sub._id,
         title: sub.title,

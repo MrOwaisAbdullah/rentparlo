@@ -183,7 +183,7 @@ export function SearchFilters({
     if (localFilters.area && localFilters.area !== "any") count++;
     if (localFilters.condition && localFilters.condition !== "any") count++;
     if (localFilters.priceType && localFilters.priceType !== "any") count++;
-    if (localFilters.minPrice > 0 || localFilters.maxPrice > 0) count++;
+    if (localFilters.minPrice > 0 || localFilters.maxPrice < 100000) count++;
     return count;
   };
 
@@ -420,7 +420,7 @@ export function SearchFilters({
                                     <CommandItem
                                       key={city.id}
                                       value={city.name}
-                                      onSelect={handleCitySelect}
+                                      onSelect={() => handleCitySelect(city.name)}
                                       className="text-sm"
                                       role="option"
                                       aria-selected={
@@ -498,7 +498,7 @@ export function SearchFilters({
                                   {areas.map((area, index) => (
                                     <CommandItem
                                       key={index}
-                                      onSelect={handleAreaSelect}
+                                      onSelect={() => handleAreaSelect(area)}
                                       className="text-sm"
                                     >
                                       <Check
@@ -704,11 +704,9 @@ export function SearchFilters({
                         </Label>
                         <Input
                           type="number"
-                          value={priceRange[0]}
+                          value={localFilters.minPrice}
                           onChange={(e) => {
                             const value = parseInt(e.target.value) || 0;
-                            const newRange = [value, priceRange[1]];
-                            setPriceRange(newRange);
                             setLocalFilters(prev => ({ ...prev, minPrice: value }));
                           }}
                           placeholder="0"
@@ -721,11 +719,9 @@ export function SearchFilters({
                         </Label>
                         <Input
                           type="number"
-                          value={priceRange[1]}
+                          value={localFilters.maxPrice}
                           onChange={(e) => {
                             const value = parseInt(e.target.value) || 100000;
-                            const newRange = [priceRange[0], value];
-                            setPriceRange(newRange);
                             setLocalFilters(prev => ({ ...prev, maxPrice: value }));
                           }}
                           placeholder="100000"
@@ -740,9 +736,11 @@ export function SearchFilters({
           ) : null}
           
           {/* Apply Button */}
-          <Button className="w-full" onClick={applyFilters}>
-            Apply Filters
-          </Button>
+          <div className="pt-4">
+            <Button className="w-full" onClick={applyFilters}>
+              Apply Filters
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </ResponsiveContainer>

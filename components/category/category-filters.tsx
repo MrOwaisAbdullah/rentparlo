@@ -69,28 +69,48 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [] }: Ca
   const searchParams = useSearchParams();
   
   // Local state for filters
-  const [localFilters, setLocalFilters] = React.useState({
-    minPrice: currentFilters.minPrice || 0,
-    maxPrice: currentFilters.maxPrice || 100000,
-    priceType: currentFilters.priceType || 'any',
-    location: currentFilters.location || 'any',
-    condition: currentFilters.condition?.split(',') || [],
-    open: false
+  const [localFilters, setLocalFilters] = React.useState(() => {
+    // Handle condition properly - make sure it's always a string or array before calling split
+    let conditionArray: string[] = [];
+    if (currentFilters && currentFilters.condition) {
+      if (Array.isArray(currentFilters.condition)) {
+        conditionArray = currentFilters.condition;
+      } else if (typeof currentFilters.condition === 'string') {
+        if (currentFilters.condition.length > 0) {
+          conditionArray = currentFilters.condition.split(',').filter(Boolean);
+        }
+      }
+      // If it's neither array nor string, leave conditionArray as empty array
+    }
+    
+    return {
+      minPrice: currentFilters?.minPrice || 0,
+      maxPrice: currentFilters?.maxPrice || 100000,
+      priceType: currentFilters?.priceType || 'any',
+      location: currentFilters?.location || 'any',
+      condition: conditionArray,
+      open: false
+    };
   });
 
   const updateSearchParams = (updates: Record<string, string | string[] | undefined>) => {
     const params = new URLSearchParams(searchParams);
     
+    // Clear all parameters that we're updating to avoid duplicates
+    Object.keys(updates).forEach(key => {
+      params.delete(key);
+    });
+    
     Object.entries(updates).forEach(([key, value]) => {
       if (value && value !== 'any') {
         if (Array.isArray(value)) {
-          params.delete(key);
-          value.forEach(v => params.append(key, v));
+          // For arrays, join them with commas instead of appending multiple values
+          if (value.length > 0) {
+            params.set(key, value.join(','));
+          }
         } else {
           params.set(key, value);
         }
-      } else {
-        params.delete(key);
       }
     });
 
@@ -128,15 +148,30 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [] }: Ca
     updateSearchParams(updates);
   };
 
-  const hasActiveFilters = Object.entries(currentFilters).some(([key, value]) => 
-    value && value !== 'any' && key !== 'sort' && key !== 'limit' && key !== 'offset'
-  );
+  const hasActiveFilters = Object.entries(currentFilters || {}).some(([key, value]) => {
+    if (key === 'sort' || key === 'limit' || key === 'offset') return false;
+    
+    // Handle condition array specifically
+    if (key === 'condition') {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      if (typeof value === 'string') {
+        return value.length > 0 && value !== 'any';
+      }
+      return false;
+    }
+    
+    return value && value !== 'any';
+  });
 
   const handleConditionChange = (condition: string) => {
     setLocalFilters(prev => {
-      const newConditions = prev.condition.includes(condition)
-        ? prev.condition.filter((c: any) => c !== condition)
-        : [...prev.condition, condition];
+      // Ensure prev.condition is an array
+      const currentConditions = Array.isArray(prev.condition) ? prev.condition : [];
+      const newConditions = currentConditions.includes(condition)
+        ? currentConditions.filter((c: string) => c !== condition)
+        : [...currentConditions, condition];
       
       return {
         ...prev,

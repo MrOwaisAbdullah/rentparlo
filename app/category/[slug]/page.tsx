@@ -127,14 +127,16 @@ async function CategoryContent({
     // Set initial filters based on category context and URL parameters
     const initialFilters = {
       query: searchParams.q || "",
-      condition: searchParams.condition || "",
+      condition: Array.isArray(searchParams.condition) 
+        ? searchParams.condition.join(',') 
+        : searchParams.condition || "",
       city: searchParams.location || "",
       area: searchParams.area || "",
       minPrice: searchParams.minPrice ? parseInt(searchParams.minPrice) : 0,
       maxPrice: searchParams.maxPrice ? parseInt(searchParams.maxPrice) : 0,
       priceType: searchParams.priceType || "",
       sortBy: searchParams.sort || "newest",
-      category: formattedCategory.slug, // Use category slug for filtering (matches mock data)
+      category: formattedCategory.slug, // Use category slug for filtering
     };
 
     // Page context for sidebar

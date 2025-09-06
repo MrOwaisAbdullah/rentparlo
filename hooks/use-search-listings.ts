@@ -13,7 +13,7 @@ interface SearchFilters {
   category: string;
   city: string;
   area: string;
-  condition: string;
+  condition: string | string[];
   minPrice: number;
   maxPrice: number;
   sortBy: string;
@@ -50,7 +50,7 @@ export function useSearchListings(
       category: filters.category || "",
       city: filters.city || "",
       area: filters.area || "",
-      condition: (filters.condition as ItemCondition) || undefined,
+      condition: filters.condition || undefined,
       minPrice: filters.minPrice || 0,
       maxPrice: filters.maxPrice || 0,
       offset: 0,
@@ -68,7 +68,9 @@ export function useSearchListings(
       searchParams.category || "",
       searchParams.city || "",
       searchParams.area || "",
-      searchParams.condition || "",
+      Array.isArray(searchParams.condition) 
+        ? searchParams.condition.join(',') 
+        : searchParams.condition || "",
       searchParams.minPrice || 0,
       searchParams.maxPrice || 0,
       searchParams.sortBy || "newest",
@@ -190,7 +192,7 @@ export function useSimpleSearch(
       category: filters.category || "",
       city: filters.city || "",
       area: filters.area || "",
-      condition: (filters.condition as ItemCondition) || undefined,
+      condition: filters.condition || undefined,
       minPrice: filters.minPrice || 0,
       maxPrice: filters.maxPrice || 0,
       offset: ((filters.page || 1) - 1) * 20,
@@ -207,7 +209,9 @@ export function useSimpleSearch(
       searchParams.category,
       searchParams.city,
       searchParams.area,
-      searchParams.condition,
+      Array.isArray(searchParams.condition) 
+        ? searchParams.condition.join(',') 
+        : searchParams.condition,
       searchParams.minPrice,
       searchParams.maxPrice,
       searchParams.sortBy,

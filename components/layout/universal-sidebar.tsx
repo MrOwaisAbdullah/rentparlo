@@ -82,16 +82,24 @@ export function UniversalSidebar({
     );
   }
 
-  // Group content by position
-  const contentByPosition = sidebarState.content.reduce(
-    (acc, content) => {
-      const position = content.position || "middle";
-      if (!acc[position]) acc[position] = [];
-      acc[position].push(content);
-      return acc;
-    },
-    {} as Record<string, SidebarContent[]>
-  );
+  // Group content by position and filter out content based on page context
+  const contentByPosition = sidebarState.content
+    .filter(content => {
+      // If hideFilters flag is set in pageContext, don't show filters
+      if (pageContext.hideFilters && content.type === 'filters') {
+        return false;
+      }
+      return true;
+    })
+    .reduce(
+      (acc, content) => {
+        const position = content.position || "middle";
+        if (!acc[position]) acc[position] = [];
+        acc[position].push(content);
+        return acc;
+      },
+      {} as Record<string, SidebarContent[]>
+    );
 
   return (
     <div className={cn("space-y-6", className)}>

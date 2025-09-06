@@ -3,12 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  Star, Shield, MapPin, Calendar, Phone, Mail, MessageCircle,
-  Globe, Clock, Award, TrendingUp, Eye, Heart, Share2,
-  User, Building, CheckCircle, AlertCircle, ExternalLink,
-  ChevronDown, Menu, Map, Phone as PhoneIcon, MessageCircle as WhatsAppIcon
-} from 'lucide-react';
+import { VerifiedBadge } from '@/components/seller/verified-badge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,7 +118,7 @@ const tierConfig = {
 
 const verificationConfig = {
   pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Verification Pending', icon: Clock },
-  approved: { color: 'bg-green-100 text-green-800', label: 'Verified Seller', icon: CheckCircle },
+  approved: { color: 'bg-green-100 text-green-800', label: 'Verified Seller', icon: VerifiedBadge },
   rejected: { color: 'bg-red-100 text-red-800', label: 'Verification Failed', icon: AlertCircle },
   under_review: { color: 'bg-blue-100 text-blue-800', label: 'Under Review', icon: Clock }
 };
@@ -320,9 +315,13 @@ export function SellerProfileContent({ seller, listings, analytics }: SellerProf
                 {/* Verification Status */}
                 {seller.verification_status && (
                   <div className="flex items-center gap-1 sm:gap-2">
-                    {React.createElement(
-                      verificationConfig[seller.verification_status]?.icon || AlertCircle,
-                      { className: "w-3 h-3 sm:w-4 sm:h-4" }
+                    {seller.verification_status === 'approved' ? (
+                      <VerifiedBadge size="sm" />
+                    ) : (
+                      React.createElement(
+                        verificationConfig[seller.verification_status]?.icon || AlertCircle,
+                        { className: "w-3 h-3 sm:w-4 sm:h-4" }
+                      )
                     )}
                     <Badge 
                       className={cn(

@@ -17,7 +17,7 @@ interface Listing {
   description?: string;
   price: number;
   priceType: "hourly" | "daily" | "weekly" | "monthly";
-  images: string[];
+  images: (string | ListingImage)[];
   condition: string;
   availability: "available" | "rented" | "maintenance";
   location: {
@@ -72,8 +72,17 @@ const transformToListingType = (listing: Listing): FullListing => {
   let transformedImages: ListingImage[] = [];
   if (Array.isArray(listing.images)) {
     transformedImages = listing.images.map((img) => {
+      // Handle undefined or null values
+      if (img === undefined || img === null) {
+        return {
+          asset: {
+            url: "/placeholder.jpg",
+            metadata: {},
+          },
+        };
+      }
       // If img is already an object with asset property
-      if (typeof img === "object" && img !== null && "asset" in img) {
+      if (typeof img === "object" && "asset" in img) {
         return img as ListingImage;
       }
       // If img is a string URL

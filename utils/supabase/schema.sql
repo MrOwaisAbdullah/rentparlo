@@ -165,6 +165,19 @@ CREATE TABLE public.analytics_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- BANNER CLICK TRACKING
+CREATE TABLE public.banner_clicks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  banner_id TEXT NOT NULL, -- Sanity document ID
+  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  guest_id UUID,
+  session_ref UUID REFERENCES public.event_sessions(session_id) ON DELETE SET NULL,
+  location TEXT,
+  device_type TEXT CHECK (device_type IN ('mobile', 'tablet', 'desktop')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+COMMENT ON TABLE public.banner_clicks IS 'Tracks clicks on advertisement banners.';
+
 -- SUPPORT TICKETS
 CREATE TABLE public.support_tickets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -411,6 +424,12 @@ CREATE INDEX idx_analytics_type ON public.analytics_events(event_type);
 CREATE INDEX idx_analytics_time ON public.analytics_events(created_at);
 CREATE INDEX idx_analytics_listing_type ON public.analytics_events(listing_id, event_type);
 
+-- Banner Click indexes
+CREATE INDEX idx_banner_clicks_banner_id ON public.banner_clicks(banner_id);
+CREATE INDEX idx_banner_clicks_user_id ON public.banner_clicks(user_id);
+CREATE INDEX idx_banner_clicks_session_ref ON public.banner_clicks(session_ref);
+CREATE INDEX idx_banner_clicks_created_at ON public.banner_clicks(created_at);
+
 -- Support indexes
 CREATE INDEX idx_tickets_user ON public.support_tickets(user_id);
 CREATE INDEX idx_tickets_status ON public.support_tickets(status);
@@ -432,6 +451,7 @@ ALTER TABLE public.seller_tier_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscription_packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.banner_clicks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
 
@@ -516,6 +536,15 @@ CREATE POLICY "Anyone can update analytics events" ON public.analytics_events
   FOR UPDATE TO authenticated, anon
   USING (true)
   WITH CHECK (true);
+
+-- Banner Click policies
+CREATE POLICY "Anyone can track banner clicks" ON public.banner_clicks
+  FOR INSERT TO authenticated, anon
+  WITH CHECK (true);
+
+CREATE POLICY "Admins can view banner clicks" ON public.banner_clicks
+  FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
 
 -- Support policies
 CREATE POLICY "Users can view own tickets" ON public.support_tickets
@@ -713,6 +742,7 @@ GRANT EXECUTE ON FUNCTION public.link_guest_to_user TO authenticated;
 GRANT ALL ON TABLE public.analytics_events TO authenticated, anon;
 GRANT ALL ON TABLE public.event_sessions TO authenticated, anon;
 GRANT ALL ON TABLE public.user_guest_tracking TO authenticated, anon;
+GRANT ALL ON TABLE public.banner_clicks TO authenticated, anon;
 GRANT SELECT ON TABLE public.cities TO authenticated, anon;
 
 -- =============================================

@@ -66,7 +66,6 @@ export function CategoryBar() {
       const isLeft = scrollLeft > 0
       const isRight = scrollLeft < (scrollWidth - clientWidth)
       
-      console.log("Scroll check:", { scrollLeft, scrollWidth, clientWidth, isLeft, isRight })
       
       setCanScrollLeft(isLeft)
       setCanScrollRight(isRight)
@@ -98,14 +97,12 @@ export function CategoryBar() {
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      console.log("Scrolling left by -150px")
       scrollRef.current.scrollBy({ left: -150, behavior: "smooth" })
     }
   }
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      console.log("Scrolling right by 150px")
       scrollRef.current.scrollBy({ left: 150, behavior: "smooth" })
     }
   }
@@ -145,12 +142,15 @@ export function CategoryBar() {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {categories.map((category) => {
-              const Icon = iconMap[category.slug] || Palette
-              const color = colorMap[category.slug] || "text-gray-600"
+              // Ensure category.slug is a valid string before using it as an index
+              const slug = typeof category.slug === 'string' ? category.slug : '';
+              const Icon = (slug in iconMap) ? iconMap[slug] : Palette;
+              const color = (slug in colorMap) ? colorMap[slug] : "text-gray-600";
+              
               return (
                 <Link
                   key={category._id}
-                  href={`/category/${category.slug}`}
+                  href={`/category/${slug}`}
                   className="flex flex-col items-center space-y-1 min-w-fit group hover:bg-muted/50 rounded-lg p-2 transition-colors flex-shrink-0"
                 >
                   <Icon className={`h-5 w-5 ${color} group-hover:scale-110 transition-transform`} />

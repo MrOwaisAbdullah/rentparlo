@@ -1,15 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Phone, Mail, MessageCircle, ExternalLink } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+import { WhatsAppButton } from '@/components/seller/whatsapp-button';
+import { CallButton } from '@/components/seller/call-button';
+import { MapButton } from '@/components/seller/map-button';
 import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface Seller {
@@ -18,6 +14,7 @@ interface Seller {
   business_name?: string;
   phone?: string;
   email?: string;
+  locationUrl?: string;
 }
 
 interface SellerContactProps {
@@ -34,24 +31,6 @@ export function SellerContact({
   className 
 }: SellerContactProps) {
   const displayName = seller.business_name || seller.username;
-
-  const handlePhoneCall = async () => {
-    if (seller.phone) {
-      window.location.href = `tel:${seller.phone}`;
-      onContact();
-      
-      // Track phone call using trackAnalyticsEventClient
-      try {
-        await trackAnalyticsEventClient({
-          event_type: 'contact_click',
-          user_id: seller.id,
-          metadata: { contact_method: 'phone', source: 'seller_profile' }
-        });
-      } catch (error) {
-        console.error('Error tracking phone call:', error);
-      }
-    }
-  };
 
   const handleEmail = async () => {
     if (seller.email) {
@@ -73,51 +52,13 @@ export function SellerContact({
     }
   };
 
-  const handleWhatsApp = async () => {
-    if (seller.phone) {
-      // Clean phone number for WhatsApp
-      const cleanPhone = seller.phone.replace(/\D/g, '');
-      const whatsappPhone = cleanPhone.startsWith('92') ? cleanPhone : `92${cleanPhone.replace(/^0/, '')}`;
-      const message = encodeURIComponent(`Hi ${displayName}, I found your profile on RentParLo.pk and I'm interested in your rental items.`);
-      
-      window.open(`https://wa.me/${whatsappPhone}?text=${message}`, '_blank');
-      onContact();
-      
-      // Track WhatsApp contact using trackAnalyticsEventClient
-      try {
-        await trackAnalyticsEventClient({
-          event_type: 'WhatsApp_click',
-          user_id: seller.id,
-          metadata: { contact_method: 'whatsapp', source: 'seller_profile' }
-        });
-      } catch (error) {
-        console.error('Error tracking WhatsApp contact:', error);
-      }
-    }
-  };
-
-  const handleMessage = () => {
-    // For now, redirect to WhatsApp or show a modal for internal messaging
-    if (seller.phone) {
-      handleWhatsApp();
-    } else {
-      // Could implement internal messaging system here
-      alert('Internal messaging system will be implemented soon. Please use other contact methods.');
-    }
-  };
-
   if (variant === 'compact') {
     return (
       <div className={`flex gap-2 ${className}`}>
         {seller.phone && (
-          <>
-            <Button size="sm" onClick={handleWhatsApp} className="bg-green-600 hover:bg-green-700">
-              <MessageCircle className="w-4 h-4" />
-            </Button>
-            <Button size="sm" variant="outline" onClick={handlePhoneCall}>
-              <Phone className="w-4 h-4" />
-            </Button>
-          </>
+          <Button size="sm" variant="outline" onClick={() => {}}>
+            <Phone className="w-4 h-4" />
+          </Button>
         )}
         {seller.email && (
           <Button size="sm" variant="outline" onClick={handleEmail}>
@@ -129,89 +70,65 @@ export function SellerContact({
   }
 
   // Check if seller has any contact method
-  const hasContactMethods = seller.phone || seller.email;
+  const hasContactMethods = seller.phone || seller.email || seller.locationUrl;
 
   if (!hasContactMethods) {
     return (
       <Button disabled className={className}>
-        <MessageCircle className="w-4 h-4 mr-2" />
+        <Phone className="w-4 h-4 mr-2" />
         Contact Unavailable
       </Button>
     );
   }
 
-  // If only one contact method, show direct button
-  if (seller.phone && !seller.email) {
-    return (
-      <Button onClick={handleWhatsApp} className={`bg-green-600 hover:bg-green-700 ${className}`}>
-        <MessageCircle className="w-4 h-4 mr-2" />
-        Contact on WhatsApp
-      </Button>
-    );
-  }
-
-  if (seller.email && !seller.phone) {
-    return (
-      <Button onClick={handleEmail} className={className}>
-        <Mail className="w-4 h-4 mr-2" />
-        Send Email
-      </Button>
-    );
-  }
-
-  // Multiple contact methods - show dropdown
+  // Display all available contact buttons with the specified layout
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className={`bg-green-600 hover:bg-green-700 ${className}`}>
-          <MessageCircle className="w-4 h-4 mr-2" />
-          Contact Seller
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+    <div className="flex flex-col gap-2 w-full">
+      {seller.phone && (
+        <div className="w-full">
+          <WhatsAppButton 
+            phoneNumber={seller.phone} 
+            sellerName={displayName}
+            onClick={onContact}
+            className="w-full cursor-pointer"
+          />
+        </div>
+      )}
+      
+      {/* Stacked layout for screens < 400px, side-by-side for larger screens */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full">
         {seller.phone && (
-          <>
-            <DropdownMenuItem onClick={handleWhatsApp} className="cursor-pointer">
-              <MessageCircle className="w-4 h-4 mr-2 text-green-600" />
-              <div className="flex flex-col">
-                <span>WhatsApp</span>
-                <span className="text-xs text-muted-foreground">Send message instantly</span>
-              </div>
-              <ExternalLink className="w-3 h-3 ml-auto text-muted-foreground" />
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handlePhoneCall} className="cursor-pointer">
-              <Phone className="w-4 h-4 mr-2 text-blue-600" />
-              <div className="flex flex-col">
-                <span>Call</span>
-                <span className="text-xs text-muted-foreground">{seller.phone}</span>
-              </div>
-            </DropdownMenuItem>
-          </>
-        )}
-        
-        {seller.email && (
-          <>
-            {seller.phone && <DropdownMenuSeparator />}
-            <DropdownMenuItem onClick={handleEmail} className="cursor-pointer">
-              <Mail className="w-4 h-4 mr-2 text-orange-600" />
-              <div className="flex flex-col">
-                <span>Email</span>
-                <span className="text-xs text-muted-foreground">Send email message</span>
-              </div>
-            </DropdownMenuItem>
-          </>
-        )}
-        
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleMessage} className="cursor-pointer">
-          <MessageCircle className="w-4 h-4 mr-2 text-purple-600" />
-          <div className="flex flex-col">
-            <span>Send Message</span>
-            <span className="text-xs text-muted-foreground">Internal messaging</span>
+          <div className="w-full sm:w-1/2">
+            <CallButton 
+              phoneNumber={seller.phone} 
+              sellerName={displayName}
+              onClick={onContact}
+              className="w-full cursor-pointer"
+            />
           </div>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        )}
+        
+        <div className="w-full sm:w-1/2">
+          {seller.locationUrl ? (
+            <MapButton 
+              locationUrl={seller.locationUrl} 
+              sellerName={displayName}
+              onClick={onContact}
+              className="w-full cursor-pointer"
+            />
+          ) : (
+            <Button 
+              variant="outline" 
+              disabled
+              className="w-full flex items-center justify-center gap-2 h-full cursor-not-allowed opacity-50"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="text-xs sm:text-sm">Map</span>
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

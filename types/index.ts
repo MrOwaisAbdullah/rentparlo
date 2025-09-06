@@ -88,6 +88,7 @@ export interface SellerProfile {
   created_at: string;
   updated_at: string;
   map_location_url?: string; // New field for location map URL
+  listing_count?: number; // Number of listings for this seller
 }
 
 /**
@@ -744,12 +745,14 @@ export type BannerPlacement =
   | "category-sidebar"
   | "search-top"
   | "listing-sidebar"
-  | "mobile-banner";
+  | "mobile-banner"
+  | "seller-profile";
 
 /**
  * Banner sizes
  */
 export type BannerSize =
+  | "large-banner"
   | "leaderboard"
   | "medium-rectangle"
   | "large-rectangle"
@@ -862,8 +865,10 @@ export interface SearchParams {
   area?: string;
   minPrice?: number;
   maxPrice?: number;
-  condition?: ItemCondition;
+  condition?: ItemCondition | ItemCondition[];
   sort?: "featured" | "price-low" | "price-high" | "newest";
+  offset?: number;
+  limit?: number;
 }
 
 /**
@@ -876,7 +881,7 @@ export interface SearchFilters {
   area?: string;
   minPrice?: number;
   maxPrice?: number;
-  condition?: ItemCondition;
+  condition?: ItemCondition | ItemCondition[];
   sort?: "featured" | "price-low" | "price-high" | "newest";
 }
 
