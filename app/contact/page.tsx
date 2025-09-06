@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
-import { ContactForm } from '@/components/forms/contact-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Phone, Mail, Clock, MessageCircle, Users } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Users } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Contact Us | RentParLo.pk',
@@ -29,23 +28,8 @@ export default function ContactPage() {
       {/* Contact Content */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Form - Takes 2 columns */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageCircle className="h-6 w-6 text-primary" />
-                    Send us a Message
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ContactForm />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Contact Information - Takes 1 column */}
+          <div className="max-w-3xl mx-auto">
+            {/* Contact Information */}
             <div className="space-y-6">
               {/* Contact Details */}
               <Card>

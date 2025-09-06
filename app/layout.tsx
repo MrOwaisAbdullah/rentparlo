@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+export const dynamic = 'force-dynamic';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { HeaderWrapper } from "@/components/layout/header-wrapper";
+import { Header } from "@/components/layout/header";
 import { CategoryBarWrapper } from "@/components/layout/category-bar-wrapper";
 import { Footer } from "@/components/layout/footer";
 import { QueryProvider } from "@/components/query-provider";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,18 +25,21 @@ export const metadata: Metadata = {
   keywords: ["rent", "parlo", "rentparlo"],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const user = await getCurrentUser();
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          <HeaderWrapper />
+          <Header user={user} />
           <div className="sticky top-0 z-50">
             <CategoryBarWrapper />
           </div>

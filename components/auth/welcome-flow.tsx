@@ -75,10 +75,10 @@ export function WelcomeFlow({ user }: WelcomeFlowProps) {
   } = useForm<WelcomeFormData>({
     resolver: zodResolver(welcomeSchema),
     defaultValues: {
-      name: user.name || '',
-      phone: user.phone || '',
-      city: user.city || 'Karachi',
-      role: user.role || 'user',
+      name: user?.name || '',
+      phone: user?.phone || '',
+      city: user?.city || 'Karachi',
+      role: user?.role || 'user',
       terms: false
     }
   });

@@ -1,26 +1,28 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { LogIn } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { HeaderSheet } from "./header-sheet";
-import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
-import UniversalSearchBar from "@/components/search/universal-search-bar";
+import Link from 'next/link';
+import { LogIn, User as UserIcon, LayoutDashboard, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { HeaderSheet } from './header-sheet';
+import UniversalSearchBar from '@/components/search/universal-search-bar';
+import { useRouter } from 'next/navigation';
+import type { User } from '@/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { signOut } from '@/lib/auth-actions';
 
-export function Header() {
-  const supabase = createClient();
+interface HeaderProps {
+  user: User | null;
+}
+
+export function Header({ user }: HeaderProps) {
   const router = useRouter();
-
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-    } else {
-      router.push("/auth/login");
-      router.refresh();
-    }
-  };
 
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 relative">
@@ -61,19 +63,57 @@ export function Header() {
             <Button variant="ghost" asChild>
               <Link href="/blog">Blog</Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link href="/auth/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/auth/register">Sign Up</Link>
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="icon" className="rounded-full">
+                    <UserIcon className="h-5 w-5" />
+                    <span className="sr-only">Toggle user menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                     <Link href="/profile">
+                       <UserIcon className="mr-2 h-4 w-4" />
+                       <span>Profile</span>
+                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <form action={signOut}>
+                    <DropdownMenuItem asChild>
+                      <button type="submit" className="w-full">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </DropdownMenuItem>
+                  </form>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" asChild>
+                  <Link href="/auth/login">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/auth/register">Sign Up</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu */}
-          <HeaderSheet />
+          <HeaderSheet user={user} />
         </div>
       </div>
     </header>

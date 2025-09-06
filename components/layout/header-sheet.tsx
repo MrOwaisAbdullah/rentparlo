@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import Link from "next/link";
@@ -12,13 +12,21 @@ import {
   Mail,
   LogIn,
   UserPlus,
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "../ui/separator";
 import UniversalSearchBar from "@/components/search/universal-search-bar";
+import type { User } from '@/types';
+import { signOut } from "@/lib/auth-actions";
 
-export function HeaderSheet() {
+interface HeaderSheetProps {
+  user: User | null;
+}
+
+export function HeaderSheet({ user }: HeaderSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -72,9 +80,82 @@ export function HeaderSheet() {
 
             {/* Mobile Navigation */}
             <div className="space-y-2 pt-4 border-t">
+              {user ? (
+                <>
+                  <div className="px-4 py-2">
+                    <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                  </div>
+                  <Separator />
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-lg py-6"
+                    asChild
+                  >
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                      <LayoutDashboard className="h-5 w-5 mr-3" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-lg py-6"
+                    asChild
+                  >
+                    <Link href="/profile" onClick={() => setIsOpen(false)}>
+                      <UserIcon className="h-5 w-5 mr-3" />
+                      Profile
+                    </Link>
+                  </Button>
+                  {user?.role === 'seller' && (
+                     <Button
+                        variant="ghost"
+                        className="w-full justify-start text-lg py-6"
+                        asChild
+                      >
+                        <Link href="/seller/dashboard" onClick={() => setIsOpen(false)}>
+                          <LayoutDashboard className="h-5 w-5 mr-3" />
+                          Seller Dashboard
+                        </Link>
+                      </Button>
+                  )}
+                  <form action={signOut} className="w-full">
+                     <Button
+                        variant="ghost"
+                        type="submit"
+                        className="w-full justify-start text-lg py-6 text-destructive hover:text-destructive"
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        Sign Out
+                      </Button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start bg-transparent text-lg py-6"
+                    asChild
+                  >
+                    <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                      <LogIn className="h-5 w-5 mr-3" />
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button className="w-full justify-start text-lg py-6" asChild>
+                    <Link href="/auth/register" onClick={() => setIsOpen(false)}>
+                      <UserPlus className="h-5 w-5 mr-3" />
+                      Sign Up
+                    </Link>
+                  </Button>
+                </>
+              )}
+
+              <Separator className="my-4" />
+
               <Button
                 variant="ghost"
-                className="w-full justify-start text-lg py-6"
+                className="w-full justify-start text-base py-4"
                 asChild
               >
                 <Link href="/advertise" onClick={() => setIsOpen(false)}>
@@ -84,7 +165,7 @@ export function HeaderSheet() {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start text-lg py-6"
+                className="w-full justify-start text-base py-4"
                 asChild
               >
                 <Link href="/blog" onClick={() => setIsOpen(false)}>
@@ -92,34 +173,8 @@ export function HeaderSheet() {
                   Blog
                 </Link>
               </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start bg-transparent text-lg py-6"
-                asChild
-              >
-                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                  <LogIn className="h-5 w-5 mr-3" />
-                  Sign In
-                </Link>
-              </Button>
-              <Button className="w-full justify-start text-lg py-6" asChild>
-                <Link href="/auth/register" onClick={() => setIsOpen(false)}>
-                  <UserPlus className="h-5 w-5 mr-3" />
-                  Sign Up
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-lg py-6"
-                asChild
-              >
-                <Link href="/seller/dashboard" onClick={() => setIsOpen(false)}>
-                  <LayoutDashboard className="h-5 w-5 mr-3" />
-                  Seller Dashboard
-                </Link>
-              </Button>
 
-              <Separator className="max-w-[400px] my-4" />
+              <Separator className="my-4" />
 
               <Button variant="outline" className="w-full" asChild>
                 <Link href="/help" onClick={() => setIsOpen(false)}>
