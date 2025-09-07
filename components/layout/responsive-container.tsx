@@ -17,6 +17,7 @@ export interface ResponsiveContainerProps {
     | "5xl"
     | "6xl"
     | "7xl"
+    | "8xl"
     | "full";
   padding?: "none" | "sm" | "default" | "lg" | "xl";
   preventHorizontalScroll?: boolean;
@@ -47,6 +48,7 @@ export function ResponsiveContainer({
     "5xl": "max-w-5xl",
     "6xl": "max-w-6xl",
     "7xl": "max-w-7xl",
+    "8xl": "max-w-[1400px]",
     full: "max-w-full",
   };
 

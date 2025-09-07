@@ -62,12 +62,12 @@ export function UniversalPageLayout({
         )}
 
         <ResponsiveContainer
-          maxWidth="7xl"
+          maxWidth="8xl"
           padding="default"
           className={containerClassName}
           preventHorizontalScroll={true}
         >
-          <div className="py-4 sm:py-6 lg:py-8">
+          <div className="py-4 px-2 sm:py-6 lg:py-8">
             <ResponsiveFlex
               direction="col"
               gap="default"

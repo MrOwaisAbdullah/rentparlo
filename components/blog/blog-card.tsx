@@ -271,7 +271,7 @@ export function BlogCard({
 
   // Default variant - standard grid card
   return (
-    <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-lg py-0", className)}>
+    <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-lg py-0 gap-2", className)}>
       <div className="relative aspect-video overflow-hidden">
         <Image
           src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
@@ -294,13 +294,13 @@ export function BlogCard({
           </div>
         )}
 
-        {post.language !== 'en' && (
+        {/* {post.language !== 'en' && (
           <div className="absolute top-3 right-3">
             <Badge variant="secondary">
               {post.language === 'ur' ? 'اردو' : 'Both'}
             </Badge>
           </div>
-        )}
+        )} */}
       </div>
 
       <CardContent className="p-6">

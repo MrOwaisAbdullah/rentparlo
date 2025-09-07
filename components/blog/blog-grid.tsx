@@ -57,7 +57,7 @@ export function BlogGrid({
       debounceTimer.current = setTimeout(() => {
         // Double-check that the query still differs before making the request
         if (searchQuery !== (filters.query || '')) {
-          onFiltersChange({ ...filters, query: searchQuery, page: 1 });
+          onFiltersChange({ ...filters, query: searchQuery });
         }
       }, 500);
     }
@@ -80,8 +80,7 @@ export function BlogGrid({
   const handleFilterChange = (key: keyof BlogFilters, value: string | boolean | undefined) => {
     onFiltersChange({
       ...filters,
-      [key]: value,
-      page: 1 // Reset to first page when filtering
+      [key]: value
     });
   };
 
@@ -211,142 +210,52 @@ export function BlogGrid({
         {/* Filters Panel */}
         {showFilters && (
           <div className="rounded-lg border p-4 space-y-4 bg-muted/30">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {/* Category Filter */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Search Button */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Category</label>
-                <Select
-                  value={filters.category || 'any'}
-                  onValueChange={(value) => handleFilterChange('category', value === 'any' ? undefined : value)}
+                <label className="text-sm font-medium mb-2 block">Search</label>
+                <Button
+                  onClick={() => {
+                    if (searchQuery) {
+                      onFiltersChange({ ...filters, query: searchQuery });
+                    }
+                  }}
+                  className="w-full"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">All categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category._id} value={category.slug.current}>
-                        {category.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Tag Filter */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Tag</label>
-                <Select
-                  value={filters.tag || 'any'}
-                  onValueChange={(value) => handleFilterChange('tag', value === 'any' ? undefined : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All tags" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">All tags</SelectItem>
-                    {tags.map((tag) => (
-                      <SelectItem key={tag} value={tag}>
-                        {tag}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Language Filter */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Language</label>
-                <Select
-                  value={filters.language || 'any'}
-                  onValueChange={(value) => handleFilterChange('language', value === 'any' ? undefined : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All languages" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">All languages</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="ur">Urdu</SelectItem>
-                    <SelectItem value="both">Both</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sort By */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Sort by</label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest first</SelectItem>
-                    <SelectItem value="oldest">Oldest first</SelectItem>
-                    <SelectItem value="popular">Most popular</SelectItem>
-                    <SelectItem value="title">Title A-Z</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Featured Posts Toggle */}
-            <div className="flex items-center justify-between pt-2 border-t">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.featured || false}
-                  onChange={(e) => handleFilterChange('featured', e.target.checked || undefined)}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm font-medium">Featured posts only</span>
-              </label>
-
-              {activeFiltersCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear all filters
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Posts
                 </Button>
-              )}
+              </div>
+
+              {/* Featured Posts Toggle */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="featured-toggle"
+                    checked={filters.featured || false}
+                    onChange={(e) => handleFilterChange('featured', e.target.checked || undefined)}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor="featured-toggle" className="text-sm font-medium cursor-pointer">
+                    Featured posts only
+                  </label>
+                </div>
+              </div>
             </div>
+
+            {activeFiltersCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="mt-2">
+                Clear all filters
+              </Button>
+            )}
           </div>
         )}
 
         {/* Active Filters */}
         {activeFiltersCount > 0 && (
           <div className="flex flex-wrap gap-2">
-            {filters.category && (
-              <Badge variant="secondary" className="gap-1">
-                Category: {categories.find(c => c.slug.current === filters.category)?.title}
-                <button 
-                  onClick={() => handleFilterChange('category', undefined)}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
-            {filters.tag && (
-              <Badge variant="secondary" className="gap-1">
-                Tag: {filters.tag}
-                <button 
-                  onClick={() => handleFilterChange('tag', undefined)}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
-            {filters.language && (
-              <Badge variant="secondary" className="gap-1">
-                Language: {filters.language === 'en' ? 'English' : filters.language === 'ur' ? 'Urdu' : 'Both'}
-                <button 
-                  onClick={() => handleFilterChange('language', undefined)}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
-              </Badge>
-            )}
             {filters.featured && (
               <Badge variant="secondary" className="gap-1">
                 Featured only

@@ -25,7 +25,7 @@ export function AuthLayout({
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left side - Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-8 lg:py-12">
+      <div className="flex-1 flex flex-col lg:justify-center px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-8 lg:py-12">
         <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
           {/* Back button */}
           {showBackButton && (
@@ -46,11 +46,14 @@ export function AuthLayout({
           )}
 
           {/* Logo */}
-          <div className="mb-6 sm:mb-8 lg:hidden text-center">
+          <div className="mx-auto my-4 sm:mb-8 lg:hidden text-center max-w-[120px]">
             <Link href="/" className="inline-block transition-transform duration-200 hover:scale-105">
-              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
-                RentParLo.pk
-              </div>
+                <Image
+                  src="/rentparlopk.png"
+                  alt="RentParlo Logo"
+                  width={250}
+                  height={66}
+                />
             </Link>
           </div>
 
@@ -105,7 +108,7 @@ export function AuthLayout({
         ) : (
           <div className="flex items-center justify-center h-full bg-gradient-to-br from-primary/10 via-primary/5 to-transparent w-full">
             <div className="text-center p-8 lg:p-12 xl:p-16 max-w-lg">
-              <div className="mb-8">
+              <div className="mb-8 mx-auto flex justify-center">
                 <Image
                   src="/rentparlopk.png"
                   alt="RentParlo Logo"
