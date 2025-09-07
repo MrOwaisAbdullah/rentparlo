@@ -43,6 +43,7 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareTitle = getTitle();
+  const shareDescription = post.excerpt || '';
 
   const copyToClipboard = async () => {
     try {
@@ -55,13 +56,13 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
   };
 
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
     twitter: `https://twitter.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
     linkedin: `https://www.linkedin.com/shareArticle?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`
   };
 
   return (
-    <article className={cn("max-w-4xl mx-auto", className)}>
+    <article className={cn("max-w-6xl mx-auto", className)}>
       {/* Back Button */}
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
@@ -93,10 +94,12 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
 
         {/* Meta Information */}
         <div className="flex flex-wrap items-center gap-4 text-muted-foreground mb-6">
-          <div className="flex items-center">
-            <User className="w-4 h-4 mr-1" />
-            <span>{post.author}</span>
-          </div>
+          {post.author && (
+            <div className="flex items-center">
+              <User className="w-4 h-4 mr-1" />
+              <span>{post.author}</span>
+            </div>
+          )}
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1" />
             <span>{formatDate(post.publishedAt)}</span>
@@ -107,27 +110,30 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
               <span>{post.readingTime} min read</span>
             </div>
           )}
-          <div className="flex items-center">
+          {/* Views will be implemented when we have actual view data */}
+          {/* <div className="flex items-center">
             <Eye className="w-4 h-4 mr-1" />
             <span>1.2k views</span>
-          </div>
+          </div> */}
         </div>
 
         {/* Featured Image */}
-        <div className="relative aspect-video overflow-hidden rounded-lg mb-8">
-          <Image
-            src={post.mainImage?.asset?.url || "/placeholder.svg"}
-            alt={post.mainImage?.alt || "Featured image"}
-            fill
-            className="object-cover"
-            priority
-          />
-          {post.mainImage?.caption && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
-              <p className="text-sm">{post.mainImage.caption}</p>
-            </div>
-          )}
-        </div>
+        {post.mainImage?.asset?.url && (
+          <div className="relative w-full h-[500px] overflow-hidden rounded-lg mb-8">
+            <Image
+              src={post.mainImage.asset.url}
+              alt={post.mainImage.alt || "Featured image"}
+              fill
+              className="object-cover"
+              priority
+            />
+            {post.mainImage.caption && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
+                <p className="text-sm">{post.mainImage.caption}</p>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Article Content */}
@@ -231,25 +237,31 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
           </div>
 
           {/* Author Box */}
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="flex items-start space-x-4">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-muted-foreground" />
+          {post.author && (
+            <Card className="mb-8">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-1">{post.author}</h3>
+                    <p className="text-muted-foreground text-sm mb-3">
+                      Content writer and rental market expert at RentParLo.pk. 
+                      Passionate about helping people find the perfect rental solutions.
+                    </p>
+                    <div className="flex space-x-2">
+                      <Link href="/blog">
+                      <Button variant="outline" size="sm">
+                        More Articles
+                      </Button>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1">{post.author}</h3>
-                  <p className="text-muted-foreground text-sm mb-3">
-                    Content writer and rental market expert at RentParLo.pk. 
-                    Passionate about helping people find the perfect rental solutions.
-                  </p>
-                    <Button variant="outline" size="sm">
-                      More Articles
-                    </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}

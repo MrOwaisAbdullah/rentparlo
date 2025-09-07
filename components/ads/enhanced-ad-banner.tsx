@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils"
 import { useDeviceDetection } from "@/hooks/use-device-detection"
 import { useBanner } from "@/contexts/banner-context"
 import { getBannerSizeClasses as getBannerSizeClassesUtil, getBannerImageDimensions, getBannerSize } from "@/lib/banner-utils"
-import { BannerCloseButton } from "@/components/ads/banner-close-button"
 import { trackBannerImpression, trackBannerClick, initializeBannerTrackingData } from "@/lib/banner-analytics"
 import { v4 as uuidv4 } from 'uuid'
 
@@ -526,7 +525,7 @@ export function EnhancedAdBanner({
       );
       
       // Add click-specific data
-      trackingData.target_url = banner.targetUrl;
+      trackingData.page_url = banner.targetUrl;
       
       trackBannerClick(trackingData);
 
@@ -659,14 +658,6 @@ export function EnhancedAdBanner({
       <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
         Ad
       </div>
-      
-      {/* Close button */}
-      {showCloseButton && (
-        <BannerCloseButton 
-          onClick={handleClose}
-          className="top-1 right-1"
-        />
-      )}
     </div>
   )
 }

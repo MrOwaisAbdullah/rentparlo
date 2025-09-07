@@ -5,13 +5,14 @@ import { BlogPost, BlogPostSummary } from '@/types';
 import { getPostBySlug, getRecentPosts } from '@/lib/blog';
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const post = await getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return {
@@ -51,13 +52,14 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       images: [socialImage]
     },
     alternates: {
-      canonical: `/blog/${params.slug}`
+      canonical: `/blog/${slug}`
     }
   };
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = await getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
@@ -94,7 +96,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     dateModified: post._updatedAt,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://rentparlo.pk/blog/${params.slug}`
+      '@id': `https://rentparlo.pk/blog/${slug}`
     }
   };
 
