@@ -139,8 +139,7 @@ export function RegisterForm({
   
   // Real-time validation
   const validateField = React.useCallback(async (field: keyof RegistrationFormData, value: any) => {
-    if (!touchedFields[field] || !value) return;
-    
+    // Always validate, even if field hasn't been touched yet
     setValidationState(prev => ({ ...prev, [field]: 'validating' }));
     
     try {
@@ -156,7 +155,7 @@ export function RegisterForm({
       const message = error?.message || 'Invalid value';
       setFormError(field, { message });
     }
-  }, [touchedFields, setFormError, clearErrors, trigger]);
+  }, [setFormError, clearErrors, trigger]);
   
   // Profile image upload handler
   const handleProfileImageUpload = async (file: File): Promise<string> => {
@@ -171,30 +170,61 @@ export function RegisterForm({
     }
   };
 
-  // Enhanced step navigation with validation
+  // Enhanced step navigation with validation - ONLY validate current step fields
   const validateCurrentStep = async () => {
-    const stepFieldMap: Record<number, string[]> = {
+    const stepFieldMap: Record<number, (keyof RegistrationFormData)[]> = {
       0: ['role'],
       1: ['name', 'email', 'phone', 'city'],
       2: ['password', 'confirmPassword'],
-      3: selectedRole === 'seller' ? ['businessName', 'cnic', 'address'] : ['terms'],
+      3: selectedRole === 'seller' ? ['businessName', 'cnic', 'address'] as (keyof RegistrationFormData)[] : ['terms'],
       4: ['terms']
     };
 
     const fieldsToValidate = stepFieldMap[currentStep];
     if (!fieldsToValidate) return true;
     
-    // Filter fields that exist in the current form state
-    const validFields = fieldsToValidate.filter(field => {
-      if (selectedRole === 'user' && ['businessName', 'cnic', 'address'].includes(field)) {
+    // Clear previous errors first
+    setError(null);
+    
+    // Special handling for step 0 (role selection)
+    if (currentStep === 0) {
+      // For role selection, we just need to make sure a role is selected
+      if (formData.role === 'user' || formData.role === 'seller') {
+        setCompletedSteps(prev => new Set([...prev, currentStep]));
+        return true;
+      } else {
+        setError('Please select an account type');
         return false;
       }
-      return true;
-    });
+    }
     
-    const isStepValid = await trigger(validFields as any);
+    // Validate only fields in the current step
+    let isStepValid = true;
+    const invalidFields: string[] = [];
     
-    if (isStepValid) {
+    for (const field of fieldsToValidate) {
+      // Skip validation for optional fields that are not applicable
+      if (selectedRole === 'user' && ['businessName', 'cnic', 'address'].includes(field as string)) {
+        continue;
+      }
+      
+      const isValid = await trigger(field);
+      if (!isValid) {
+        isStepValid = false;
+        // Get the field name for the error message
+        const fieldName = field.toString();
+        invalidFields.push(fieldName);
+      }
+    }
+    
+    if (!isStepValid) {
+      if (invalidFields.length > 0) {
+        setError(`Please correct the following fields: ${invalidFields.join(', ')}`);
+      } else {
+        setError('Please correct the highlighted fields and try again.');
+      }
+    } else {
+      // If step is valid, mark it as completed
       setCompletedSteps(prev => new Set([...prev, currentStep]));
     }
     
@@ -202,10 +232,10 @@ export function RegisterForm({
   };
 
   const handleNext = async () => {
+    setError(null); // Clear previous errors
     const isStepValid = await validateCurrentStep();
     if (isStepValid && currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
-      setError(null);
     }
   };
 
@@ -258,9 +288,15 @@ export function RegisterForm({
         }
       } else {
         // If successful, handle redirect or success callback
-        onSuccess?.();
-        if (result.redirectTo && !onSuccess) {
+        if (result.redirectTo) {
+          // Redirect to the appropriate page
           window.location.href = result.redirectTo;
+        } else {
+          // Fallback to onSuccess callback or dashboard
+          onSuccess?.();
+          if (!onSuccess) {
+            window.location.href = '/dashboard';
+          }
         }
       }
     } catch (err) {
@@ -304,7 +340,9 @@ export function RegisterForm({
               selected={formData.role}
               onSelect={(role) => {
                 setValue('role', role);
-                validateField('role', role);
+                // For role selection, we can immediately mark as valid since it's required
+                setValidationState(prev => ({ ...prev, role: 'valid' }));
+                clearErrors('role');
               }}
             />
           </motion.div>
@@ -354,7 +392,10 @@ export function RegisterForm({
                   validationState={validationState.name}
                   isValid={validationState.name === 'valid'}
                   isLoading={validationState.name === 'validating'}
-                  onChange={(value) => setValue('name', value as string)}
+                  onChange={(value) => {
+                    setValue('name', value as string);
+                    validateField('name', value);
+                  }}
                   onBlur={() => validateField('name', formData.name)}
                   animation="slide"
                 />
@@ -379,7 +420,10 @@ export function RegisterForm({
                   validationState={validationState.email}
                   isValid={validationState.email === 'valid'}
                   isLoading={validationState.email === 'validating'}
-                  onChange={(value) => setValue('email', value as string)}
+                  onChange={(value) => {
+                    setValue('email', value as string);
+                    validateField('email', value);
+                  }}
                   onBlur={() => validateField('email', formData.email)}
                   animation="slide"
                 />
@@ -406,7 +450,10 @@ export function RegisterForm({
                   validationState={validationState.phone}
                   isValid={validationState.phone === 'valid'}
                   isLoading={validationState.phone === 'validating'}
-                  onChange={(value) => setValue('phone', value as string)}
+                  onChange={(value) => {
+                    setValue('phone', value as string);
+                    validateField('phone', value);
+                  }}
                   onBlur={() => validateField('phone', formData.phone)}
                   animation="slide"
                 />
@@ -428,7 +475,10 @@ export function RegisterForm({
                   required
                   disabled={isLoading}
                   icon={MapPin}
-                  onChange={(value) => setValue('city', value as any)}
+                  onChange={(value) => {
+                    setValue('city', value as any);
+                    validateField('city', value);
+                  }}
                   animation="slide"
                 />
               </motion.div>
@@ -454,7 +504,10 @@ export function RegisterForm({
                 error={errors.password?.message}
                 required
                 description="Must contain at least 8 characters with uppercase, lowercase, and number"
-                onChange={(value) => setValue('password', value as string)}
+                onChange={(value) => {
+                  setValue('password', value as string);
+                  validateField('password', value);
+                }}
               />
 
               <FormField
@@ -466,7 +519,10 @@ export function RegisterForm({
                 value={formData.confirmPassword}
                 error={errors.confirmPassword?.message}
                 required
-                onChange={(value) => setValue('confirmPassword', value as string)}
+                onChange={(value) => {
+                  setValue('confirmPassword', value as string);
+                  validateField('confirmPassword', value);
+                }}
               />
             </div>
           </FormSection>
@@ -488,7 +544,10 @@ export function RegisterForm({
                   placeholder="Enter your business name (optional)"
                   value={formData.businessName || ''}
                   error={(errors as any).businessName?.message}
-                  onChange={(value) => setValue('businessName', value as any)}
+                  onChange={(value) => {
+                    setValue('businessName', value as any);
+                    validateField('businessName', value);
+                  }}
                 />
 
                 <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
@@ -500,7 +559,10 @@ export function RegisterForm({
                     value={formData.cnic || ''}
                     error={(errors as any).cnic?.message}
                     description="Required for seller verification"
-                    onChange={(value) => setValue('cnic', value as any)}
+                    onChange={(value) => {
+                      setValue('cnic', value as any);
+                      validateField('cnic', value);
+                    }}
                   />
 
                   <div className="md:col-span-1">
@@ -512,7 +574,10 @@ export function RegisterForm({
                       placeholder="Enter your complete business address"
                       value={formData.address || ''}
                       error={(errors as any).address?.message}
-                      onChange={(value) => setValue('address', value as any)}
+                      onChange={(value) => {
+                        setValue('address', value as any);
+                        validateField('address', value);
+                      }}
                     />
                   </div>
                 </div>
@@ -533,7 +598,10 @@ export function RegisterForm({
                 value={formData.terms}
                 error={errors.terms?.message}
                 required
-                onChange={(value) => setValue('terms', value as boolean)}
+                onChange={(value) => {
+                  setValue('terms', value as boolean);
+                  validateField('terms', value);
+                }}
               />
             </FormSection>
           );
@@ -612,7 +680,10 @@ export function RegisterForm({
                   value={formData.terms}
                   error={errors.terms?.message}
                   required
-                  onChange={(value) => setValue('terms', value as boolean)}
+                  onChange={(value) => {
+                    setValue('terms', value as boolean);
+                    validateField('terms', value);
+                  }}
                 />
               </div>
             )}
@@ -732,6 +803,7 @@ export function RegisterForm({
           completedSteps={completedSteps}
           variant="default"
           animation="slide"
+          onSubmit={handleSubmit(onSubmit as any)}
         >
           {renderStepContent()}
         </MultiStepForm>

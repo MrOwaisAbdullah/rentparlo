@@ -24,6 +24,7 @@ export interface MultiStepFormProps {
   onNext?: () => void | Promise<void>;
   onPrevious?: () => void;
   onStepClick?: (stepIndex: number) => void;
+  onSubmit?: (e: React.FormEvent) => void | Promise<void>;
   nextLabel?: string;
   previousLabel?: string;
   submitLabel?: string;
@@ -48,6 +49,7 @@ export function MultiStepForm({
   onNext,
   onPrevious,
   onStepClick,
+  onSubmit,
   nextLabel = 'Next',
   previousLabel = 'Previous',
   submitLabel = 'Submit',
@@ -117,7 +119,9 @@ export function MultiStepForm({
   };
   
   // Handler for next button
-  const handleNext = async () => {
+  const handleNext = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (canGoNext && !isLoading && !isTransitioning) {
       setAnimationDirection('forward');
       setIsTransitioning(true);
@@ -138,9 +142,16 @@ export function MultiStepForm({
           onProgressSave(currentStep, {});
         }
         
-        // Call next handler
-        if (onNext) {
-          await onNext();
+        // If this is the last step, submit the form
+        if (currentStep === steps.length - 1) {
+          if (onSubmit) {
+            await onSubmit(e);
+          }
+        } else {
+          // Call next handler for intermediate steps
+          if (onNext) {
+            await onNext();
+          }
         }
       } catch (error) {
         console.error('Error proceeding to next step:', error);
@@ -478,7 +489,11 @@ export function MultiStepForm({
           )}
           
           <Button
-            onClick={handleNext}
+            type="submit"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNext(e);
+            }}
             disabled={!canGoNext || isLoading || isTransitioning}
             className="w-full sm:w-auto min-w-[120px] h-11 sm:h-12 order-3"
           >

@@ -28,18 +28,6 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      updateScrollButtons();
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     // If listings are provided as props, filter them directly
@@ -112,7 +100,7 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
       container.addEventListener("scroll", updateScrollButtons);
       return () => container.removeEventListener("scroll", updateScrollButtons);
     }
-  }, [filteredlistings, isMobile]);
+  }, [filteredlistings]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -207,10 +195,10 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
             </>
           )}
 
-          <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 overflow-x-auto py-2 pb-4 scrollbar-hide">
+          <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 overflow-x-auto px-2 py-2 pb-4 scrollbar-hide">
             {filteredlistings.length > 0 ? (
               filteredlistings.map((listing, index) => (
-                <ListingCard variant="swiper" key={`${listing._id}-${index}`} listing={listing} isMobile={isMobile} />
+                <ListingCard variant="swiper" key={`${listing._id}-${index}`} listing={listing} />
               ))
             ) : (
               <div className="w-full text-center py-8">

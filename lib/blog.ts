@@ -72,6 +72,62 @@ export async function getAllPosts(
   }
 }
 
+export async function getFilteredPosts(
+  filters: BlogFilters,
+  page: number = 1,
+  limit: number = 12
+): Promise<{ posts: BlogPostSummary[]; total: number }> {
+  try {
+    const offset = (page - 1) * limit;
+    
+    // Build the query conditions
+    let conditions = '_type == "blog" && status == "published"';
+    
+    if (filters.query) {
+      const query = filters.query.toLowerCase();
+      conditions += ` && (title match "${query}*" || excerpt match "${query}*" || "${query}" in tags)`;
+    }
+    
+    if (filters.category) {
+      conditions += ` && "${filters.category}" in categories[]->slug.current`;
+    }
+    
+    if (filters.tag) {
+      conditions += ` && "${filters.tag}" in tags`;
+    }
+    
+    if (filters.language) {
+      conditions += ` && language == "${filters.language}"`;
+    }
+    
+    if (filters.featured) {
+      conditions += ` && featured == true`;
+    }
+    
+    if (filters.dateFrom) {
+      conditions += ` && dateTime(publishedAt) >= dateTime("${filters.dateFrom}")`;
+    }
+    
+    if (filters.dateTo) {
+      conditions += ` && dateTime(publishedAt) <= dateTime("${filters.dateTo}")`;
+    }
+    
+    const [posts, total] = await Promise.all([
+      client.fetch<BlogPostSummary[]>(groq`
+        *[${conditions}] | order(publishedAt desc) [${offset}...${offset + limit}] {
+          ${blogPostSummaryFields}
+        }
+      `),
+      client.fetch<number>(groq`count(*[${conditions}])`)
+    ]);
+    
+    return { posts, total };
+  } catch (error) {
+    console.error('Error fetching filtered blog posts:', error);
+    return { posts: [], total: 0 };
+  }
+}
+
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   try {
     const query = groq`*[_type == "blog" && slug.current == $slug][0] {

@@ -1,70 +1,71 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { Star, MapPin, Award, TrendingUp } from 'lucide-react';
-import { VerifiedBadge } from '@/components/seller/verified-badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import { Seller } from '@/types';
+import { Marquee } from '@/components/ui/marquee';
+import { Seller } from '@/types'; // Assuming Seller type is available
+import { VerifiedBadge } from '@/components/seller/verified-badge';
+import { Star } from 'lucide-react';
+
+// This card is adapted from the original TestimonialCard
+function SellerMarqueeCard({ seller }: { seller: Seller }) {
+  const profile = seller.profile;
+
+  // Safely access properties with fallbacks
+  const name = profile.business_name || profile.username || 'Unnamed Seller';
+  const username = profile.username ? `@${profile.username}` : '';
+  const avatarUrl = profile.avatar_url || '';
+  const description = profile.description || seller.bio || ''; // Fallback to user bio
+  const city = seller.city || '';
+  const isVerified = profile.is_verified || false;
+  const rating = profile.customer_rating ?? 0;
+  const totalReviews = profile.total_reviews ?? 0;
+
+  return (
+    <Card className="w-64 mx-2">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2.5 mb-3">
+          <Avatar className="size-9">
+            <AvatarImage src={avatarUrl} alt={username} />
+            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <figcaption className="text-sm font-medium text-foreground">
+                {name}
+              </figcaption>
+              {isVerified && <VerifiedBadge size="sm" />}
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">{username}</p>
+          </div>
+        </div>
+
+        {description && (
+          <blockquote className="mt-3 text-sm text-secondary-foreground h-10 line-clamp-2">
+            {description}
+          </blockquote>
+        )}
+
+        <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <span className="text-sm font-semibold">{rating.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">({totalReviews})</span>
+            </div>
+            {city && <span className="text-xs text-muted-foreground">{city}</span>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 
 interface TopSellersProps {
-  sellers: Seller[];
-  className?: string;
+    sellers: Seller[];
 }
 
-const tierConfig = {
-  basic: {
-    color: 'bg-gray-100 text-gray-700',
-    icon: '🥉',
-    label: 'Basic'
-  },
-  bronze: {
-    color: 'bg-orange-100 text-orange-700',
-    icon: '🥉',
-    label: 'Bronze'
-  },
-  silver: {
-    color: 'bg-gray-100 text-gray-600',
-    icon: '🥈',
-    label: 'Silver'
-  },
-  gold: {
-    color: 'bg-yellow-100 text-yellow-700',
-    icon: '🥇',
-    label: 'Gold'
-  },
-  platinum: {
-    color: 'bg-purple-100 text-purple-700',
-    icon: '💎',
-    label: 'Platinum'
-  },
-  diamond: {
-    color: 'bg-blue-100 text-blue-700',
-    icon: '💎',
-    label: 'Diamond'
-  }
-};
-
-export function TopSellers({ sellers, className }: TopSellersProps) {
-  const formatJoinDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short' 
-    });
-  };
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}k`;
-    }
-    return num.toString();
-  };
-
+// The main component, renamed from Component to TopSellers
+export default function TopSellers({ sellers }: TopSellersProps) {
   if (!sellers || sellers.length === 0) {
     return (
       <div className="text-center py-12">
@@ -73,104 +74,29 @@ export function TopSellers({ sellers, className }: TopSellersProps) {
     );
   }
 
+  // To make the marquees look different, we can split the sellers array
+  const firstHalf = sellers.slice(0, Math.ceil(sellers.length / 2));
+  const secondHalf = sellers.slice(Math.ceil(sellers.length / 2));
+
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4", className)}>
-      {sellers.map((seller, index) => (
-        <Card key={seller.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
-          <CardContent className="p-4 text-center">
-            {/* Rank Badge */}
-            {index < 3 && (
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold">
-                #{index + 1}
-              </div>
-            )}
-
-            {/* Avatar */}
-            <div className="relative mb-3">
-              <Avatar className="w-16 h-16 mx-auto ring-2 ring-muted">
-                <AvatarImage 
-                  src={seller.profile.avatar_url} 
-                  alt={seller.profile.username}
-                />
-                <AvatarFallback className="text-lg font-semibold">
-                  {seller.profile.username.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              {seller.profile.is_verified && (
-                <div className="absolute -bottom-1 -right-1">
-                  <VerifiedBadge size="sm" />
-                </div>
-              )}
-
-              {/* Top seller crown */}
-              {seller.profile.is_top_seller && (
-                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                  <Award className="w-5 h-5 text-yellow-500" />
-                </div>
-              )}
-            </div>
-
-            {/* Seller Info */}
-            <Link href={`/seller/${seller.profile.username}`} className="block">
-              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors line-clamp-1">
-                {seller.profile.business_name || seller.profile.username}
-              </h3>
-              {seller.profile.business_name && (
-                <p className="text-xs text-muted-foreground line-clamp-1">
-                  @{seller.profile.username}
-                </p>
-              )}
-            </Link>
-
-            {/* Location */}
-            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1 mb-2">
-              <MapPin className="w-3 h-3" />
-              <span>{seller.city || 'Location not specified'}</span>
-            </div>
-
-            {/* Tier Badge */}
-            <div className="flex items-center justify-center gap-1 mb-3">
-              <Badge className={cn("text-xs", tierConfig[seller.profile.tier].color)}>
-                <span className="mr-1">{tierConfig[seller.profile.tier].icon}</span>
-                {tierConfig[seller.profile.tier].label}
-              </Badge>
-            </div>
-
-            {/* Stats */}
-            <div className="space-y-2 mb-3">
-              {/* Tier Points */}
-              <div className="flex items-center justify-center gap-1">
-                <TrendingUp className="w-3 h-3 text-blue-500" />
-                <span className="text-xs font-medium text-blue-600">
-                  {formatNumber(seller.profile.tier_points)} pts
-                </span>
-              </div>
-            </div>
-
-            {/* Performance Indicators */}
-            <div className="flex justify-center gap-1 mb-3">
-              {seller.profile.is_top_seller && (
-                <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                  Top Seller
-                </Badge>
-              )}
-              {seller.is_verified && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  Verified
-                </Badge>
-              )}
-            </div>
-
-            {/* Join Date */}
-            <div className="text-xs text-muted-foreground">
-              Since {formatJoinDate(seller.created_at)}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="relative flex w-full flex-col items-center justify-center gap-1 overflow-hidden py-8">
+      {/* Marquee moving left to right (default) */}
+      <Marquee pauseOnHover repeat={5} className="[--duration:80s]">
+        {firstHalf.map((seller) => (
+          <SellerMarqueeCard key={`${seller.id}-first`} seller={seller} />
+        ))}
+      </Marquee>
+      {/* Marquee moving right to left (reverse) */}
+      <Marquee pauseOnHover reverse repeat={5} className="[--duration:80s]">
+        {secondHalf.map((seller) => (
+          <SellerMarqueeCard key={`${seller.id}-second`} seller={seller} />
+        ))}
+      </Marquee>
+      {/* Stylish gradient overlays */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 bg-gradient-to-r from-background/95 to-transparent"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 bg-gradient-to-l from-background/95 to-transparent"></div>
+      <div className="pointer-events-none absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-background/90 to-transparent"></div>
+      <div className="pointer-events-none absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-background/90 to-transparent"></div>
     </div>
   );
 }
-
-export default TopSellers;

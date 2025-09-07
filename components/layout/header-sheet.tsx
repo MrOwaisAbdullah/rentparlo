@@ -20,7 +20,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "../ui/separator";
 import UniversalSearchBar from "@/components/search/universal-search-bar";
 import type { User } from '@/types';
-import { signOut } from "@/lib/auth-actions";
+import { signOutAndRedirect } from "@/lib/auth-actions";
+import { useSavedItems } from "@/contexts/SavedItemsContext";
+import { Bookmark } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface HeaderSheetProps {
   user: User | null;
@@ -28,10 +31,11 @@ interface HeaderSheetProps {
 
 export function HeaderSheet({ user }: HeaderSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { totalItems } = useSavedItems();
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild className="md:hidden">
+      <SheetTrigger asChild className="lg:hidden">
         <Button variant="ghost" size="icon">
           <Menu className="h-7 w-7" />
         </Button>
@@ -80,6 +84,49 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
 
             {/* Mobile Navigation */}
             <div className="space-y-2 pt-4 border-t">
+
+
+            <Button
+                variant="ghost"
+                className="w-full justify-start text-base py-4"
+                asChild
+              >
+                <Link href="/advertise" onClick={() => setIsOpen(false)}>
+                  <Megaphone className="h-5 w-5 mr-3" />
+                  Advertise
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-base py-4"
+                asChild
+              >
+                <Link href="/blog" onClick={() => setIsOpen(false)}>
+                  <FileText className="h-5 w-5 mr-3" />
+                  Blog
+                </Link>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-base py-4"
+                asChild
+              >
+                <Link href="/saved" onClick={() => setIsOpen(false)} className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Bookmark className="h-5 w-5 mr-3" />
+                    Saved Items
+                  </div>
+                  {totalItems > 0 && (
+                    <Badge variant="destructive" className="h-6 w-6 flex items-center justify-center rounded-full p-0">
+                      {totalItems}
+                    </Badge>
+                  )}
+                </Link>
+              </Button>
+
+              <Separator className="my-4" />
+
               {user ? (
                 <>
                   <div className="px-4 py-2">
@@ -110,7 +157,7 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                   {user?.role === 'seller' && (
                      <Button
                         variant="ghost"
-                        className="w-full justify-start text-lg py-6"
+                        className="w-full text-lg py-4"
                         asChild
                       >
                         <Link href="/seller/dashboard" onClick={() => setIsOpen(false)}>
@@ -119,11 +166,11 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                         </Link>
                       </Button>
                   )}
-                  <form action={signOut} className="w-full">
+                  <form action={signOutAndRedirect} className="w-full">
                      <Button
                         variant="ghost"
                         type="submit"
-                        className="w-full justify-start text-lg py-6 text-destructive hover:text-destructive"
+                        className="w-full text-lg py-4 text-destructive hover:text-destructive"
                       >
                         <LogOut className="h-5 w-5 mr-3" />
                         Sign Out
@@ -134,7 +181,7 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                 <>
                   <Button
                     variant="outline"
-                    className="w-full justify-start bg-transparent text-lg py-6"
+                    className="w-full bg-transparent text-lg py-4"
                     asChild
                   >
                     <Link href="/auth/login" onClick={() => setIsOpen(false)}>
@@ -142,7 +189,7 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                       Sign In
                     </Link>
                   </Button>
-                  <Button className="w-full justify-start text-lg py-6" asChild>
+                  <Button className="w-full text-lg py-4" asChild>
                     <Link href="/auth/register" onClick={() => setIsOpen(false)}>
                       <UserPlus className="h-5 w-5 mr-3" />
                       Sign Up
@@ -150,29 +197,6 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                   </Button>
                 </>
               )}
-
-              <Separator className="my-4" />
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-base py-4"
-                asChild
-              >
-                <Link href="/advertise" onClick={() => setIsOpen(false)}>
-                  <Megaphone className="h-5 w-5 mr-3" />
-                  Advertise
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-base py-4"
-                asChild
-              >
-                <Link href="/blog" onClick={() => setIsOpen(false)}>
-                  <FileText className="h-5 w-5 mr-3" />
-                  Blog
-                </Link>
-              </Button>
 
               <Separator className="my-4" />
 

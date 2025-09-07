@@ -15,7 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { signOut } from '@/lib/auth-actions';
+import { signOutAndRedirect } from '@/lib/auth-actions';
+import { SavedItemsHeaderIcon } from './saved-items-header-icon';
+import Image from 'next/image';
 
 interface HeaderProps {
   user: User | null;
@@ -29,17 +31,18 @@ export function Header({ user }: HeaderProps) {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">
-                RP
-              </span>
-            </div>
-            <span className="font-bold text-xl text-primary">RentParlo</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/rentparlopk.png"
+              alt="RentParlo Logo"
+              width={150}
+              height={40}
+              priority
+            />
           </Link>
 
           {/* Desktop Search Bar */}
-          <div className="hidden md:flex items-center space-x-2 flex-1 max-w-2xl mx-8">
+          <div className="hidden lg:flex items-center space-x-2 flex-1 max-w-2xl mx-8">
             <UniversalSearchBar
               variant="header"
               placeholder="Try 'DSLR camera', 'Car', 'Laptop'..."
@@ -56,13 +59,14 @@ export function Header({ user }: HeaderProps) {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <Button variant="ghost" asChild>
               <Link href="/advertise">Advertise</Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link href="/blog">Blog</Link>
             </Button>
+            <SavedItemsHeaderIcon />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -87,7 +91,7 @@ export function Header({ user }: HeaderProps) {
                      </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <form action={signOut}>
+                  <form action={signOutAndRedirect}>
                     <DropdownMenuItem asChild>
                       <button type="submit" className="w-full">
                         <LogOut className="mr-2 h-4 w-4" />
@@ -112,8 +116,11 @@ export function Header({ user }: HeaderProps) {
             )}
           </div>
 
-          {/* Mobile Menu */}
-          <HeaderSheet user={user} />
+          {/* Mobile Actions */}
+          <div className="lg:hidden flex items-center space-x-2">
+            <SavedItemsHeaderIcon />
+            <HeaderSheet user={user} />
+          </div>
         </div>
       </div>
     </header>

@@ -26,6 +26,7 @@ import { ContactSellerModal } from '@/components/listing/contact-seller-modal';
 import { PriceInfoCard } from '@/components/listing/price-info-card';
 import { cn } from '@/lib/utils';
 import { Listing as SanityListing, Seller, SellerProfile } from '@/types';
+import { SaveButton } from '@/components/ui/save-button';
 
 interface ListingDetailContentProps {
   listing: SanityListing;
@@ -47,7 +48,7 @@ const availabilityConfig = {
 };
 
 const tierConfig = {
-  basic: { color: 'bg-gray-100 text-gray-700', icon: '🥉' },
+  basic: { color: 'bg-gray-100 text-gray-700', icon: '🏅' },
   bronze: { color: 'bg-amber-100 text-amber-700', icon: '🥉' },
   silver: { color: 'bg-gray-100 text-gray-600', icon: '🥈' },
   gold: { color: 'bg-yellow-100 text-yellow-700', icon: '🥇' },
@@ -83,7 +84,7 @@ interface ContactModalSeller {
 
 export function ListingDetailContent({ listing, similarListings = [], reviews = [] }: ListingDetailContentProps) {
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
-  const [isFavorited, setIsFavorited] = React.useState(false);
+  
   const [showContactModal, setShowContactModal] = React.useState(false);
   const [showCallSafetyModal, setShowCallSafetyModal] = React.useState(false);
   const [showMapSafetyModal, setShowMapSafetyModal] = React.useState(false);
@@ -371,14 +372,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
 
                 {/* Action Buttons */}
                 <div className="absolute top-4 right-4 flex md:flex-col gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
-                    onClick={() => setIsFavorited(!isFavorited)}
-                  >
-                    <Heart className={cn("w-3 h-3 sm:w-4 sm:h-4", isFavorited && "fill-red-500 text-red-500")} />
-                  </Button>
+                  <SaveButton listing={listing} className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white" />
                   <Button
                     size="sm"
                     variant="secondary"
@@ -694,11 +688,9 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
         </div>
 
         {/* Reviews Section */}
-        {reviews && reviews.length > 0 && (
-          <div className="mt-12">
+        <div className="mt-12">
             <ListingReviews reviews={reviews} listingId={listing._id} />
           </div>
-        )}
 
         {/* Similar Listings */}
         {similarListings && similarListings.length > 0 && (
@@ -748,7 +740,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
               </div>
               <div className="flex gap-2">
                 <Button 
-                  className="w-12 h-12 p-0"
+                  className="w-12 h-14 p-1"
                   onClick={handleCallSeller}
                   disabled={!getSellerPhone() || listing.availability?.isAvailable === false}
                 >

@@ -59,7 +59,7 @@ export function Combobox({
       <PopoverContent className={cn("w-full p-0", "z-[99999]")}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandList className="max-h-[200px] overflow-y-auto overscroll-y-contain">
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (

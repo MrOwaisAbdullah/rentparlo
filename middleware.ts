@@ -21,7 +21,7 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-  '/dashboard',
+  // '/dashboard',
   '/profile',
   '/settings',
   '/messages',
@@ -37,6 +37,7 @@ const adminRoutes = [
 ];
 
 const sellerRoutes = [
+  // '/dashboard',
   '/seller/dashboard',
   '/seller/listings',
   '/seller/analytics',

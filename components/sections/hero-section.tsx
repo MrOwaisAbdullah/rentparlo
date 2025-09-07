@@ -6,6 +6,8 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { getOptimizedImageUrl } from "@/sanity/lib/image";
 import UniversalSearchBar from "@/components/search/universal-search-bar";
+import { AdBanner } from "@/components/ads/ad-banner";
+import { cn } from "@/lib/utils";
 
 interface Banner {
   _id: string;
@@ -160,6 +162,17 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
 
   return (
     <section className="relative bg-muted/20">
+      {/* Top Banner - Full Width Large Banner */}
+      <div className="w-full bg-background">
+        <div className="container mx-auto px-4 pt-4">
+          <AdBanner 
+            placement="homepage-top" 
+            className="mx-auto w-full" 
+            fallbackText="Advertisement"
+          />
+        </div>
+      </div>
+
       <div className="relative h-[400px] bg-cover bg-center bg-no-repeat overflow-hidden">
         {/* Banner Slider with Smooth Animations */}
         <AnimatePresence mode="wait">
@@ -300,6 +313,17 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
           size="lg"
           className="max-w-4xl mx-auto"
         />
+      </div>
+
+      {/* Bottom Banner - Leaderboard */}
+      <div className="w-full bg-background">
+        <div className="container mx-auto px-4 pt-6 pb-4">
+          <AdBanner 
+            placement="homepage-bottom" 
+            className="mx-auto w-full" 
+            fallbackText="Advertisement"
+          />
+        </div>
       </div>
     </section>
   );

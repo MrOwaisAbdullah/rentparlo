@@ -8,15 +8,12 @@ import { FeaturedListings } from "@/components/sections/featured-listings";
 import { CategoryCards } from "@/components/sections/category-cards";
 import { HeroSection } from "@/components/sections/hero-section";
 import { BlogSection } from "@/components/sections/blog-section";
-import { Testimonials } from "@/components/testimonials";
-import { TopSellers } from "@/components/sections/top-sellers";
+import { Testimonials } from "@/components/sections/testimonials";
+import TopSellers from "@/components/sections/top-sellers";
 import { AdBanner } from "@/components/ads/ad-banner";
 import ProductSwiper from "@/components/sections/product-swiper";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BlogCard } from "@/components/blog/blog-card";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import LocationLinks from "@/components/sections/location-links"; // Import LocationLinks component
 import {
   Seller,
@@ -160,33 +157,27 @@ async function HomepageContent() {
 
         {/* Top Sellers Section */}
         {topSellers.length > 0 && (
-          <section className="py-12 bg-muted/20">
-            <div className="container mx-auto px-4">
+          <section className="py-12 bg-muted/20 container mx-auto">
               <h2 className="text-3xl font-bold text-center mb-8">
                 Top Sellers
               </h2>
               <TopSellersList sellers={topSellers} />
-            </div>
           </section>
         )}
 
         {/* Blog Section */}
         {recentBlogs.length > 0 && (
-          <section className="py-12">
-            <div className="container mx-auto px-4">
+          <section className="py-12 container mx-auto">
               <h2 className="text-3xl font-bold text-center mb-8">
                 Latest from Blog
               </h2>
               <HomepageBlogSection posts={recentBlogs} />
-            </div>
           </section>
         )}
 
         {/* Testimonials */}
-        <section className="py-12 bg-muted/20">
-          <div className="container mx-auto px-4">
+        <section className="py-12 bg-muted/60">
             <Testimonials />
-          </div>
         </section>
 
         {/* Location Links */}
@@ -268,23 +259,7 @@ function HomepageBlogSection({ posts }: { posts: BlogPost[] }) {
   }));
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">From Our Blog</h2>
-          <Button asChild variant="ghost">
-            <Link href="/blog">
-              View All <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogSummaries.map((post) => (
-            <BlogCard key={post._id} post={post} />
-          ))}
-        </div>
-      </div>
-    </section>
+  <BlogSection />
   );
 }
 

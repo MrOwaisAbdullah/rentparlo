@@ -49,6 +49,7 @@ export interface User {
   whatsapp_consent?: boolean;
   notification_preferences: NotificationPreferences;
   preferred_language: UserLanguage;
+  bio?: string;
 }
 
 /**
@@ -89,6 +90,9 @@ export interface SellerProfile {
   updated_at: string;
   map_location_url?: string; // New field for location map URL
   listing_count?: number; // Number of listings for this seller
+  customer_rating?: number;
+  total_reviews?: number;
+  description?: string;
 }
 
 /**
@@ -743,22 +747,40 @@ export type BannerPlacement =
   | "homepage-top"
   | "homepage-middle"
   | "homepage-bottom"
+  | "dashboard-top"
+  | "dashboard-sidebar"
+  | "category-top"
   | "category-sidebar"
+  | "category-sidebar-specific"
   | "search-top"
+  | "search-sidebar"
+  | "listing-top"
   | "listing-sidebar"
+  | "profile-top"
+  | "profile-sidebar"
+  | "blog-top"
+  | "blog-sidebar"
+  | "content-top"
+  | "content-sidebar"
   | "mobile-banner"
+  | "mobile-specific"
+  | "popup-banner"
   | "seller-profile";
 
-/**
- * Banner sizes
- */
-export type BannerSize =
-  | "large-banner"
-  | "leaderboard"
-  | "medium-rectangle"
-  | "large-rectangle"
-  | "half-page"
-  | "mobile-banner";
+  /**
+   * Banner sizes
+   */
+  export type BannerSize =
+    | "large-banner"
+    | "leaderboard"
+    | "medium-rectangle"
+    | "large-rectangle"
+    | "half-page"
+    | "mobile-banner"
+    | "popup"
+    | "square"
+    | "vertical-rectangle"
+    | "skyscraper";
 
 /**
  * Advertisement banner (stored in Sanity)

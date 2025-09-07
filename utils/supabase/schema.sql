@@ -104,7 +104,7 @@ CREATE TABLE public.seller_profiles (
 );
 
 -- Add CNIC validation
-ALTER TABLE seller_profiles ADD CONSTRAINT valid_cnic CHECK (owner_cnic ~ '^[0-9+]{5}-[0-9+]{7}-[0-9]{1}$');
+ALTER TABLE seller_profiles ADD CONSTRAINT valid_cnic CHECK (owner_cnic ~ '^[0-9+]{5}-[0-9+]{7}-[0-9]{1});
 
 -- SELLER TIER HISTORY
 CREATE TABLE public.seller_tier_history (
@@ -165,8 +165,41 @@ CREATE TABLE public.analytics_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- =============================================
+-- BANNER ANALYTICS SCHEMA
+-- Complete schema for banner impressions and clicks tracking
+-- =============================================
+
+-- BANNER IMPRESSION TRACKING
+-- Tracks when banners are displayed to users
+CREATE TABLE IF NOT EXISTS public.banner_impressions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  banner_id TEXT NOT NULL, -- Sanity document ID
+  placement TEXT NOT NULL, -- Placement location (homepage-top, category-sidebar, etc.)
+  banner_size TEXT NOT NULL, -- Size of the banner (leaderboard, medium-rectangle, etc.)
+  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  guest_id UUID, -- For anonymous users
+  session_ref UUID REFERENCES public.event_sessions(session_id) ON DELETE SET NULL,
+  ip_address INET,
+  user_agent TEXT,
+  referrer TEXT,
+  city TEXT,
+  device_type TEXT CHECK (device_type IN ('mobile', 'tablet', 'desktop')),
+  browser TEXT,
+  os TEXT,
+  screen_resolution TEXT, -- e.g., "1920x1080"
+  viewport_size TEXT, -- e.g., "1200x800"
+  page_url TEXT, -- The page where the banner was displayed
+  page_title TEXT, -- Title of the page
+  category_context TEXT, -- Category context if applicable
+  search_query TEXT, -- Search query if on search results page
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+COMMENT ON TABLE public.banner_impressions IS 'Tracks impressions (displays) of advertisement banners with detailed context.';
+
 -- BANNER CLICK TRACKING
-CREATE TABLE public.banner_clicks (
+-- Tracks when users click on banners
+CREATE TABLE IF NOT EXISTS public.banner_clicks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   banner_id TEXT NOT NULL, -- Sanity document ID
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
@@ -174,31 +207,48 @@ CREATE TABLE public.banner_clicks (
   session_ref UUID REFERENCES public.event_sessions(session_id) ON DELETE SET NULL,
   location TEXT,
   device_type TEXT CHECK (device_type IN ('mobile', 'tablet', 'desktop')),
+  placement TEXT,
+  banner_size TEXT,
+  ip_address INET,
+  user_agent TEXT,
+  referrer TEXT,
+  city TEXT,
+  browser TEXT,
+  os TEXT,
+  page_url TEXT,
+  page_title TEXT,
+  category_context TEXT,
+  search_query TEXT,
+  target_url TEXT, -- The URL the user was directed to
+  time_on_page INTEGER, -- Seconds user spent on page before clicking
+  scroll_depth INTEGER, -- Percentage of page scrolled before clicking
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-COMMENT ON TABLE public.banner_clicks IS 'Tracks clicks on advertisement banners.';
+COMMENT ON TABLE public.banner_clicks IS 'Tracks clicks on advertisement banners with detailed context.';
 
--- SUPPORT TICKETS
-CREATE TABLE public.support_tickets (
+-- BANNER PERFORMANCE SUMMARY
+-- Aggregated daily statistics for banner performance
+CREATE TABLE IF NOT EXISTS public.banner_performance_daily (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  subject TEXT NOT NULL,
-  message TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('technical', 'billing', 'verification', 'listing', 'other')),
-  priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
-  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
-  assigned_to UUID REFERENCES public.users(id),
+  banner_id TEXT NOT NULL, -- Sanity document ID
+  placement TEXT NOT NULL,
+  banner_size TEXT NOT NULL,
+  date DATE NOT NULL,
+  impressions INTEGER DEFAULT 0,
+  clicks INTEGER DEFAULT 0,
+  unique_impressions INTEGER DEFAULT 0, -- Unique users who saw the banner
+  unique_clicks INTEGER DEFAULT 0, -- Unique users who clicked the banner
+  ctr DECIMAL(5,4), -- Click-through rate
+  avg_time_on_page INTEGER, -- Average time users spent on page
+  avg_scroll_depth INTEGER, -- Average scroll depth percentage
+  top_cities JSONB, -- Top cities by impressions
+  top_devices JSONB, -- Top devices by impressions
+  top_browsers JSONB, -- Top browsers by impressions
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(banner_id, placement, date)
 );
-
--- CITIES REFERENCE
-CREATE TABLE public.cities (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL UNIQUE,
-  province TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+COMMENT ON TABLE public.banner_performance_daily IS 'Daily aggregated statistics for banner performance.';
 
 -- Insert Pakistani cities (without duplicates)
 INSERT INTO public.cities (name, province) VALUES
@@ -424,11 +474,36 @@ CREATE INDEX idx_analytics_type ON public.analytics_events(event_type);
 CREATE INDEX idx_analytics_time ON public.analytics_events(created_at);
 CREATE INDEX idx_analytics_listing_type ON public.analytics_events(listing_id, event_type);
 
--- Banner Click indexes
-CREATE INDEX idx_banner_clicks_banner_id ON public.banner_clicks(banner_id);
-CREATE INDEX idx_banner_clicks_user_id ON public.banner_clicks(user_id);
-CREATE INDEX idx_banner_clicks_session_ref ON public.banner_clicks(session_ref);
-CREATE INDEX idx_banner_clicks_created_at ON public.banner_clicks(created_at);
+-- Banner impressions indexes
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_banner_id ON public.banner_impressions(banner_id);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_placement ON public.banner_impressions(placement);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_banner_size ON public.banner_impressions(banner_size);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_user_id ON public.banner_impressions(user_id);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_guest_id ON public.banner_impressions(guest_id);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_session_ref ON public.banner_impressions(session_ref);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_device_type ON public.banner_impressions(device_type);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_city ON public.banner_impressions(city);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_created_at ON public.banner_impressions(created_at);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_page_url ON public.banner_impressions(page_url);
+CREATE INDEX IF NOT EXISTS idx_banner_impressions_category_context ON public.banner_impressions(category_context);
+
+-- Banner clicks indexes
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_banner_id ON public.banner_clicks(banner_id);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_user_id ON public.banner_clicks(user_id);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_session_ref ON public.banner_clicks(session_ref);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_created_at ON public.banner_clicks(created_at);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_placement ON public.banner_clicks(placement);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_banner_size ON public.banner_clicks(banner_size);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_city ON public.banner_clicks(city);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_device_type ON public.banner_clicks(device_type);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_page_url ON public.banner_clicks(page_url);
+CREATE INDEX IF NOT EXISTS idx_banner_clicks_target_url ON public.banner_clicks(target_url);
+
+-- Daily performance indexes
+CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_banner_id ON public.banner_performance_daily(banner_id);
+CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_placement ON public.banner_performance_daily(placement);
+CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_date ON public.banner_performance_daily(date);
+CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_ctr ON public.banner_performance_daily(ctr);
 
 -- Support indexes
 CREATE INDEX idx_tickets_user ON public.support_tickets(user_id);
@@ -557,18 +632,57 @@ CREATE POLICY "Users can create tickets" ON public.support_tickets
 CREATE POLICY "Anyone can view cities" ON public.cities
   FOR SELECT TO authenticated, anon USING (true);
 
+-- Banner impressions policies
+DO $ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Admins can manage banner impressions') THEN
+    CREATE POLICY "Admins can manage banner impressions" ON public.banner_impressions
+      FOR ALL TO authenticated
+      USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+  END IF;
+END $;
+
+-- Banner clicks policies
+DO $ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Anyone can track banner clicks') THEN
+    CREATE POLICY "Anyone can track banner clicks" ON public.banner_clicks
+      FOR INSERT TO authenticated, anon
+      WITH CHECK (true);
+  END IF;
+END $;
+
+DO $ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Admins can view banner clicks') THEN
+    CREATE POLICY "Admins can view banner clicks" ON public.banner_clicks
+      FOR SELECT TO authenticated
+      USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+  END IF;
+END $;
+
+-- Daily performance policies
+DO $ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Admins can manage banner performance daily') THEN
+    CREATE POLICY "Admins can manage banner performance daily" ON public.banner_performance_daily
+      FOR ALL TO authenticated
+      USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+  END IF;
+END $;
+
 -- =============================================
 -- FUNCTIONS
 -- =============================================
 
 -- Update timestamp function
 CREATE OR REPLACE FUNCTION public.update_modified_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Triggers
 CREATE TRIGGER update_users_modtime
@@ -587,7 +701,7 @@ CREATE OR REPLACE FUNCTION public.get_or_create_session(
   p_user_agent TEXT DEFAULT NULL,
   p_referrer TEXT DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID AS $
 DECLARE
   v_session_id UUID;
   v_existing_session UUID;
@@ -614,11 +728,11 @@ BEGIN
     RETURN v_session_id;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- End session function
 CREATE OR REPLACE FUNCTION public.end_session(p_session_id UUID)
-RETURNS VOID AS $$
+RETURNS VOID AS $
 BEGIN
   UPDATE public.event_sessions 
   SET 
@@ -627,7 +741,7 @@ BEGIN
     is_bounce = (page_views <= 1)
   WHERE session_id = p_session_id AND ended_at IS NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Link guest to user
 CREATE OR REPLACE FUNCTION public.link_guest_to_user(
@@ -636,7 +750,7 @@ CREATE OR REPLACE FUNCTION public.link_guest_to_user(
   p_ip_address INET DEFAULT NULL,
   p_user_agent TEXT DEFAULT NULL
 )
-RETURNS VOID AS $$
+RETURNS VOID AS $
 BEGIN
   INSERT INTO public.user_guest_tracking (user_id, guest_id, ip_address, user_agent, last_seen)
   VALUES (p_user_id, p_guest_id, p_ip_address, p_user_agent, NOW())
@@ -646,7 +760,7 @@ BEGIN
     session_count = user_guest_tracking.session_count + 1,
     is_active = true;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================
 -- ANALYTICS FUNCTIONS
@@ -662,7 +776,7 @@ RETURNS TABLE(
   views_by_day JSONB
 ) 
 LANGUAGE plpgsql
-AS $$
+AS $
 BEGIN
   RETURN QUERY
   SELECT 
@@ -674,7 +788,7 @@ BEGIN
   FROM analytics_events ae
   WHERE ae.user_id = seller_id;
 END;
-$$;
+$;
 
 -- Grant execute permission on the function
 GRANT EXECUTE ON FUNCTION public.get_seller_analytics TO authenticated, anon;
@@ -733,16 +847,78 @@ CREATE POLICY "Sellers can view own analytics" ON public.analytics_events
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
   );
 
--- Grant permissions
-GRANT EXECUTE ON FUNCTION public.get_or_create_session TO authenticated;
-GRANT EXECUTE ON FUNCTION public.end_session TO authenticated;
-GRANT EXECUTE ON FUNCTION public.link_guest_to_user TO authenticated;
+-- Function to calculate banner CTR
+CREATE OR REPLACE FUNCTION public.calculate_banner_ctr(impressions INTEGER, clicks INTEGER)
+RETURNS DECIMAL(5,4) AS $
+BEGIN
+  IF impressions = 0 THEN
+    RETURN 0.0000;
+  ELSE
+    RETURN ROUND((clicks::DECIMAL / impressions::DECIMAL) * 100, 4);
+  END IF;
+END;
+$ LANGUAGE plpgsql;
+
+-- Function to get banner analytics summary
+CREATE OR REPLACE FUNCTION public.get_banner_analytics_summary(
+  p_banner_id TEXT DEFAULT NULL,
+  p_placement TEXT DEFAULT NULL,
+  p_start_date DATE DEFAULT NULL,
+  p_end_date DATE DEFAULT NULL
+)
+RETURNS TABLE(
+  banner_id TEXT,
+  placement TEXT,
+  total_impressions BIGINT,
+  total_clicks BIGINT,
+  unique_impressions BIGINT,
+  unique_clicks BIGINT,
+  ctr DECIMAL(5,4),
+  avg_ctr DECIMAL(5,4),
+  top_cities JSONB,
+  top_devices JSONB,
+  top_browsers JSONB
+) 
+LANGUAGE plpgsql
+AS $
+BEGIN
+  RETURN QUERY
+  SELECT 
+    bp.banner_id,
+    bp.placement,
+    SUM(bp.impressions)::BIGINT as total_impressions,
+    SUM(bp.clicks)::BIGINT as total_clicks,
+    SUM(bp.unique_impressions)::BIGINT as unique_impressions,
+    SUM(bp.unique_clicks)::BIGINT as unique_clicks,
+    public.calculate_banner_ctr(
+      SUM(bp.impressions)::INTEGER, 
+      SUM(bp.clicks)::INTEGER
+    ) as ctr,
+    AVG(bp.ctr)::DECIMAL(5,4) as avg_ctr,
+    '[]'::JSONB as top_cities,  -- Could be enhanced with actual aggregation
+    '[]'::JSONB as top_devices, -- Could be enhanced with actual aggregation
+    '[]'::JSONB as top_browsers -- Could be enhanced with actual aggregation
+  FROM public.banner_performance_daily bp
+  WHERE 
+    (p_banner_id IS NULL OR bp.banner_id = p_banner_id)
+    AND (p_placement IS NULL OR bp.placement = p_placement)
+    AND (p_start_date IS NULL OR bp.date >= p_start_date)
+    AND (p_end_date IS NULL OR bp.date <= p_end_date)
+  GROUP BY bp.banner_id, bp.placement;
+END;
+$;
+
+-- Grant execute permission on the functions
+GRANT EXECUTE ON FUNCTION public.calculate_banner_ctr TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.get_banner_analytics_summary TO authenticated;
 
 -- Grant table permissions
 GRANT ALL ON TABLE public.analytics_events TO authenticated, anon;
 GRANT ALL ON TABLE public.event_sessions TO authenticated, anon;
 GRANT ALL ON TABLE public.user_guest_tracking TO authenticated, anon;
 GRANT ALL ON TABLE public.banner_clicks TO authenticated, anon;
+GRANT ALL ON TABLE public.banner_impressions TO authenticated;
+GRANT ALL ON TABLE public.banner_performance_daily TO authenticated;
 GRANT SELECT ON TABLE public.cities TO authenticated, anon;
 
 -- =============================================
@@ -761,6 +937,8 @@ COMMENT ON TABLE public.event_sessions IS 'Session management without volatile i
 COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
 COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
 COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
 
 -- =============================================
 -- SUMMARY OF FIXES

@@ -3,10 +3,13 @@ export const dynamic = 'force-dynamic';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
-import { CategoryBarWrapper } from "@/components/layout/category-bar-wrapper";
+import { ConditionalCategoryBar } from "@/components/layout/conditional-category-bar";
 import { Footer } from "@/components/layout/footer";
 import { QueryProvider } from "@/components/query-provider";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { SavedItemsProvider } from "@/contexts/SavedItemsContext";
+import { MobileBanner } from "@/components/ads/mobile-banner";
+import { BannerProvider } from "@/contexts/banner-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,10 +42,15 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          <Header user={user} />
-          <CategoryBarWrapper />
-          {children}
-          <Footer />
+          <BannerProvider>
+            <SavedItemsProvider>
+              <Header user={user} />
+              <ConditionalCategoryBar />
+              {children}
+              <Footer />
+              <MobileBanner />
+            </SavedItemsProvider>
+          </BannerProvider>
         </QueryProvider>
       </body>
     </html>

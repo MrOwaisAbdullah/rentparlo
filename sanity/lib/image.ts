@@ -57,6 +57,11 @@ export const getSanityImageUrl = (
     return fallbackUrl || '';
   }
 
+  // If image.asset.url is directly available, use it
+  if (image.asset.url) {
+    return image.asset.url;
+  }
+
   try {
     return urlFor(image).url();
   } catch (error) {

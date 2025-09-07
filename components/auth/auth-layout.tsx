@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -105,9 +106,12 @@ export function AuthLayout({
           <div className="flex items-center justify-center h-full bg-gradient-to-br from-primary/10 via-primary/5 to-transparent w-full">
             <div className="text-center p-8 lg:p-12 xl:p-16 max-w-lg">
               <div className="mb-8">
-                <div className="w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 mx-auto bg-primary/10 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-105">
-                  <div className="text-2xl lg:text-3xl xl:text-4xl font-bold text-primary">R</div>
-                </div>
+                <Image
+                  src="/rentparlopk.png"
+                  alt="RentParlo Logo"
+                  width={250}
+                  height={66}
+                />
               </div>
               <h2 className="text-xl lg:text-2xl xl:text-3xl font-semibold text-foreground mb-4 lg:mb-6">
                 Welcome to RentParLo.pk

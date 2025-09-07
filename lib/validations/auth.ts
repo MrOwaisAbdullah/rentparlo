@@ -26,7 +26,7 @@ const pakistaniCities = [
  */
 export const signInSchema = z.object({
   email: z.string()
-    .email('Invalid email address')
+    .email('Please enter a valid email address')
     .toLowerCase(),
   
   password: z.string()
@@ -41,22 +41,22 @@ export const signInSchema = z.object({
 export const userRegistrationSchema = z.object({
   role: z.literal('user'),
   name: z.string()
-    .min(2, 'Name must be at least 2 characters')
+    .min(2, 'Name must be at least 2 characters long')
     .max(50, 'Name must be less than 50 characters')
     .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
     .transform(val => val.trim()),
   
   email: z.string()
-    .email('Invalid email address')
+    .email('Please enter a valid email address')
     .toLowerCase()
-    .refine(email => !email.includes('+'), 'Email aliases not allowed'),
+    .refine(email => !email.includes('+'), 'Email aliases are not allowed'),
   
   phone: z.string()
-    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani phone number format (03XXXXXXXXX)')
+    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Please enter a valid Pakistani phone number (03XXXXXXXXX)')
     .transform(val => val.replace(/\s+/g, '')), // Remove spaces
   
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, 'Password must be at least 8 characters long')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
   
   city: z.enum(pakistaniCities, {
@@ -64,7 +64,7 @@ export const userRegistrationSchema = z.object({
   }),
   
   confirmPassword: z.string(),
-  terms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions')
+  terms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions to continue')
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
@@ -76,22 +76,22 @@ export const userRegistrationSchema = z.object({
 export const sellerRegistrationSchema = z.object({
   role: z.literal('seller'),
   name: z.string()
-    .min(2, 'Name must be at least 2 characters')
+    .min(2, 'Name must be at least 2 characters long')
     .max(50, 'Name must be less than 50 characters')
     .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
     .transform(val => val.trim()),
   
   email: z.string()
-    .email('Invalid email address')
+    .email('Please enter a valid email address')
     .toLowerCase()
-    .refine(email => !email.includes('+'), 'Email aliases not allowed'),
+    .refine(email => !email.includes('+'), 'Email aliases are not allowed'),
   
   phone: z.string()
-    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani phone number format (03XXXXXXXXX)')
+    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Please enter a valid Pakistani phone number (03XXXXXXXXX)')
     .transform(val => val.replace(/\s+/g, '')), // Remove spaces
   
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, 'Password must be at least 8 characters long')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
   
   city: z.enum(pakistaniCities, {
@@ -100,7 +100,7 @@ export const sellerRegistrationSchema = z.object({
   
   confirmPassword: z.string(),
   businessName: z.string()
-    .min(2, 'Business name must be at least 2 characters')
+    .min(2, 'Business name must be at least 2 characters long')
     .max(100, 'Business name must be less than 100 characters')
     .optional(),
   
@@ -109,11 +109,11 @@ export const sellerRegistrationSchema = z.object({
     .optional(),
   
   address: z.string()
-    .min(10, 'Address must be at least 10 characters')
+    .min(10, 'Address must be at least 10 characters long')
     .max(200, 'Address must be less than 200 characters')
     .optional(),
   
-  terms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions')
+  terms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions to continue')
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
@@ -132,11 +132,11 @@ export const getRegistrationSchema = () => z.union([
  */
 export const contactFormSchema = z.object({
   name: z.string()
-    .min(2, 'Name must be at least 2 characters')
+    .min(2, 'Name must be at least 2 characters long')
     .max(50, 'Name must be less than 50 characters'),
   
   email: z.string()
-    .email('Invalid email address')
+    .email('Please enter a valid email address')
     .toLowerCase(),
   
   subject: z.enum(['General', 'Support', 'Business', 'Press'], {
@@ -144,7 +144,7 @@ export const contactFormSchema = z.object({
   }),
   
   message: z.string()
-    .min(10, 'Message must be at least 10 characters')
+    .min(10, 'Message must be at least 10 characters long')
     .max(1000, 'Message must be less than 1000 characters'),
   
   urgency: z.enum(['Low', 'Medium', 'High'])

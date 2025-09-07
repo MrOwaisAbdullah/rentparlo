@@ -19,18 +19,6 @@ export function BlogPageContent({
   filters,
   pagination,
 }: BlogPageContentProps) {
-  // Handle filter changes
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log('Filters changed:', newFilters);
-  };
-
-  // Handle search
-  const handleSearch = (query: string) => {
-    // In a real implementation, this would update the URL and refetch data
-    console.log('Search query:', query);
-  };
-
   return (
     <UnifiedBlogSearch
       posts={posts}
@@ -38,8 +26,6 @@ export function BlogPageContent({
       tags={tags}
       filters={filters}
       pagination={pagination}
-      onFiltersChange={handleFiltersChange}
-      onSearch={handleSearch}
       layout="top"
       showSidebar={false} // Sidebar is handled by UniversalPageLayout
     />

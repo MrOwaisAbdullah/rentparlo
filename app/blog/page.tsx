@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { BlogPageContent } from "@/components/blog/blog-page-content";
 import { UniversalPageLayout } from "@/components/layout/universal-page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BlogPostSummary, BlogCategory } from "@/types";
+import { BlogPostSummary, BlogCategory, BlogFilters } from "@/types";
+import { getFilteredPosts, getAllCategories, getAllTags } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Blog | RentParLo.pk - Rental Tips & Market Insights",
@@ -16,92 +17,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-
-// Mock data - Replace with actual data fetching
-const mockPosts: BlogPostSummary[] = [
-  {
-    _id: "1",
-    title: "Complete Guide to Renting Electronics in Pakistan",
-    slug: { current: "complete-guide-renting-electronics-pakistan" },
-    excerpt:
-      "Everything you need to know about renting electronics in Pakistan, from smartphones to laptops and gaming equipment.",
-    mainImage: {
-      asset: { url: "/placeholder-blog-new.svg" },
-      alt: "Electronics rental guide",
-    },
-    categories: [{ _id: "1", title: "Electronics", slug: { current: "electronics" } }],
-    tags: ["electronics", "rental tips", "technology"],
-    author: "RentParLo Team",
-    readingTime: 8,
-    publishedAt: "2024-01-15T10:00:00Z",
-    featured: true,
-    language: "en",
-  },
-  {
-    _id: "2",
-    title: "Top 10 Most Rented Items in Karachi",
-    slug: { current: "top-10-most-rented-items-karachi" },
-    excerpt:
-      "Discover which items are in highest demand in Karachi's rental market and what makes them so popular.",
-    mainImage: {
-      asset: { url: "/placeholder-blog-new.svg" },
-      alt: "Popular rental items in Karachi",
-    },
-    categories: [
-      { _id: "2", title: "Market Insights", slug: { current: "market-insights" } },
-    ],
-    tags: ["karachi", "trends", "popular items"],
-    author: "Sarah Ahmed",
-    readingTime: 5,
-    publishedAt: "2024-01-10T14:30:00Z",
-    featured: false,
-    language: "en",
-  },
-];
-
-const mockCategories: BlogCategory[] = [
-  {
-    _id: "1",
-    _type: "category",
-    title: "Electronics",
-    slug: { current: "electronics" },
-    postCount: 15,
-  },
-  {
-    _id: "2",
-    _type: "category",
-    title: "Furniture",
-    slug: { current: "furniture" },
-    postCount: 12,
-  },
-  {
-    _id: "3",
-    _type: "category",
-    title: "Market Insights",
-    slug: { current: "market-insights" },
-    postCount: 8,
-  },
-  {
-    _id: "4",
-    _type: "category",
-    title: "Rental Tips",
-    slug: { current: "rental-tips" },
-    postCount: 10,
-  },
-];
-
-const mockTags = [
-  "electronics",
-  "furniture",
-  "wedding",
-  "events",
-  "photography",
-  "decor",
-  "tips",
-  "karachi",
-  "lahore",
-  "islamabad",
-];
 
 interface BlogPageProps {
   searchParams: {
@@ -117,7 +32,7 @@ interface BlogPageProps {
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
-  const filters = {
+  const filters: BlogFilters = {
     query: searchParams.q || "",
     category: searchParams.category,
     tag: searchParams.tag,
@@ -127,12 +42,24 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     dateTo: searchParams.dateTo,
   };
 
+  const page = parseInt(searchParams.page || "1");
+  const limit = 12;
+
+  // Fetch real data from Sanity
+  const [postsData, categories, tags] = await Promise.all([
+    getFilteredPosts(filters, page, limit),
+    getAllCategories(),
+    getAllTags(),
+  ]);
+
+  const { posts, total } = postsData;
+
   const pagination = {
-    page: parseInt(searchParams.page || "1"),
-    limit: 12,
-    total: mockPosts.length,
-    totalPages: Math.ceil(mockPosts.length / 12),
-    hasMore: false,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    hasMore: page * limit < total,
   };
 
   return (
@@ -141,9 +68,9 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       pageContext={{
         title: "RentParLo Blog",
         description: "Your ultimate guide to renting and listing in Pakistan",
-        totalPosts: mockPosts.length,
-        categories: mockCategories,
-        tags: mockTags,
+        totalPosts: total,
+        categories,
+        tags,
       }}
       showSidebar={true}
     >
@@ -160,9 +87,9 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
       <Suspense fallback={<BlogGridSkeleton />}>
         <BlogPageContent
-          posts={mockPosts}
-          categories={mockCategories}
-          tags={mockTags}
+          posts={posts}
+          categories={categories}
+          tags={tags}
           filters={filters}
           pagination={pagination}
         />

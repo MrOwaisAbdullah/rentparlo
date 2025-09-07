@@ -7,3 +7,12 @@ export const client = createClient({
   apiVersion,
   useCdn: process.env.NODE_ENV === 'production',
 })
+
+// Add a new client for authenticated operations
+export const sanityWriteClient = createClient({
+  projectId,
+  dataset,
+  apiVersion,
+  useCdn: false, // Should always be false for write operations
+  token: process.env.SANITY_API_TOKEN,
+})

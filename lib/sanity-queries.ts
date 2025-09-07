@@ -908,3 +908,19 @@ export async function getAllBlogSlugs() {
 export async function getAllCategorySlugs() {
   return await client.fetch(ALL_CATEGORY_SLUGS_QUERY)
 }
+
+// Helper function to fetch listings by seller ID
+export async function getListingsBySeller(sellerId: string): Promise<Listing[]> {
+    const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+        _id,
+        title,
+        slug,
+        price,
+        priceType,
+        status,
+        "imageUrl": images[0].asset->url
+    }`;
+    const params = { sellerId };
+    const listings = await client.fetch(query, params);
+    return listings;
+}

@@ -20,10 +20,25 @@ export default defineType({
           {title: 'Homepage Top', value: 'homepage-top'},
           {title: 'Homepage Middle', value: 'homepage-middle'},
           {title: 'Homepage Bottom', value: 'homepage-bottom'},
+          {title: 'Dashboard Top', value: 'dashboard-top'},
+          {title: 'Dashboard Sidebar', value: 'dashboard-sidebar'},
+          {title: 'Category Page Top', value: 'category-top'},
           {title: 'Category Page Sidebar', value: 'category-sidebar'},
+          {title: 'Category Page Sidebar (Category Specific)', value: 'category-sidebar-specific'},
           {title: 'Search Results Top', value: 'search-top'},
+          {title: 'Search Results Sidebar', value: 'search-sidebar'},
+          {title: 'Listing Page Top', value: 'listing-top'},
           {title: 'Listing Page Sidebar', value: 'listing-sidebar'},
-          {title: 'Mobile Banner', value: 'mobile-banner'}
+          {title: 'User Profile Top', value: 'profile-top'},
+          {title: 'User Profile Sidebar', value: 'profile-sidebar'},
+          {title: 'Blog Page Top', value: 'blog-top'},
+          {title: 'Blog Page Sidebar', value: 'blog-sidebar'},
+          {title: 'Content Page Top', value: 'content-top'},
+          {title: 'Content Page Sidebar', value: 'content-sidebar'},
+          {title: 'Mobile Banner', value: 'mobile-banner'},
+          {title: 'Mobile Specific', value: 'mobile-specific'},
+          {title: 'Popup Banner', value: 'popup-banner'},
+          {title: 'Seller Profile Banner', value: 'seller-profile'}
         ]
       },
       validation: Rule => Rule.required(),
@@ -34,11 +49,16 @@ export default defineType({
       type: 'string',
       options: {
         list: [
-          {title: 'Leaderboard (728x90)', value: 'leaderboard'},
+          {title: 'Leaderboard (1200x250)', value: 'leaderboard'},
+          {title: 'Large Banner (1400x400)', value: 'large-banner'},
           {title: 'Medium Rectangle (300x250)', value: 'medium-rectangle'},
           {title: 'Large Rectangle (336x280)', value: 'large-rectangle'},
           {title: 'Half Page (300x600)', value: 'half-page'},
-          {title: 'Mobile Banner (320x50)', value: 'mobile-banner'}
+          {title: 'Mobile Banner (320x50)', value: 'mobile-banner'},
+          {title: 'Popup (600x400)', value: 'popup'},
+          {title: 'Square (250x250)', value: 'square'},
+          {title: 'Vertical Rectangle (300x600)', value: 'vertical-rectangle'},
+          {title: 'Skyscraper (160x600)', value: 'skyscraper'}
         ]
       },
       validation: Rule => Rule.required(),

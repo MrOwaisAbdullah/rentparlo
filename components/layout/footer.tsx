@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -11,12 +11,14 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">RP</span>
-              </div>
-              <span className="font-bold text-xl text-primary">RentParlo</span>
-            </div>
+            <Link href="/">
+              <Image
+                src="/rentparlopk.png"
+                alt="RentParlo Logo"
+                width={180}
+                height={48}
+              />
+            </Link>
             <p className="text-sm text-muted-foreground">
               Pakistan&apos;s leading rental marketplace. Rent anything, anywhere, anytime.
             </p>

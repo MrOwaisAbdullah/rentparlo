@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { MapPin, Star, Phone, Heart, Share2, Eye, Clock, Settings, Calendar, Zap, Award, Tag, Percent, Leaf, MapPinHouse } from "lucide-react"
+import { Trash2, MapPin, Star, Phone, Heart, Share2, Eye, Clock, Settings, Calendar, Zap, Award, Tag, Percent, Leaf, MapPinHouse } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { getSanityImageUrl } from "@/sanity/lib/image"
 import { Listing, ListingImage, ListingBadge } from "@/types"
 import { WhatsAppButton } from "@/components/seller/whatsapp-button"
+import { SaveButton } from "@/components/ui/save-button"
 
 interface ListingCardProps {
   // Original individual props
@@ -29,9 +30,8 @@ interface ListingCardProps {
   }
   variant?: "default" | "category" | "list" | "featured" | "swiper" // Added 'swiper' variant
   className?: string
-  
-  // New listing prop for compatibility with SearchResults
-  listing?: Listing
+  onRemove?: (id: string) => void;
+  listing: Listing; // Make listing required
   
   // Additional props from SearchResults
   showSellerInfo?: boolean
@@ -161,6 +161,7 @@ export function ListingCard({
   seller,
   variant = "default",
   className,
+  onRemove,
   listing, // New prop
   showSellerInfo = true, // Default to true to match SearchResults
   priority = false, // Default to false to match SearchResults
@@ -405,9 +406,7 @@ export function ListingCard({
             {/* Overlay actions passed as prop */}
             {overlayActions || (
               <div className="absolute top-3 right-3 flex gap-2">
-                <Button size="sm" variant="secondary" className="w-8 h-8 p-0 bg-white/90 hover:bg-white">
-                  <Heart className="w-4 h-4" />
-                </Button>
+                {listing && <SaveButton listing={listing} className="w-8 h-8 p-0 bg-white/90 hover:bg-white" />}
                 <Button 
                   size="sm" 
                   variant="secondary" 
@@ -556,9 +555,7 @@ export function ListingCard({
             
             {/* Overlay actions */}
             <div className="absolute top-3 right-3 flex flex-col gap-2">
-              <Button size="sm" variant="secondary" className="w-8 h-8 p-0 bg-white/90 hover:bg-white">
-                <Heart className="w-4 h-4" />
-              </Button>
+              {listing && <SaveButton listing={listing} className="w-8 h-8 p-0 bg-white/90 hover:bg-white" />}
               <Button 
                 size="sm" 
                 variant="secondary" 
@@ -827,13 +824,26 @@ export function ListingCard({
                   <span className="hidden sm:inline text-xs">Call</span>
                 </Button>
                 {listing?.seller?.phone && (
-                  <div className="flex-1 min-h-[36px]">
                     <WhatsAppButton
                       phoneNumber={listing.seller.phone}
                       sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
-                      className="h-8 px-2 w-full"
+                      className="!h-8 px-2 w-full flex-1 min-h-[36px]"
                     />
-                  </div>
+                )}
+                {onRemove && listing?._id && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-8 px-2 flex-1 min-h-[36px]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRemove(listing._id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline text-xs">Remove</span>
+                  </Button>
                 )}
               </div>
             </div>
@@ -878,9 +888,7 @@ export function ListingCard({
 
             {/* Action Buttons */}
             <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button size="icon" variant="secondary" className="h-8 w-8">
-                <Heart className="h-4 w-4" />
-              </Button>
+              {listing && <SaveButton listing={listing} className="h-8 w-8" />}
               <Button 
                 size="icon" 
                 variant="secondary" 

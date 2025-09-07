@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 export interface RoleSelectorProps {
-  selected: 'user' | 'seller' | null;
+  selected: 'user' | 'seller';
   onSelect: (role: 'user' | 'seller') => void;
   className?: string;
 }

@@ -821,3 +821,14 @@ export async function refreshSession(): Promise<AuthResult> {
     }
   }
 }
+
+/**
+ * Wrapper for signOut to be used in form actions, handles redirect.
+ */
+export async function signOutAndRedirect() {
+  'use server'
+  const result = await signOut();
+  if (result.success && result.redirectTo) {
+    redirect(result.redirectTo);
+  }
+}

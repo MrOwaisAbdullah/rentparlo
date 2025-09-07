@@ -118,7 +118,7 @@ export function UniversalSearchBar({
       case "hero":
         return "e.g., Camera, Car, Wedding Hall...";
       case "header":
-        return "Try 'DSLR camera', 'Car', 'Laptop'...";
+        return "Try 'DSLR camera', 'Car', 'Advertising Banner'...";
       case "inline":
         return "Search for rental items...";
       default:
@@ -488,11 +488,11 @@ export function UniversalSearchBar({
       case "inline":
         return {
           wrapper: "bg-background border rounded-md",
-          form: "p-2 flex-col sm:flex-row",
+          form: "p-2 flex-col",
           inputWrapper: "flex-1",
-          locationWrapper: "w-full sm:w-48",
-          searchWrapper: "flex-1",
-          buttonWrapper: "shrink-0",
+          locationWrapper: "w-full",
+          searchWrapper: "w-full",
+          buttonWrapper: "w-full",
         };
       default:
         return {
