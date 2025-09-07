@@ -12,7 +12,7 @@ export function SavedItemsHeaderIcon() {
   return (
     <Button variant="ghost" size="icon" asChild>
       <Link href="/saved" className="relative">
-        <Bookmark className="h-6 w-6" />
+        <Bookmark className="h-8 w-8" />
         {totalItems > 0 && (
           <Badge
             variant="destructive"

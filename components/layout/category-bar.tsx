@@ -15,8 +15,8 @@ import {
   ChevronRight 
 } from "lucide-react"
 import { useRef, useState, useEffect, useCallback } from "react"
-import { getCategories } from "@/lib/categories"
-import { Category } from "@/types"
+import { STATIC_CATEGORIES } from "@/lib/static-categories"
+import { getCategoryEmoji } from "@/lib/static-categories"
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   automobiles: Car,
@@ -46,17 +46,7 @@ export function CategoryBar() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const cats = await getCategories()
-      // Only show the first 8 categories
-      setCategories(cats.slice(0, 8))
-    }
-    
-    fetchCategories()
-  }, [])
+  const [categories] = useState(STATIC_CATEGORIES.slice(0, 8))
 
   const checkScrollability = useCallback(() => {
     if (scrollRef.current) {
@@ -65,7 +55,6 @@ export function CategoryBar() {
       // Simple, robust check
       const isLeft = scrollLeft > 0
       const isRight = scrollLeft < (scrollWidth - clientWidth)
-      
       
       setCanScrollLeft(isLeft)
       setCanScrollRight(isRight)
@@ -143,8 +132,8 @@ export function CategoryBar() {
           >
             {categories.map((category) => {
               // Ensure category.slug is a valid string before using it as an index
-              const slug = typeof category.slug === 'string' ? category.slug : '';
-              const Icon = (slug in iconMap) ? iconMap[slug] : Palette;
+              const slug = typeof category.slug === 'string' ? category.slug : category.slug?.current || '';
+              const Icon = (slug in iconMap) ? iconMap[slug] : null;
               const color = (slug in colorMap) ? colorMap[slug] : "text-gray-600";
               
               return (
@@ -153,7 +142,13 @@ export function CategoryBar() {
                   href={`/category/${slug}`}
                   className="flex flex-col items-center space-y-1 min-w-fit group hover:bg-muted/50 rounded-lg p-2 transition-colors flex-shrink-0"
                 >
-                  <Icon className={`h-5 w-5 ${color} group-hover:scale-110 transition-transform`} />
+                  {Icon ? (
+                    <Icon className={`h-5 w-5 ${color} group-hover:scale-110 transition-transform`} />
+                  ) : (
+                    <span className={`text-xl ${color} group-hover:scale-110 transition-transform`}>
+                      {getCategoryEmoji(slug)}
+                    </span>
+                  )}
                   <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground whitespace-nowrap">
                     {category.title}
                   </span>

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 export const dynamic = 'force-dynamic';
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { ConditionalCategoryBar } from "@/components/layout/conditional-category-bar";
@@ -10,16 +9,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { SavedItemsProvider } from "@/contexts/SavedItemsContext";
 import { MobileBanner } from "@/components/ads/mobile-banner";
 import { BannerProvider } from "@/contexts/banner-context";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { lato, poppins } from "./fonts";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://rentparlo.pk"),
@@ -39,7 +29,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${lato.variable} ${poppins.variable} antialiased`}
       >
         <QueryProvider>
           <BannerProvider>

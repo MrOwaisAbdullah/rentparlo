@@ -37,7 +37,7 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild className="lg:hidden">
         <Button variant="ghost" size="icon">
-          <Menu className="h-7 w-7" />
+          <Menu className="h-10 w-10" />
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full max-w-xs sm:max-w-sm md:max-w-md p-0 z-50">
@@ -186,13 +186,13 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                   >
                     <Link href="/auth/login" onClick={() => setIsOpen(false)}>
                       <LogIn className="h-5 w-5 mr-3" />
-                      Sign In
+                      Login
                     </Link>
                   </Button>
                   <Button className="w-full text-lg py-4" asChild>
                     <Link href="/auth/register" onClick={() => setIsOpen(false)}>
                       <UserPlus className="h-5 w-5 mr-3" />
-                      Sign Up
+                      Register
                     </Link>
                   </Button>
                 </>

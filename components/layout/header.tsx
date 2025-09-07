@@ -106,11 +106,11 @@ export function Header({ user }: HeaderProps) {
                 <Button variant="outline" asChild>
                   <Link href="/auth/login">
                     <LogIn className="h-4 w-4 mr-2" />
-                    Sign In
+                    Login
                   </Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/auth/register">Sign Up</Link>
+                  <Link href="/auth/register">Register</Link>
                 </Button>
               </>
             )}

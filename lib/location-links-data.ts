@@ -3,13 +3,14 @@
  * RentParlo.pk Location Links Data
  * =====================================================
  * Category-based location links for popular search queries
+ * Focused on the 9 main categories
  */
 
 import { CategoryLocationLink } from '@/lib/location-link-types';
 
 export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
   {
-    category: "Camera & Photography",
+    category: "Camera",
     links: [
       {
         id: "camera-karachi",
@@ -52,6 +53,20 @@ export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
         description: "Sturdy tripods and stabilizers in Lahore",
         query: "tripod",
         city: "Lahore",
+      },
+      {
+        id: "gimbal-islamabad",
+        label: "Rent Gimbal in Islamabad",
+        description: "Camera stabilization equipment in Islamabad",
+        query: "gimbal",
+        city: "Islamabad",
+      },
+      {
+        id: "flash-camera-faisalabad",
+        label: "Rent Camera Flash in Faisalabad",
+        description: "Professional lighting equipment in Faisalabad",
+        query: "flash",
+        city: "Faisalabad",
       }
     ]
   },
@@ -99,58 +114,25 @@ export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
         description: "Passenger vans for group travel in Rawalpindi",
         query: "van",
         city: "Rawalpindi",
+      },
+      {
+        id: "truck-peshawar",
+        label: "Rent Truck in Peshawar",
+        description: "Cargo and delivery trucks in Peshawar",
+        query: "truck",
+        city: "Peshawar",
+      },
+      {
+        id: "luxury-car-karachi",
+        label: "Rent Luxury Car in Karachi",
+        description: "Premium vehicles for special occasions in Karachi",
+        query: "luxury car",
+        city: "Karachi",
       }
     ]
   },
   {
-    category: "Home Appliances",
-    links: [
-      {
-        id: "ac-islamabad",
-        label: "Rent AC in Islamabad",
-        description: "Cool your home with AC rentals in Islamabad",
-        query: "ac",
-        city: "Islamabad",
-      },
-      {
-        id: "ac-karachi",
-        label: "Rent AC in Karachi",
-        description: "Window and split AC units for rent in Karachi",
-        query: "ac",
-        city: "Karachi",
-      },
-      {
-        id: "washing-machine-faisalabad",
-        label: "Rent Washing Machine in Faisalabad",
-        description: "Convenient washing machine rentals in Faisalabad",
-        query: "washing machine",
-        city: "Faisalabad",
-      },
-      {
-        id: "refrigerator-lahore",
-        label: "Rent Refrigerator in Lahore",
-        description: "Fridge rentals for temporary needs in Lahore",
-        query: "refrigerator",
-        city: "Lahore",
-      },
-      {
-        id: "microwave-karachi",
-        label: "Rent Microwave in Karachi",
-        description: "Kitchen microwave ovens for rent in Karachi",
-        query: "microwave",
-        city: "Karachi",
-      },
-      {
-        id: "generator-rawalpindi",
-        label: "Rent Power Generator in Rawalpindi",
-        description: "Backup power solutions for homes and businesses in Rawalpindi",
-        query: "power generator",
-        city: "Rawalpindi",
-      }
-    ]
-  },
-  {
-    category: "Medical Equipment",
+    category: "Medical",
     links: [
       {
         id: "wheelchair-karachi",
@@ -193,20 +175,26 @@ export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
         description: "Mobility aids and walking frames in Islamabad",
         query: "walker",
         city: "Islamabad",
+      },
+      {
+        id: "cane-karachi",
+        label: "Rent Walking Cane in Karachi",
+        description: "Assistive walking devices in Karachi",
+        query: "walking cane",
+        city: "Karachi",
+      },
+      {
+        id: "scales-islamabad",
+        label: "Rent Medical Scales in Islamabad",
+        description: "Weighing scales for health monitoring in Islamabad",
+        query: "medical scales",
+        city: "Islamabad",
       }
     ]
   },
   {
-    category: "Construction Tools",
+    category: "Construction",
     links: [
-      {
-        id: "lawn-manzoor",
-        label: "Rent Lawn Equipment in Manzoor Colony, Karachi",
-        description: "Garden tools and equipment rentals in Manzoor Colony",
-        query: "lawn equipment",
-        city: "Karachi",
-        area: "Manzoor Colony",
-      },
       {
         id: "drill-karachi",
         label: "Rent Drill Machine in Karachi",
@@ -241,11 +229,93 @@ export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
         description: "Industrial welding equipment rentals in Lahore",
         query: "welding machine",
         city: "Lahore",
+      },
+      {
+        id: "jack-rawalpindi",
+        label: "Rent Hydraulic Jack in Rawalpindi",
+        description: "Heavy lifting equipment in Rawalpindi",
+        query: "hydraulic jack",
+        city: "Rawalpindi",
+      },
+      {
+        id: "compressor-peshawar",
+        label: "Rent Air Compressor in Peshawar",
+        description: "Pneumatic tools and equipment in Peshawar",
+        query: "air compressor",
+        city: "Peshawar",
+      },
+      {
+        id: "excavator-multan",
+        label: "Rent Excavator in Multan",
+        description: "Heavy construction machinery in Multan",
+        query: "excavator",
+        city: "Multan",
       }
     ]
   },
   {
-    category: "Event & Wedding",
+    category: "Generators",
+    links: [
+      {
+        id: "generator-karachi",
+        label: "Rent Power Generator in Karachi",
+        description: "Backup power solutions for homes and businesses in Karachi",
+        query: "power generator",
+        city: "Karachi",
+      },
+      {
+        id: "generator-lahore",
+        label: "Rent Generator in Lahore",
+        description: "Residential and commercial generators in Lahore",
+        query: "generator",
+        city: "Lahore",
+      },
+      {
+        id: "inverter-islamabad",
+        label: "Rent Inverter in Islamabad",
+        description: "Uninterrupted power supply systems in Islamabad",
+        query: "inverter",
+        city: "Islamabad",
+      },
+      {
+        id: "solar-generator-faisalabad",
+        label: "Rent Solar Generator in Faisalabad",
+        description: "Eco-friendly power solutions in Faisalabad",
+        query: "solar generator",
+        city: "Faisalabad",
+      },
+      {
+        id: "diesel-generator-peshawar",
+        label: "Rent Diesel Generator in Peshawar",
+        description: "Industrial power generators in Peshawar",
+        query: "diesel generator",
+        city: "Peshawar",
+      },
+      {
+        id: "portable-generator-karachi",
+        label: "Rent Portable Generator in Karachi",
+        description: "Compact power solutions for events in Karachi",
+        query: "portable generator",
+        city: "Karachi",
+      },
+      {
+        id: "ups-lahore",
+        label: "Rent UPS in Lahore",
+        description: "Computer backup power systems in Lahore",
+        query: "ups",
+        city: "Lahore",
+      },
+      {
+        id: "welding-generator-islamabad",
+        label: "Rent Welding Generator in Islamabad",
+        description: "Combination welding and power equipment in Islamabad",
+        query: "welding generator",
+        city: "Islamabad",
+      }
+    ]
+  },
+  {
+    category: "Wedding Couture",
     links: [
       {
         id: "wedding-dress-karachi",
@@ -262,18 +332,58 @@ export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
         city: "Lahore",
       },
       {
-        id: "sound-system-islamabad",
-        label: "Rent Sound System in Islamabad",
-        description: "PA systems and audio equipment in Islamabad",
-        query: "sound system",
-        city: "Islamabad",
-      },
-      {
         id: "wedding-car-karachi",
         label: "Rent Wedding Car in Karachi",
         description: "Luxury wedding cars for rent in Karachi",
         query: "wedding car",
         city: "Karachi",
+      },
+      {
+        id: "mehndi-dress-lahore",
+        label: "Rent Mehndi Dress in Lahore",
+        description: "Traditional bridal wear in Lahore",
+        query: "mehndi dress",
+        city: "Lahore",
+      },
+      {
+        id: "sherwani-islamabad",
+        label: "Rent Sherwani in Islamabad",
+        description: "Groom's formal attire in Islamabad",
+        query: "sherwani",
+        city: "Islamabad",
+      },
+      {
+        id: "jewelry-karachi",
+        label: "Rent Wedding Jewelry in Karachi",
+        description: "Bridal accessories and jewelry in Karachi",
+        query: "wedding jewelry",
+        city: "Karachi",
+      },
+      {
+        id: "makeup-artist-lahore",
+        label: "Rent Makeup Artist in Lahore",
+        description: "Professional bridal makeup services in Lahore",
+        query: "makeup artist",
+        city: "Lahore",
+      },
+      {
+        id: "photographer-islamabad",
+        label: "Rent Wedding Photographer in Islamabad",
+        description: "Professional wedding photography services in Islamabad",
+        query: "wedding photographer",
+        city: "Islamabad",
+      }
+    ]
+  },
+  {
+    category: "Events",
+    links: [
+      {
+        id: "sound-system-islamabad",
+        label: "Rent Sound System in Islamabad",
+        description: "PA systems and audio equipment in Islamabad",
+        query: "sound system",
+        city: "Islamabad",
       },
       {
         id: "catering-equipment-lahore",
@@ -288,147 +398,163 @@ export const CATEGORY_LOCATION_LINKS: CategoryLocationLink[] = [
         description: "Event stage and lighting equipment in Rawalpindi",
         query: "stage setup",
         city: "Rawalpindi",
-      }
-    ]
-  },
-  {
-    category: "Fitness & Sports",
-    links: [
+      },
       {
-        id: "treadmill-karachi",
-        label: "Rent Treadmill in Karachi",
-        description: "Home fitness equipment rentals in Karachi",
-        query: "treadmill",
+        id: "tent-karachi",
+        label: "Rent Event Tent in Karachi",
+        description: "Party and event tents in Karachi",
+        query: "event tent",
         city: "Karachi",
       },
       {
-        id: "gym-equipment-lahore",
-        label: "Rent Gym Equipment in Lahore",
-        description: "Professional fitness gear in Lahore",
-        query: "gym equipment",
-        city: "Lahore",
+        id: "lighting-peshawar",
+        label: "Rent Event Lighting in Peshawar",
+        description: "Professional stage lighting in Peshawar",
+        query: "event lighting",
+        city: "Peshawar",
       },
       {
-        id: "cricket-kit-islamabad",
-        label: "Rent Cricket Kit in Islamabad",
-        description: "Complete cricket gear rentals in Islamabad",
-        query: "cricket kit",
-        city: "Islamabad",
-      },
-      {
-        id: "bicycle-karachi",
-        label: "Rent Bicycle in Karachi",
-        description: "Mountain and road bikes for rent in Karachi",
-        query: "bicycle",
-        city: "Karachi",
-      },
-      {
-        id: "swimming-pool-faisalabad",
-        label: "Rent Swimming Pool in Faisalabad",
-        description: "Inflatable pools for summer fun in Faisalabad",
-        query: "swimming pool",
+        id: "table-chairs-faisalabad",
+        label: "Rent Tables & Chairs in Faisalabad",
+        description: "Event furniture rentals in Faisalabad",
+        query: "tables chairs",
         city: "Faisalabad",
       },
       {
-        id: "sports-equipment-rawalpindi",
-        label: "Rent Sports Equipment in Rawalpindi",
-        description: "Various sports gear rentals in Rawalpindi",
-        query: "sports equipment",
-        city: "Rawalpindi",
+        id: "dj-karachi",
+        label: "Rent DJ Services in Karachi",
+        description: "Professional DJ equipment and services in Karachi",
+        query: "dj services",
+        city: "Karachi",
+      },
+      {
+        id: "decor-islamabad",
+        label: "Rent Event Decor in Islamabad",
+        description: "Wedding and party decorations in Islamabad",
+        query: "event decor",
+        city: "Islamabad",
       }
     ]
   },
   {
-    category: "Electronics",
+    category: "Studio",
     links: [
       {
-        id: "laptop-karachi",
-        label: "Rent Laptop in Karachi",
-        description: "Business and gaming laptops for rent in Karachi",
-        query: "laptop",
+        id: "recording-equipment-karachi",
+        label: "Rent Recording Equipment in Karachi",
+        description: "Professional audio recording gear in Karachi",
+        query: "recording equipment",
         city: "Karachi",
       },
       {
-        id: "printer-lahore",
-        label: "Rent Printer in Lahore",
-        description: "Office printers and scanners in Lahore",
-        query: "printer",
+        id: "studio-lahore",
+        label: "Rent Recording Studio in Lahore",
+        description: "Professional music studios in Lahore",
+        query: "recording studio",
         city: "Lahore",
       },
       {
-        id: "projector-islamabad",
-        label: "Rent Projector in Islamabad",
-        description: "Home cinema and business projectors in Islamabad",
-        query: "projector",
+        id: "microphone-islamabad",
+        label: "Rent Microphone in Islamabad",
+        description: "Professional microphones for recording in Islamabad",
+        query: "microphone",
         city: "Islamabad",
       },
       {
-        id: "tablet-karachi",
-        label: "Rent Tablet in Karachi",
-        description: "iPad and Android tablets for rent in Karachi",
-        query: "tablet",
+        id: "mixing-console-karachi",
+        label: "Rent Mixing Console in Karachi",
+        description: "Audio mixing equipment in Karachi",
+        query: "mixing console",
         city: "Karachi",
       },
       {
-        id: "speaker-lahore",
-        label: "Rent Speaker in Lahore",
-        description: "Bluetooth and home theater speakers in Lahore",
-        query: "speaker",
+        id: "headphones-lahore",
+        label: "Rent Studio Headphones in Lahore",
+        description: "Professional monitoring headphones in Lahore",
+        query: "studio headphones",
         city: "Lahore",
       },
       {
-        id: "smart-tv-rawalpindi",
-        label: "Rent Smart TV in Rawalpindi",
-        description: "Large screen TVs for events in Rawalpindi",
-        query: "smart tv",
-        city: "Rawalpindi",
+        id: "audio-interface-islamabad",
+        label: "Rent Audio Interface in Islamabad",
+        description: "Digital audio recording interfaces in Islamabad",
+        query: "audio interface",
+        city: "Islamabad",
+      },
+      {
+        id: "studio-lights-karachi",
+        label: "Rent Studio Lights in Karachi",
+        description: "Professional photography lighting in Karachi",
+        query: "studio lights",
+        city: "Karachi",
+      },
+      {
+        id: "green-screen-lahore",
+        label: "Rent Green Screen in Lahore",
+        description: "Video production equipment in Lahore",
+        query: "green screen",
+        city: "Lahore",
       }
     ]
   },
   {
-    category: "Furniture",
+    category: "Advertisements",
     links: [
       {
-        id: "sofa-karachi",
-        label: "Rent Sofa in Karachi",
-        description: "Living room furniture rentals in Karachi",
-        query: "sofa",
+        id: "banner-karachi",
+        label: "Rent Advertising Banner in Karachi",
+        description: "Promotional banners and signage in Karachi",
+        query: "advertising banner",
         city: "Karachi",
       },
       {
-        id: "office-chair-lahore",
-        label: "Rent Office Chair in Lahore",
-        description: "Ergonomic office furniture in Lahore",
-        query: "office chair",
+        id: "led-screen-lahore",
+        label: "Rent LED Screen in Lahore",
+        description: "Digital advertising displays in Lahore",
+        query: "led screen",
         city: "Lahore",
       },
       {
-        id: "dining-table-islamabad",
-        label: "Rent Dining Table in Islamabad",
-        description: "Dining sets for events in Islamabad",
-        query: "dining table",
+        id: "billboard-islamabad",
+        label: "Rent Billboard in Islamabad",
+        description: "Large format outdoor advertising in Islamabad",
+        query: "billboard",
         city: "Islamabad",
       },
       {
-        id: "bed-karachi",
-        label: "Rent Bed in Karachi",
-        description: "Temporary bedroom furniture in Karachi",
-        query: "bed",
+        id: "flyers-karachi",
+        label: "Rent Flyer Printing in Karachi",
+        description: "Promotional materials and printing in Karachi",
+        query: "flyers",
         city: "Karachi",
       },
       {
-        id: "wardrobe-lahore",
-        label: "Rent Wardrobe in Lahore",
-        description: "Storage solutions and wardrobes in Lahore",
-        query: "wardrobe",
+        id: "standee-lahore",
+        label: "Rent Standee in Lahore",
+        description: "Retail advertising displays in Lahore",
+        query: "standee",
         city: "Lahore",
       },
       {
-        id: "study-table-rawalpindi",
-        label: "Rent Study Table in Rawalpindi",
-        description: "Student furniture rentals in Rawalpindi",
-        query: "study table",
-        city: "Rawalpindi",
+        id: "hoarding-peshawar",
+        label: "Rent Hoarding in Peshawar",
+        description: "Large outdoor advertising structures in Peshawar",
+        query: "hoarding",
+        city: "Peshawar",
+      },
+      {
+        id: "digital-signage-islamabad",
+        label: "Rent Digital Signage in Islamabad",
+        description: "Electronic advertising displays in Islamabad",
+        query: "digital signage",
+        city: "Islamabad",
+      },
+      {
+        id: "vehicle-ads-karachi",
+        label: "Rent Vehicle Advertising in Karachi",
+        description: "Mobile advertising solutions in Karachi",
+        query: "vehicle advertising",
+        city: "Karachi",
       }
     ]
   }

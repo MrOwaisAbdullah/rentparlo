@@ -42,7 +42,7 @@ export function AdBanner({
   return (
     <div
       className={cn(
-        "relative rounded-lg overflow-hidden border bg-muted/30 cursor-pointer group",
+        "relative rounded-lg overflow-hidden border bg-muted/30 cursor-pointer group mb-6 last:mb-0",
         sizeClasses[size],
         className,
       )}
