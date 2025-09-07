@@ -162,17 +162,6 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
 
   return (
     <section className="relative bg-muted/20">
-      {/* Top Banner - Full Width Large Banner */}
-      <div className="w-full bg-background">
-        <div className="container mx-auto px-4 pt-4">
-          <AdBanner 
-            placement="homepage-top" 
-            className="mx-auto w-full" 
-            fallbackText="Advertisement"
-          />
-        </div>
-      </div>
-
       <div className="relative h-[400px] bg-cover bg-center bg-no-repeat overflow-hidden">
         {/* Banner Slider with Smooth Animations */}
         <AnimatePresence mode="wait">

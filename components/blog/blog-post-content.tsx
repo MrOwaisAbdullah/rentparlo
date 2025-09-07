@@ -10,105 +10,17 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { BlogCard } from './blog-card';
 import { cn } from '@/lib/utils';
-import { BlogPost, BlogPostSummary, PortableTextBlock, ImageBlock, CodeBlock } from '@/types';
+import { BlogPost, BlogPostSummary } from '@/types';
+import { PortableText } from '@portabletext/react';
+import { PortableTextBlock } from '@portabletext/types';
+import { CustomComponent } from './CustomComponent';
+import { TableOfContents } from './TableOfContent';
 
 interface BlogPostContentProps {
   post: BlogPost;
   relatedPosts?: BlogPostSummary[];
   className?: string;
 }
-
-// Portable Text Component
-const PortableTextRenderer: React.FC<{ content: (PortableTextBlock | ImageBlock | CodeBlock)[] }> = ({ content }) => {
-  const renderBlock = (block: PortableTextBlock | ImageBlock | CodeBlock) => {
-    switch (block._type) {
-      case 'block':
-        const blockData = block as PortableTextBlock;
-        const style = blockData.style || 'normal';
-        const children = blockData.children?.map((child, index) => {
-          let text = child.text;
-          
-          // Apply marks (bold, italic, etc.)
-          if (child.marks && child.marks.length > 0) {
-            child.marks.forEach(mark => {
-              switch (mark) {
-                case 'strong':
-                  text = <strong key={index}>{text}</strong>;
-                  break;
-                case 'em':
-                  text = <em key={index}>{text}</em>;
-                  break;
-                case 'code':
-                  text = <code key={index} className="bg-muted px-1 py-0.5 rounded text-sm font-mono">{text}</code>;
-                  break;
-              }
-            });
-          }
-          
-          return <span key={child._key}>{text}</span>;
-        });
-
-        // Render different styles
-        switch (style) {
-          case 'h1':
-            return <h1 key={blockData._key} className="text-3xl font-bold mb-4 mt-8">{children}</h1>;
-          case 'h2':
-            return <h2 key={blockData._key} className="text-2xl font-semibold mb-3 mt-6">{children}</h2>;
-          case 'h3':
-            return <h3 key={blockData._key} className="text-xl font-semibold mb-2 mt-4">{children}</h3>;
-          case 'h4':
-            return <h4 key={blockData._key} className="text-lg font-medium mb-2 mt-4">{children}</h4>;
-          case 'blockquote':
-            return (
-              <blockquote key={blockData._key} className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4">
-                {children}
-              </blockquote>
-            );
-          default:
-            return <p key={blockData._key} className="mb-4 leading-relaxed">{children}</p>;
-        }
-
-      case 'image':
-        const imageBlock = block as ImageBlock;
-        return (
-          <figure key={imageBlock._key} className="my-8">
-            <div className="relative aspect-video overflow-hidden rounded-lg">
-              <Image
-                src={imageBlock.asset?.url || "/placeholder.svg"}
-                alt={imageBlock.alt || "Blog image"}
-                fill
-                className="object-cover"
-              />
-            </div>
-            {imageBlock.caption && (
-              <figcaption className="text-sm text-muted-foreground text-center mt-2">
-                {imageBlock.caption}
-              </figcaption>
-            )}
-          </figure>
-        );
-
-      case 'code':
-        const codeBlock = block as CodeBlock;
-        return (
-          <div key={codeBlock._key} className="my-6">
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-              <code className="text-sm font-mono">{codeBlock.code}</code>
-            </pre>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="prose prose-gray max-w-none">
-      {content.map(renderBlock)}
-    </div>
-  );
-};
 
 export function BlogPostContent({ post, relatedPosts = [], className }: BlogPostContentProps) {
   const [copied, setCopied] = React.useState(false);
@@ -143,9 +55,9 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
   };
 
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
+    facebook: `https://www.facebook.com/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    twitter: `https://twitter.com/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
+    linkedin: `https://www.linkedin.com/shareArticle?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`
   };
 
   return (
@@ -270,7 +182,7 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
 
           {/* Article Body */}
           <div className="prose prose-gray max-w-none mb-8">
-            <PortableTextRenderer content={getContent()} />
+            <PortableText value={getContent()} components={CustomComponent} />
           </div>
 
           {/* Tags */}
@@ -331,14 +243,9 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
                     Content writer and rental market expert at RentParLo.pk. 
                     Passionate about helping people find the perfect rental solutions.
                   </p>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      View Profile
-                    </Button>
                     <Button variant="outline" size="sm">
                       More Articles
                     </Button>
-                  </div>
                 </div>
               </div>
             </CardContent>
@@ -348,26 +255,11 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-8 space-y-6">
-            {/* Table of Contents - placeholder */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">Table of Contents</h3>
-                <div className="space-y-2 text-sm">
-                  <a href="#" className="block text-muted-foreground hover:text-primary transition-colors">
-                    Introduction
-                  </a>
-                  <a href="#" className="block text-muted-foreground hover:text-primary transition-colors">
-                    Key Points
-                  </a>
-                  <a href="#" className="block text-muted-foreground hover:text-primary transition-colors">
-                    Conclusion
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Table of Contents */}
+            <TableOfContents content={getContent().filter(block => block._type === 'block') as PortableTextBlock[]} />
 
             {/* Newsletter Signup */}
-            <Card className="bg-primary/5 border-primary/20">
+            {/* <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-4 text-center">
                 <h3 className="font-semibold mb-2">Stay Updated</h3>
                 <p className="text-sm text-muted-foreground mb-3">
@@ -377,7 +269,7 @@ export function BlogPostContent({ post, relatedPosts = [], className }: BlogPost
                   Subscribe Now
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>

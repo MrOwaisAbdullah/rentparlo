@@ -64,12 +64,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   // Get recent posts as related posts
-  const { posts: relatedPosts } = await getRecentPosts(3);
+  const relatedPosts = await getRecentPosts(3);
 
   // Filter out the current post from related posts
-  const filteredRelatedPosts = relatedPosts.filter(
-    relatedPost => relatedPost._id !== post._id
-  );
+  const filteredRelatedPosts = Array.isArray(relatedPosts) 
+    ? relatedPosts.filter(relatedPost => relatedPost._id !== post._id)
+    : [];
 
   // Generate JSON-LD structured data
   const jsonLd = {
