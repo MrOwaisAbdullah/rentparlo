@@ -220,54 +220,53 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
       };
     }
 
-    // Create user profile in public schema
-    const { error: profileError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user.id,
-        email: validData.email,
-        phone: validData.phone,
-        role: validData.role,
-        city: validData.city,
-        country: 'Pakistan',
-        is_verified: false,
-        email_verified: false,
-        active: true,
-        guest_id: `guest_${Date.now()}`,
-        notification_preferences: {
+    // Create user profile using SECURITY DEFINER function
+    const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
+        p_id: authData.user.id,
+        p_email: validData.email,
+        p_phone: validData.phone,
+        p_role: validData.role,
+        p_city: validData.city,
+        p_country: 'Pakistan',
+        p_is_verified: false,
+        p_email_verified: false,
+        p_active: true,
+        p_guest_id: `guest_${Date.now()}`,
+        p_notification_preferences: {
           email: true,
           sms: false,
           push: true
         },
-        preferred_language: 'en'
-      });
+        p_preferred_language: 'en'
+    });
 
     if (profileError) {
       console.error('Profile creation error:', profileError.message);
       // Note: In production, you might want to clean up the auth user here
     }
 
-    // If seller, create seller profile
+    // If seller, create seller profile using SECURITY DEFINER function
     if (validData.role === 'seller') {
-      const { error: sellerError } = await supabase
-        .from('seller_profiles')
-        .insert({
-          id: authData.user.id,
-          username: validData.email.split('@')[0], // Generate username from email
-          business_name: validData.businessName,
-          owner_cnic: validData.cnic,
-          address_line1: validData.address,
-          is_verified: false,
-          is_top_seller: false,
-          tier: 'basic',
-          tier_points: 0,
-          verification_status: 'pending',
-          verification_documents: {
+      const { error: sellerError } = await supabase.rpc('create_seller_profile_after_signup', {
+          p_id: authData.user.id,
+          p_username: validData.email.split('@')[0],
+          p_business_name: validData.businessName,
+          p_owner_cnic: validData.cnic,
+          p_address_line1: validData.address,
+          p_is_verified: false,
+          p_is_top_seller: false,
+          p_tier: 'basic',
+          p_tier_points: 0,
+          p_verification_status: 'pending',
+          p_verification_documents: {
             cnic_front: null,
             cnic_back: null,
             business_license: null
-          }
-        });
+          },
+          p_city: validData.city,
+          p_phone: validData.phone,
+          p_email: validData.email
+      });
 
       if (sellerError) {
         console.error('Seller profile creation error:', sellerError.message);
@@ -446,40 +445,25 @@ export async function handleOAuthCallback(code: string, provider: string, type?:
         
       if (!existingUser) {
         isNewUser = true;
-        // Create user profile for new OAuth user
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            name: data.user.user_metadata?.full_name || data.user.user_metadata?.name,
-            profile_image_url: data.user.user_metadata?.avatar_url,
-            role: 'user', // Default role, can be changed during onboarding
-            country: 'Pakistan',
-            is_verified: false,
-            email_verified: data.user.email_confirmed_at ? true : false,
-            phone_verified: false,
-            active: true,
-            onboarding_completed: false, // New Google users need onboarding
-            guest_id: `guest_${Date.now()}`,
-            notification_preferences: {
+        // Create user profile for new OAuth user using SECURITY DEFINER function
+        const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
+            p_id: data.user.id,
+            p_email: data.user.email!,
+            p_phone: null, // Assuming phone is not available from OAuth directly
+            p_role: 'user', // Default role, can be changed during onboarding
+            p_city: null, // Assuming city is not available from OAuth directly
+            p_country: 'Pakistan',
+            p_is_verified: false,
+            p_email_verified: data.user.email_confirmed_at ? true : false,
+            p_active: true,
+            p_guest_id: `guest_${Date.now()}`,
+            p_notification_preferences: {
               email: true,
               sms: false,
-              push: true,
-              marketing: false,
-              security_alerts: true
+              push: true
             },
-            privacy_settings: {
-              profile_visible: true,
-              contact_info_visible: false,
-              activity_visible: true,
-              location_sharing: false
-            },
-            preferred_language: 'en',
-            timezone: 'Asia/Karachi',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
+            p_preferred_language: 'en'
+        });
           
         if (profileError) {
           console.error('OAuth profile creation error:', profileError);

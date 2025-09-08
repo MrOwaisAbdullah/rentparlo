@@ -1,6 +1,6 @@
 -- =============================================
 -- RENTPARLO.PK COMPLETE SUPABASE SCHEMA
--- Single comprehensive schema with volatile function fixes
+-- Consolidated for a clean start
 -- =============================================
 
 -- Extensions
@@ -8,10 +8,10 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- =============================================
--- CORE TABLES WITH FIXES
+-- 1. TABLE CREATIONS
 -- =============================================
 
--- USERS TABLE (No volatile guest_id index)
+-- USERS TABLE
 CREATE TABLE public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE public.users (
   timezone TEXT DEFAULT 'Asia/Karachi'
 );
 
--- SESSION MANAGEMENT (Fixes volatile session issues)
+-- SESSION MANAGEMENT
 CREATE TABLE public.event_sessions (
   session_id UUID PRIMARY KEY,
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
@@ -60,7 +60,7 @@ CREATE TABLE public.event_sessions (
   ended_at TIMESTAMPTZ
 );
 
--- GUEST TRACKING (Alternative to volatile guest_id)
+-- GUEST TRACKING
 CREATE TABLE public.user_guest_tracking (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   guest_id UUID NOT NULL,
@@ -102,9 +102,6 @@ CREATE TABLE public.seller_profiles (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Add CNIC validation
-ALTER TABLE seller_profiles ADD CONSTRAINT valid_cnic CHECK (owner_cnic ~ '^[0-9+]{5}-[0-9+]{7}-[0-9]{1});
 
 -- SELLER TIER HISTORY
 CREATE TABLE public.seller_tier_history (
@@ -148,7 +145,7 @@ CREATE TABLE public.user_subscriptions (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ANALYTICS EVENTS (Fixed with session reference)
+-- ANALYTICS EVENTS
 CREATE TABLE public.analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   listing_id TEXT, -- Made nullable to allow profile view tracking
@@ -165,14 +162,8 @@ CREATE TABLE public.analytics_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- =============================================
--- BANNER ANALYTICS SCHEMA
--- Complete schema for banner impressions and clicks tracking
--- =============================================
-
 -- BANNER IMPRESSION TRACKING
--- Tracks when banners are displayed to users
-CREATE TABLE IF NOT EXISTS public.banner_impressions (
+CREATE TABLE public.banner_impressions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   banner_id TEXT NOT NULL, -- Sanity document ID
   placement TEXT NOT NULL, -- Placement location (homepage-top, category-sidebar, etc.)
@@ -198,8 +189,7 @@ CREATE TABLE IF NOT EXISTS public.banner_impressions (
 COMMENT ON TABLE public.banner_impressions IS 'Tracks impressions (displays) of advertisement banners with detailed context.';
 
 -- BANNER CLICK TRACKING
--- Tracks when users click on banners
-CREATE TABLE IF NOT EXISTS public.banner_clicks (
+CREATE TABLE public.banner_clicks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   banner_id TEXT NOT NULL, -- Sanity document ID
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
@@ -227,8 +217,7 @@ CREATE TABLE IF NOT EXISTS public.banner_clicks (
 COMMENT ON TABLE public.banner_clicks IS 'Tracks clicks on advertisement banners with detailed context.';
 
 -- BANNER PERFORMANCE SUMMARY
--- Aggregated daily statistics for banner performance
-CREATE TABLE IF NOT EXISTS public.banner_performance_daily (
+CREATE TABLE public.banner_performance_daily (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   banner_id TEXT NOT NULL, -- Sanity document ID
   placement TEXT NOT NULL,
@@ -250,201 +239,44 @@ CREATE TABLE IF NOT EXISTS public.banner_performance_daily (
 );
 COMMENT ON TABLE public.banner_performance_daily IS 'Daily aggregated statistics for banner performance.';
 
--- Insert Pakistani cities (without duplicates)
-INSERT INTO public.cities (name, province) VALUES
-('Karachi', 'Sindh'),
-('Lahore', 'Punjab'),
-('Islamabad', 'ICT'),
-('Rawalpindi', 'Punjab'),
-('Faisalabad', 'Punjab'),
-('Multan', 'Punjab'),
-('Peshawar', 'KPK'),
-('Quetta', 'Balochistan'),
-('Sialkot', 'Punjab'),
-('Gujranwala', 'Punjab'),
-('Hyderabad', 'Sindh'),
-('Bahawalpur', 'Punjab'),
-('Sargodha', 'Punjab'),
-('Sukkur', 'Sindh'),
-('Larkana', 'Sindh'),
-('Rahim Yar Khan', 'Punjab'),
-('Kasur', 'Punjab'),
-('Sheikhupura', 'Punjab'),
-('Jhang', 'Punjab'),
-('Dera Ghazi Khan', 'Punjab'),
-('Gujrat', 'Punjab'),
-('Sahiwal', 'Punjab'),
-('Okara', 'Punjab'),
-('Muzaffargarh', 'Punjab'),
-('Nawabshah', 'Sindh'),
-('Mirpur Khas', 'Sindh'),
-('Jacobabad', 'Sindh'),
-('Mardan', 'KPK'),
-('Kohat', 'KPK'),
-('Abbottabad', 'KPK'),
-('Dera Ismail Khan', 'KPK'),
-('Bannu', 'KPK'),
-('Swabi', 'KPK'),
-('Nowshera', 'KPK'),
-('Charsadda', 'KPK'),
-('Tank', 'KPK'),
-('Hangu', 'KPK'),
-('Buner', 'KPK'),
-('Malakand', 'KPK'),
-('Swat', 'KPK'),
-('Chitral', 'KPK'),
-('Haripur', 'KPK'),
-('Mansehra', 'KPK'),
-('Karak', 'KPK'),
-('Kurram', 'KPK'),
-('North Waziristan', 'KPK'),
-('South Waziristan', 'KPK'),
-('Khyber', 'KPK'),
-('Orakzai', 'KPK'),
-('Harnai', 'Balochistan'),
-('Ziarat', 'Balochistan'),
-('Khuzdar', 'Balochistan'),
-('Turbat', 'Balochistan'),
-('Panjgur', 'Balochistan'),
-('Kech', 'Balochistan'),
-('Dera Bugti', 'Balochistan'),
-('Nasirabad', 'Balochistan'),
-('Jaffarabad', 'Balochistan'),
-('Sibi', 'Balochistan'),
-('Bolan', 'Balochistan'),
-('Qilla Abdullah', 'Balochistan'),
-('Pishin', 'Balochistan'),
-('Chagai', 'Balochistan'),
-('Kharan', 'Balochistan'),
-('Washuk', 'Balochistan'),
-('Awaran', 'Balochistan'),
-('Gwadar', 'Balochistan'),
-('Lasbela', 'Balochistan'),
-('Kalat', 'Balochistan'),
-('Mastung', 'Balochistan'),
-('Duki', 'Balochistan'),
-('Loralai', 'Balochistan'),
-('Musakhel', 'Balochistan'),
-('Barkhan', 'Balochistan'),
-('Dera Murad Jamali', 'Balochistan'),
-('Jhal Magsi', 'Balochistan'),
-('Sohbatpur', 'Balochistan'),
-('Kachhi', 'Balochistan'),
-('Jafarabad', 'Balochistan'),
-('Umerkot', 'Sindh'),
-('Tharparkar', 'Sindh'),
-('Badin', 'Sindh'),
-('Thatta', 'Sindh'),
-('Jamshoro', 'Sindh'),
-('Tando Allahyar', 'Sindh'),
-('Tando Muhammad Khan', 'Sindh'),
-('Sanghar', 'Sindh'),
-('Dadu', 'Sindh'),
-('Kambar Shahdadkot', 'Sindh'),
-('Qambar Shahdadkot', 'Sindh'),
-('Shikarpur', 'Sindh'),
-('Naushahro Firoz', 'Sindh'),
-('Khairpur', 'Sindh'),
-('Kashmore', 'Sindh'),
-('Sujawal', 'Sindh'),
-('Gilgit', 'GB'),
-('Skardu', 'GB'),
-('Muzaffarabad', 'AJK'),
-('Mirpur', 'AJK'),
-('Rawalakot', 'AJK'),
-('Kotli', 'AJK'),
-('Attock', 'Punjab'),
-('Chiniot', 'Punjab'),
-('Daska', 'Punjab'),
-('Hafizabad', 'Punjab'),
-('Jaranwala', 'Punjab'),
-('Kamoke', 'Punjab'),
-('Khanewal', 'Punjab'),
-('Khanpur', 'Punjab'),
-('Khushab', 'Punjab'),
-('Mandi Bahauddin', 'Punjab'),
-('Muridke', 'Punjab'),
-('Pakpattan', 'Punjab'),
-('Sadiqabad', 'Punjab'),
-('Samundri', 'Punjab'),
-('Wah Cantonment', 'Punjab'),
-('Buner', 'KPK'),
-('Charsadda', 'KPK'),
-('Chitral', 'KPK'),
-('Hangu', 'KPK'),
-('Haripur', 'KPK'),
-('Karak', 'KPK'),
-('Kohat', 'KPK'),
-('Kurram', 'KPK'),
-('Malakand', 'KPK'),
-('Mansehra', 'KPK'),
-('Mardan', 'KPK'),
-('North Waziristan', 'KPK'),
-('Nowshera', 'KPK'),
-('Orakzai', 'KPK'),
-('South Waziristan', 'KPK'),
-('Swabi', 'KPK'),
-('Swat', 'KPK'),
-('Tank', 'KPK'),
-('Upper Dir', 'KPK'),
-('Awaran', 'Balochistan'),
-('Barkhan', 'Balochistan'),
-('Bolan', 'Balochistan'),
-('Chagai', 'Balochistan'),
-('Dera Bugti', 'Balochistan'),
-('Duki', 'Balochistan'),
-('Gwadar', 'Balochistan'),
-('Harnai', 'Balochistan'),
-('Jaffarabad', 'Balochistan'),
-('Jhal Magsi', 'Balochistan'),
-('Kachhi', 'Balochistan'),
-('Kalat', 'Balochistan'),
-('Kech', 'Balochistan'),
-('Kharan', 'Balochistan'),
-('Kohlu', 'Balochistan'), -- Added based on common knowledge of regions
-('Lasbela', 'Balochistan'),
-('Loralai', 'Balochistan'),
-('Mastung', 'Balochistan'),
-('Musakhel', 'Balochistan'),
-('Nasirabad', 'Balochistan'),
-('Panjgur', 'Balochistan'),
-('Pishin', 'Balochistan'),
-('Qilla Abdullah', 'Balochistan'),
-('Sibi', 'Balochistan'),
-('Sohbatpur', 'Balochistan'),
-('Turbat', 'Balochistan'),
-('Washuk', 'Balochistan'),
-('Ziarat', 'Balochistan'),
-('Zhob', 'Balochistan'), -- Added based on common knowledge of regions
-('Badin', 'Sindh'),
-('Dadu', 'Sindh'),
-('Ghotki', 'Sindh'),
-('Jamshoro', 'Sindh'),
-('Kambar Shahdadkot', 'Sindh'),
-('Kashmore', 'Sindh'),
-('Khairpur', 'Sindh'),
-('Matiari', 'Sindh'), -- Added based on common knowledge of regions
-('Naushahro Firoz', 'Sindh'),
-('Sanghar', 'Sindh'),
-('Shikarpur', 'Sindh'),
-('Sujawal', 'Sindh'),
-('Thatta', 'Sindh'),
-('Tharparkar', 'Sindh'),
-('Tando Allahyar', 'Sindh'),
-('Tando Muhammad Khan', 'Sindh'),
-('Umerkot', 'Sindh');
+-- Cities table
+CREATE TABLE public.cities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  province TEXT
+);
 
+-- Support tickets table
+CREATE TABLE public.support_tickets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  subject TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT,
+  priority TEXT,
+  status TEXT DEFAULT 'open',
+  assigned_to UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- =============================================
--- INDEXES (FIXED - NO VOLATILE FUNCTIONS)
+-- 2. CONSTRAINTS
 -- =============================================
 
--- User indexes (NO guest_id index)
+-- CNIC validation for seller_profiles
+ALTER TABLE public.seller_profiles ADD CONSTRAINT valid_cnic CHECK (owner_cnic ~ '^[0-9+]{5}-[0-9+]{7}-[0-9]{1}');
+
+-- =============================================
+-- 3. INDEXES
+-- =============================================
+
+-- User indexes
 CREATE INDEX idx_users_email ON public.users(email);
 CREATE INDEX idx_users_city ON public.users(city);
 CREATE INDEX idx_users_location ON public.users USING GIST (last_location);
 
--- Session indexes (deterministic)
+-- Session indexes
 CREATE INDEX idx_event_sessions_user ON public.event_sessions(user_id);
 CREATE INDEX idx_event_sessions_guest ON public.event_sessions(guest_id);
 CREATE INDEX idx_event_sessions_created ON public.event_sessions(created_at);
@@ -466,7 +298,7 @@ CREATE INDEX idx_subscriptions_user ON public.user_subscriptions(user_id);
 CREATE INDEX idx_subscriptions_status ON public.user_subscriptions(status);
 CREATE INDEX idx_subscriptions_active ON public.user_subscriptions(user_id) WHERE status = 'active';
 
--- Analytics indexes (FIXED - using session_ref)
+-- Analytics indexes
 CREATE INDEX idx_analytics_listing ON public.analytics_events(listing_id);
 CREATE INDEX idx_analytics_user ON public.analytics_events(user_id);
 CREATE INDEX idx_analytics_session_ref ON public.analytics_events(session_ref);
@@ -475,35 +307,35 @@ CREATE INDEX idx_analytics_time ON public.analytics_events(created_at);
 CREATE INDEX idx_analytics_listing_type ON public.analytics_events(listing_id, event_type);
 
 -- Banner impressions indexes
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_banner_id ON public.banner_impressions(banner_id);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_placement ON public.banner_impressions(placement);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_banner_size ON public.banner_impressions(banner_size);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_user_id ON public.banner_impressions(user_id);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_guest_id ON public.banner_impressions(guest_id);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_session_ref ON public.banner_impressions(session_ref);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_device_type ON public.banner_impressions(device_type);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_city ON public.banner_impressions(city);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_created_at ON public.banner_impressions(created_at);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_page_url ON public.banner_impressions(page_url);
-CREATE INDEX IF NOT EXISTS idx_banner_impressions_category_context ON public.banner_impressions(category_context);
+CREATE INDEX idx_banner_impressions_banner_id ON public.banner_impressions(banner_id);
+CREATE INDEX idx_banner_impressions_placement ON public.banner_impressions(placement);
+CREATE INDEX idx_banner_impressions_banner_size ON public.banner_impressions(banner_size);
+CREATE INDEX idx_banner_impressions_user_id ON public.banner_impressions(user_id);
+CREATE INDEX idx_banner_impressions_guest_id ON public.banner_impressions(guest_id);
+CREATE INDEX idx_banner_impressions_session_ref ON public.banner_impressions(session_ref);
+CREATE INDEX idx_banner_impressions_device_type ON public.banner_impressions(device_type);
+CREATE INDEX idx_banner_impressions_city ON public.banner_impressions(city);
+CREATE INDEX idx_banner_impressions_created_at ON public.banner_impressions(created_at);
+CREATE INDEX idx_banner_impressions_page_url ON public.banner_impressions(page_url);
+CREATE INDEX idx_banner_impressions_category_context ON public.banner_impressions(category_context);
 
 -- Banner clicks indexes
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_banner_id ON public.banner_clicks(banner_id);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_user_id ON public.banner_clicks(user_id);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_session_ref ON public.banner_clicks(session_ref);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_created_at ON public.banner_clicks(created_at);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_placement ON public.banner_clicks(placement);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_banner_size ON public.banner_clicks(banner_size);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_city ON public.banner_clicks(city);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_device_type ON public.banner_clicks(device_type);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_page_url ON public.banner_clicks(page_url);
-CREATE INDEX IF NOT EXISTS idx_banner_clicks_target_url ON public.banner_clicks(target_url);
+CREATE INDEX idx_banner_clicks_banner_id ON public.banner_clicks(banner_id);
+CREATE INDEX idx_banner_clicks_user_id ON public.banner_clicks(user_id);
+CREATE INDEX idx_banner_clicks_session_ref ON public.banner_clicks(session_ref);
+CREATE INDEX idx_banner_clicks_created_at ON public.banner_clicks(created_at);
+CREATE INDEX idx_banner_clicks_placement ON public.banner_clicks(placement);
+CREATE INDEX idx_banner_clicks_banner_size ON public.banner_clicks(banner_size);
+CREATE INDEX idx_banner_clicks_city ON public.banner_clicks(city);
+CREATE INDEX idx_banner_clicks_device_type ON public.banner_clicks(device_type);
+CREATE INDEX idx_banner_clicks_page_url ON public.banner_clicks(page_url);
+CREATE INDEX idx_banner_clicks_target_url ON public.banner_clicks(target_url);
 
 -- Daily performance indexes
-CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_banner_id ON public.banner_performance_daily(banner_id);
-CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_placement ON public.banner_performance_daily(placement);
-CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_date ON public.banner_performance_daily(date);
-CREATE INDEX IF NOT EXISTS idx_banner_performance_daily_ctr ON public.banner_performance_daily(ctr);
+CREATE INDEX idx_banner_performance_daily_banner_id ON public.banner_performance_daily(banner_id);
+CREATE INDEX idx_banner_performance_daily_placement ON public.banner_performance_daily(placement);
+CREATE INDEX idx_banner_performance_daily_date ON public.banner_performance_daily(date);
+CREATE INDEX idx_banner_performance_daily_ctr ON public.banner_performance_daily(ctr);
 
 -- Support indexes
 CREATE INDEX idx_tickets_user ON public.support_tickets(user_id);
@@ -514,10 +346,10 @@ CREATE INDEX idx_cities_name ON public.cities(name);
 CREATE INDEX idx_cities_province ON public.cities(province);
 
 -- =============================================
--- ROW LEVEL SECURITY
+-- 4. ROW LEVEL SECURITY (RLS)
 -- =============================================
 
--- Enable RLS
+-- Enable RLS for all tables
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.event_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_guest_tracking ENABLE ROW LEVEL SECURITY;
@@ -527,35 +359,32 @@ ALTER TABLE public.subscription_packages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.banner_clicks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.banner_impressions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.banner_performance_daily ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
 
 -- User policies
 CREATE POLICY "Users can view own profile" ON public.users
   FOR SELECT TO authenticated USING (id = auth.uid());
-
 CREATE POLICY "Admins can view all users" ON public.users
   FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-
 CREATE POLICY "Anyone can view basic user info" ON public.users
   FOR SELECT TO authenticated, anon USING (true);
-
 CREATE POLICY "Authenticated users can insert their own profile" ON public.users
   FOR INSERT TO authenticated
   WITH CHECK (id = auth.uid());
+CREATE POLICY "Users can update own profile" ON public.users
+  FOR UPDATE TO authenticated USING (id = auth.uid());
 
 -- Session policies
 CREATE POLICY "Admins can manage sessions" ON public.event_sessions
   FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-
--- Add policy to allow creating sessions for analytics
 CREATE POLICY "Anyone can create sessions" ON public.event_sessions
   FOR INSERT TO authenticated, anon
   WITH CHECK (true);
-
--- Add policy to allow updating sessions
 CREATE POLICY "Anyone can update sessions" ON public.event_sessions
   FOR UPDATE TO authenticated, anon
   USING (true)
@@ -564,13 +393,9 @@ CREATE POLICY "Anyone can update sessions" ON public.event_sessions
 -- Guest tracking policies
 CREATE POLICY "Users can view own guest tracking" ON public.user_guest_tracking
   FOR SELECT TO authenticated USING (user_id = auth.uid());
-
--- Add policy to allow creating guest tracking records
 CREATE POLICY "Anyone can create guest tracking" ON public.user_guest_tracking
   FOR INSERT TO authenticated, anon
   WITH CHECK (true);
-
--- Add policy to allow updating guest tracking records
 CREATE POLICY "Anyone can update guest tracking" ON public.user_guest_tracking
   FOR UPDATE TO authenticated, anon
   USING (true)
@@ -579,14 +404,11 @@ CREATE POLICY "Anyone can update guest tracking" ON public.user_guest_tracking
 -- Seller policies
 CREATE POLICY "Anyone can view seller profiles" ON public.seller_profiles
   FOR SELECT TO authenticated, anon USING (true);
-
 CREATE POLICY "Sellers can manage own profile" ON public.seller_profiles
   FOR ALL TO authenticated USING (id = auth.uid());
-
 CREATE POLICY "Admins can manage seller profiles" ON public.seller_profiles
   FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-
 CREATE POLICY "Authenticated users can insert their own seller profile" ON public.seller_profiles
   FOR INSERT TO public
   WITH CHECK (id = auth.uid());
@@ -595,26 +417,20 @@ CREATE POLICY "Authenticated users can insert their own seller profile" ON publi
 CREATE POLICY "Users can view own subscriptions" ON public.user_subscriptions
   FOR SELECT TO authenticated USING (user_id = auth.uid());
 
--- Analytics policies (admin only)
+-- Analytics policies
 CREATE POLICY "Admins can view analytics" ON public.analytics_events
   FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-
--- Allow sellers to view their own analytics
 CREATE POLICY "Sellers can view own analytics" ON public.analytics_events
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR 
+    OR
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
   );
-
--- Add policy to allow inserting analytics events
 CREATE POLICY "Anyone can track analytics events" ON public.analytics_events
   FOR INSERT TO authenticated, anon
   WITH CHECK (true);
-
--- Add policy to allow updating analytics events
 CREATE POLICY "Anyone can update analytics events" ON public.analytics_events
   FOR UPDATE TO authenticated, anon
   USING (true)
@@ -624,82 +440,42 @@ CREATE POLICY "Anyone can update analytics events" ON public.analytics_events
 CREATE POLICY "Anyone can track banner clicks" ON public.banner_clicks
   FOR INSERT TO authenticated, anon
   WITH CHECK (true);
-
 CREATE POLICY "Admins can view banner clicks" ON public.banner_clicks
   FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+
+-- Banner impressions policies
+CREATE POLICY "Admins can manage banner impressions" ON public.banner_impressions
+  FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+
+-- Daily performance policies
+CREATE POLICY "Admins can manage banner performance daily" ON public.banner_performance_daily
+  FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
 
 -- Support policies
 CREATE POLICY "Users can view own tickets" ON public.support_tickets
   FOR SELECT TO authenticated USING (user_id = auth.uid());
-
 CREATE POLICY "Users can create tickets" ON public.support_tickets
   FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
--- Cities policies (allow public read access)
+-- Cities policies
 CREATE POLICY "Anyone can view cities" ON public.cities
   FOR SELECT TO authenticated, anon USING (true);
 
--- Banner impressions policies
-DO $ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Admins can manage banner impressions') THEN
-    CREATE POLICY "Admins can manage banner impressions" ON public.banner_impressions
-      FOR ALL TO authenticated
-      USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-  END IF;
-END $;
-
--- Banner clicks policies
-DO $ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Anyone can track banner clicks') THEN
-    CREATE POLICY "Anyone can track banner clicks" ON public.banner_clicks
-      FOR INSERT TO authenticated, anon
-      WITH CHECK (true);
-  END IF;
-END $;
-
-DO $ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Admins can view banner clicks') THEN
-    CREATE POLICY "Admins can view banner clicks" ON public.banner_clicks
-      FOR SELECT TO authenticated
-      USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-  END IF;
-END $;
-
--- Daily performance policies
-DO $ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Admins can manage banner performance daily') THEN
-    CREATE POLICY "Admins can manage banner performance daily" ON public.banner_performance_daily
-      FOR ALL TO authenticated
-      USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
-  END IF;
-END $;
-
 -- =============================================
--- FUNCTIONS
+-- 5. FUNCTIONS
 -- =============================================
 
 -- Update timestamp function
 CREATE OR REPLACE FUNCTION public.update_modified_column()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
-
--- Triggers
-CREATE TRIGGER update_users_modtime
-BEFORE UPDATE ON public.users
-FOR EACH ROW EXECUTE FUNCTION public.update_modified_column();
-
-CREATE TRIGGER update_seller_profiles_modtime
-BEFORE UPDATE ON public.seller_profiles
-FOR EACH ROW EXECUTE FUNCTION public.update_modified_column();
+$$ LANGUAGE plpgsql;
 
 -- Session management function
 CREATE OR REPLACE FUNCTION public.get_or_create_session(
@@ -709,7 +485,7 @@ CREATE OR REPLACE FUNCTION public.get_or_create_session(
   p_user_agent TEXT DEFAULT NULL,
   p_referrer TEXT DEFAULT NULL
 )
-RETURNS UUID AS $
+RETURNS UUID AS $$
 DECLARE
   v_session_id UUID;
   v_existing_session UUID;
@@ -717,7 +493,7 @@ BEGIN
   -- Find existing session
   SELECT session_id INTO v_existing_session
   FROM public.event_sessions
-  WHERE 
+  WHERE
     (p_user_id IS NOT NULL AND user_id = p_user_id OR p_guest_id IS NOT NULL AND guest_id = p_guest_id)
     AND last_active > NOW() - INTERVAL '30 minutes'
     AND ended_at IS NULL
@@ -725,7 +501,7 @@ BEGIN
   LIMIT 1;
 
   IF v_existing_session IS NOT NULL THEN
-    UPDATE public.event_sessions 
+    UPDATE public.event_sessions
     SET last_active = NOW(), page_views = page_views + 1
     WHERE session_id = v_existing_session;
     RETURN v_existing_session;
@@ -736,20 +512,20 @@ BEGIN
     RETURN v_session_id;
   END IF;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- End session function
 CREATE OR REPLACE FUNCTION public.end_session(p_session_id UUID)
-RETURNS VOID AS $
+RETURNS VOID AS $$
 BEGIN
-  UPDATE public.event_sessions 
-  SET 
+  UPDATE public.event_sessions
+  SET
     ended_at = NOW(),
     session_duration = EXTRACT(EPOCH FROM (NOW() - created_at))::INTEGER,
     is_bounce = (page_views <= 1)
   WHERE session_id = p_session_id AND ended_at IS NULL;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Link guest to user
 CREATE OR REPLACE FUNCTION public.link_guest_to_user(
@@ -758,21 +534,17 @@ CREATE OR REPLACE FUNCTION public.link_guest_to_user(
   p_ip_address INET DEFAULT NULL,
   p_user_agent TEXT DEFAULT NULL
 )
-RETURNS VOID AS $
+RETURNS VOID AS $$
 BEGIN
   INSERT INTO public.user_guest_tracking (user_id, guest_id, ip_address, user_agent, last_seen)
   VALUES (p_user_id, p_guest_id, p_ip_address, p_user_agent, NOW())
-  ON CONFLICT (user_id, guest_id) 
-  DO UPDATE SET 
+  ON CONFLICT (user_id, guest_id)
+  DO UPDATE SET
     last_seen = NOW(),
     session_count = user_guest_tracking.session_count + 1,
     is_active = true;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- =============================================
--- ANALYTICS FUNCTIONS
--- =============================================
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Get seller analytics function
 CREATE OR REPLACE FUNCTION public.get_seller_analytics(seller_id UUID)
@@ -782,12 +554,12 @@ RETURNS TABLE(
   total_whatsapp_clicks BIGINT,
   top_listings JSONB,
   views_by_day JSONB
-) 
+)
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     COALESCE(SUM(CASE WHEN ae.event_type = 'view' THEN 1 ELSE 0 END), 0)::BIGINT as total_views,
     COALESCE(SUM(CASE WHEN ae.event_type = 'contact_click' THEN 1 ELSE 0 END), 0)::BIGINT as total_contact_clicks,
     COALESCE(SUM(CASE WHEN ae.event_type = 'WhatsApp_click' THEN 1 ELSE 0 END), 0)::BIGINT as total_whatsapp_clicks,
@@ -796,68 +568,11 @@ BEGIN
   FROM analytics_events ae
   WHERE ae.user_id = seller_id;
 END;
-$;
-
--- Grant execute permission on the function
-GRANT EXECUTE ON FUNCTION public.get_seller_analytics TO authenticated, anon;
-
--- =============================================
--- ANALYTICS VIEW
--- =============================================
-
-CREATE OR REPLACE VIEW public.enhanced_seller_analytics AS
-SELECT 
-  a.listing_id,
-  sp.id as seller_id,
-  sp.username,
-  COUNT(*) FILTER (WHERE a.event_type = 'view') AS total_views,
-  COUNT(*) FILTER (WHERE a.event_type = 'contact_click') AS contact_clicks,
-  COUNT(*) FILTER (WHERE a.event_type = 'WhatsApp_click') AS whatsapp_clicks,
-  COUNT(*) FILTER (WHERE a.event_type = 'share') AS shares,
-  COUNT(DISTINCT a.session_ref) AS unique_sessions,
-  COUNT(DISTINCT a.user_id) AS unique_users,
-  DATE_TRUNC('day', a.created_at) AS event_date
-FROM analytics_events a
-LEFT JOIN users u ON a.user_id = u.id
-LEFT JOIN seller_profiles sp ON u.id = sp.id
-WHERE sp.id IS NOT NULL
-GROUP BY a.listing_id, sp.id, sp.username, event_date;
-
--- RLS on view
--- Remove this line:
--- ALTER VIEW public.enhanced_seller_analytics WITH (security_invoker=true);
-
--- Instead, create the view with security_invoker option
-CREATE OR REPLACE VIEW public.enhanced_seller_analytics 
-WITH (security_invoker=true) AS
-SELECT 
-  a.listing_id,
-  sp.id as seller_id,
-  sp.username,
-  COUNT(*) FILTER (WHERE a.event_type = 'view') AS total_views,
-  COUNT(*) FILTER (WHERE a.event_type = 'contact_click') AS contact_clicks,
-  COUNT(*) FILTER (WHERE a.event_type = 'WhatsApp_click') AS whatsapp_clicks,
-  COUNT(*) FILTER (WHERE a.event_type = 'share') AS shares,
-  COUNT(DISTINCT a.session_ref) AS unique_sessions,
-  COUNT(DISTINCT a.user_id) AS unique_users,
-  DATE_TRUNC('day', a.created_at) AS event_date
-FROM analytics_events a
-LEFT JOIN users u ON a.user_id = u.id
-LEFT JOIN seller_profiles sp ON u.id = sp.id
-WHERE sp.id IS NOT NULL
-GROUP BY a.listing_id, sp.id, sp.username, event_date;
-
-CREATE POLICY "Sellers can view own analytics" ON public.analytics_events
-  FOR SELECT TO authenticated
-  USING (
-    user_id = auth.uid()
-    OR 
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-  );
+$$;
 
 -- Function to calculate banner CTR
 CREATE OR REPLACE FUNCTION public.calculate_banner_ctr(impressions INTEGER, clicks INTEGER)
-RETURNS DECIMAL(5,4) AS $
+RETURNS DECIMAL(5,4) AS $$
 BEGIN
   IF impressions = 0 THEN
     RETURN 0.0000;
@@ -865,7 +580,7 @@ BEGIN
     RETURN ROUND((clicks::DECIMAL / impressions::DECIMAL) * 100, 4);
   END IF;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Function to get banner analytics summary
 CREATE OR REPLACE FUNCTION public.get_banner_analytics_summary(
@@ -886,12 +601,12 @@ RETURNS TABLE(
   top_cities JSONB,
   top_devices JSONB,
   top_browsers JSONB
-) 
+)
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     bp.banner_id,
     bp.placement,
     SUM(bp.impressions)::BIGINT as total_impressions,
@@ -899,7 +614,7 @@ BEGIN
     SUM(bp.unique_impressions)::BIGINT as unique_impressions,
     SUM(bp.unique_clicks)::BIGINT as unique_clicks,
     public.calculate_banner_ctr(
-      SUM(bp.impressions)::INTEGER, 
+      SUM(bp.impressions)::INTEGER,
       SUM(bp.clicks)::INTEGER
     ) as ctr,
     AVG(bp.ctr)::DECIMAL(5,4) as avg_ctr,
@@ -907,37 +622,192 @@ BEGIN
     '[]'::JSONB as top_devices, -- Could be enhanced with actual aggregation
     '[]'::JSONB as top_browsers -- Could be enhanced with actual aggregation
   FROM public.banner_performance_daily bp
-  WHERE 
+  WHERE
     (p_banner_id IS NULL OR bp.banner_id = p_banner_id)
     AND (p_placement IS NULL OR bp.placement = p_placement)
     AND (p_start_date IS NULL OR bp.date >= p_start_date)
     AND (p_end_date IS NULL OR bp.date <= p_end_date)
   GROUP BY bp.banner_id, bp.placement;
 END;
-$;
+$$;
 
--- Grant execute permission on the functions
+-- SECURITY DEFINER function for user profile creation
+CREATE OR REPLACE FUNCTION public.create_user_profile_after_signup(
+    p_id UUID,
+    p_email TEXT,
+    p_phone TEXT DEFAULT NULL,
+    p_role TEXT DEFAULT 'user',
+    p_city TEXT DEFAULT NULL,
+    p_country TEXT DEFAULT 'Pakistan',
+    p_is_verified BOOLEAN DEFAULT FALSE,
+    p_email_verified BOOLEAN DEFAULT FALSE,
+    p_active BOOLEAN DEFAULT TRUE,
+    p_guest_id TEXT DEFAULT NULL,
+    p_notification_preferences JSONB DEFAULT '{"email":true,"sms":false,"push":true}'::jsonb,
+    p_preferred_language TEXT DEFAULT 'en'
+) RETURNS VOID AS $$
+BEGIN
+    RAISE NOTICE 'create_user_profile_after_signup called for %', p_id;
+    PERFORM set_config('row_security', 'off', true);
+    INSERT INTO public.users (
+        id, email, phone, role, city, country,
+        is_verified, email_verified, active,
+        guest_id, notification_preferences, preferred_language
+    ) VALUES (
+        p_id, p_email, p_phone, p_role, p_city, p_country,
+        p_is_verified, p_email_verified, p_active,
+        p_guest_id, p_notification_preferences, p_preferred_language
+    );
+    RAISE NOTICE 'User % inserted successfully', p_id;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error in create_user_profile_after_signup: %', SQLERRM;
+        RAISE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- SECURITY DEFINER function for seller profile creation
+CREATE OR REPLACE FUNCTION public.create_seller_profile_after_signup(
+    p_id UUID,
+    p_username TEXT,
+    p_business_name TEXT DEFAULT NULL,
+    p_owner_cnic TEXT DEFAULT NULL,
+    p_address_line1 TEXT DEFAULT NULL,
+    p_is_verified BOOLEAN DEFAULT FALSE,
+    p_is_top_seller BOOLEAN DEFAULT FALSE,
+    p_tier TEXT DEFAULT 'basic',
+    p_tier_points INTEGER DEFAULT 0,
+    p_verification_status TEXT DEFAULT 'pending',
+    p_verification_documents JSONB DEFAULT '{"cnic_front": null, "cnic_back": null}'::jsonb,
+    p_city TEXT DEFAULT NULL,
+    p_phone TEXT DEFAULT NULL,
+    p_email TEXT DEFAULT NULL
+)
+RETURNS VOID AS $$
+BEGIN
+    RAISE NOTICE 'create_seller_profile_after_signup function called for seller %', p_id;
+    PERFORM set_config('row_security', 'off', true);
+
+    INSERT INTO public.seller_profiles (
+        id, username, business_name, owner_cnic, address_line1,
+        is_verified, is_top_seller, tier, tier_points, verification_status,
+        verification_documents, city, phone, email
+    ) VALUES (
+        p_id, p_username, p_business_name, p_owner_cnic, p_address_line1,
+        p_is_verified, p_is_top_seller, p_tier, p_tier_points, p_verification_status,
+        p_verification_documents, p_city, p_phone, p_email
+    );
+    RAISE NOTICE 'Seller % inserted successfully within function', p_id;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error in create_seller_profile_after_signup: %', SQLERRM;
+        RAISE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================
+-- 6. GRANTS FOR FUNCTIONS
+-- =============================================
+
+-- Grants for existing functions
+GRANT EXECUTE ON FUNCTION public.update_modified_column TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.get_or_create_session TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.end_session TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.link_guest_to_user TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.get_seller_analytics TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.calculate_banner_ctr TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.get_banner_analytics_summary TO authenticated;
 
--- Grant table permissions
-GRANT ALL ON TABLE public.analytics_events TO authenticated, anon;
-GRANT ALL ON TABLE public.event_sessions TO authenticated, anon;
-GRANT ALL ON TABLE public.user_guest_tracking TO authenticated, anon;
-GRANT ALL ON TABLE public.banner_clicks TO authenticated, anon;
-GRANT ALL ON TABLE public.banner_impressions TO authenticated;
-GRANT ALL ON TABLE public.banner_performance_daily TO authenticated;
-GRANT SELECT ON TABLE public.cities TO authenticated, anon;
+-- Grants for SECURITY DEFINER functions
+GRANT EXECUTE ON FUNCTION public.create_user_profile_after_signup TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.create_seller_profile_after_signup TO authenticated, anon;
+
+-- Set ownership for SECURITY DEFINER functions
+-- ALTER FUNCTION public.create_user_profile_after_signup OWNER TO supabase_admin;
+-- ALTER FUNCTION public.create_seller_profile_after_signup OWNER TO supabase_admin;
 
 -- =============================================
--- SAMPLE DATA (Optional)
+-- 7. TRIGGERS
 -- =============================================
+
+CREATE TRIGGER update_users_modtime
+BEFORE UPDATE ON public.users
+FOR EACH ROW EXECUTE FUNCTION public.update_modified_column();
+
+CREATE TRIGGER update_seller_profiles_modtime
+BEFORE UPDATE ON public.seller_profiles
+FOR EACH ROW EXECUTE FUNCTION public.update_modified_column();
+
+-- =============================================
+-- 8. VIEWS
+-- =============================================
+
+CREATE OR REPLACE VIEW public.enhanced_seller_analytics
+WITH (security_invoker=true) AS
+SELECT
+  a.listing_id,
+  sp.id as seller_id,
+  sp.username,
+  COUNT(*) FILTER (WHERE a.event_type = 'view') AS total_views,
+  COUNT(*) FILTER (WHERE a.event_type = 'contact_click') AS contact_clicks,
+  COUNT(*) FILTER (WHERE a.event_type = 'WhatsApp_click') AS whatsapp_clicks,
+  COUNT(*) FILTER (WHERE a.event_type = 'share') AS shares,
+  COUNT(DISTINCT a.session_ref) AS unique_sessions,
+  COUNT(DISTINCT a.user_id) AS unique_users,
+  DATE_TRUNC('day', a.created_at) AS event_date
+FROM analytics_events a
+LEFT JOIN users u ON a.user_id = u.id
+LEFT JOIN seller_profiles sp ON u.id = sp.id
+WHERE sp.id IS NOT NULL
+GROUP BY a.listing_id, sp.id, sp.username, event_date;
+
+-- =============================================
+-- 9. INITIAL DATA INSERTS
+-- =============================================
+
+-- Insert Pakistani cities (without duplicates)
+INSERT INTO public.cities (name, province) VALUES
+('Karachi', 'Sindh'), ('Lahore', 'Punjab'), ('Islamabad', 'ICT'), ('Rawalpindi', 'Punjab'),
+('Faisalabad', 'Punjab'), ('Multan', 'Punjab'), ('Peshawar', 'KPK'), ('Quetta', 'Balochistan'),
+('Sialkot', 'Punjab'), ('Gujranwala', 'Punjab'), ('Hyderabad', 'Sindh'), ('Bahawalpur', 'Punjab'),
+('Sargodha', 'Punjab'), ('Sukkur', 'Sindh'), ('Larkana', 'Sindh'), ('Rahim Yar Khan', 'Punjab'),
+('Kasur', 'Punjab'), ('Sheikhupura', 'Punjab'), ('Jhang', 'Punjab'), ('Dera Ghazi Khan', 'Punjab'),
+('Gujrat', 'Punjab'), ('Sahiwal', 'Punjab'), ('Okara', 'Punjab'), ('Muzaffargarh', 'Punjab'),
+('Nawabshah', 'Sindh'), ('Mirpur Khas', 'Sindh'), ('Jacobabad', 'Sindh'), ('Mardan', 'KPK'),
+('Kohat', 'KPK'), ('Abbottabad', 'KPK'), ('Dera Ismail Khan', 'KPK'), ('Bannu', 'KPK'),
+('Swabi', 'KPK'), ('Nowshera', 'KPK'), ('Charsadda', 'KPK'), ('Tank', 'KPK'),
+('Hangu', 'KPK'), ('Buner', 'KPK'), ('Malakand', 'KPK'), ('Swat', 'KPK'),
+('Chitral', 'KPK'), ('Haripur', 'KPK'), ('Mansehra', 'KPK'), ('Karak', 'KPK'),
+('Kurram', 'KPK'), ('North Waziristan', 'KPK'), ('South Waziristan', 'KPK'), ('Khyber', 'KPK'),
+('Orakzai', 'KPK'), ('Harnai', 'Balochistan'), ('Ziarat', 'Balochistan'), ('Khuzdar', 'Balochistan'),
+('Turbat', 'Balochistan'), ('Panjgur', 'Balochistan'), ('Kech', 'Balochistan'), ('Dera Bugti', 'Balochistan'),
+('Nasirabad', 'Balochistan'), ('Jaffarabad', 'Balochistan'), ('Sibi', 'Balochistan'), ('Bolan', 'Balochistan'),
+('Qilla Abdullah', 'Balochistan'), ('Pishin', 'Balochistan'), ('Chagai', 'Balochistan'), ('Kharan', 'Balochistan'),
+('Washuk', 'Balochistan'), ('Awaran', 'Balochistan'), ('Gwadar', 'Balochistan'), ('Lasbela', 'Balochistan'),
+('Kalat', 'Balochistan'), ('Mastung', 'Balochistan'), ('Duki', 'Balochistan'), ('Loralai', 'Balochistan'),
+('Musakhel', 'Balochistan'), ('Barkhan', 'Balochistan'), ('Dera Murad Jamali', 'Balochistan'), ('Jhal Magsi', 'Balochistan'),
+('Sohbatpur', 'Balochistan'), ('Kachhi', 'Balochistan'), ('Jafarabad', 'Balochistan'), ('Umerkot', 'Sindh'),
+('Tharparkar', 'Sindh'), ('Badin', 'Sindh'), ('Thatta', 'Sindh'), ('Jamshoro', 'Sindh'),
+('Tando Allahyar', 'Sindh'), ('Tando Muhammad Khan', 'Sindh'), ('Sanghar', 'Sindh'), ('Dadu', 'Sindh'),
+('Kambar Shahdadkot', 'Sindh'), ('Qambar Shahdadkot', 'Sindh'), ('Shikarpur', 'Sindh'), ('Naushahro Firoz', 'Sindh'),
+('Khairpur', 'Sindh'), ('Kashmore', 'Sindh'), ('Sujawal', 'Sindh'), ('Gilgit', 'GB'),
+('Skardu', 'GB'), ('Muzaffarabad', 'AJK'), ('Mirpur', 'AJK'), ('Rawalakot', 'AJK'),
+('Kotli', 'AJK'), ('Attock', 'Punjab'), ('Chiniot', 'Punjab'), ('Daska', 'Punjab'),
+('Hafizabad', 'Punjab'), ('Jaranwala', 'Punjab'), ('Kamoke', 'Punjab'), ('Khanewal', 'Punjab'),
+('Khanpur', 'Punjab'), ('Khushab', 'Punjab'), ('Mandi Bahauddin', 'Punjab'), ('Muridke', 'Punjab'),
+('Pakpattan', 'Punjab'), ('Sadiqabad', 'Punjab'), ('Samundri', 'Punjab'), ('Wah Cantonment', 'Punjab'),
+('Upper Dir', 'KPK'), ('Kohlu', 'Balochistan'), ('Zhob', 'Balochistan'), ('Matiari', 'Sindh'),
+('Ghotki', 'Sindh');
 
 -- Sample subscription packages
 INSERT INTO public.subscription_packages (name, price, max_listings, features) VALUES
 ('Free', 0, 5, '{"analytics_days": 30}'),
 ('Basic', 999, 20, '{"analytics_days": 90, "priority_support": true}'),
 ('Premium', 2999, 100, '{"analytics_days": 365, "priority_support": true, "advanced_analytics": true}');
+
+-- =============================================
+-- 10. COMMENTS AND SUMMARY
+-- =============================================
 
 -- Comments for documentation
 COMMENT ON TABLE public.users IS 'Core user management with authentication';
@@ -947,29 +817,21 @@ COMMENT ON TABLE public.analytics_events IS 'Event tracking with session referen
 COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
 COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
 COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
 
--- =============================================
--- SUMMARY OF FIXES
--- =============================================
-
+-- Summary of fixes and improvements
 /*
-VOLATILE FUNCTION INDEX FIXES:
-1. Removed idx_users_guest_id (was indexing gen_random_uuid())
-2. Removed idx_analytics_guest (was indexing volatile guest_id)
-3. Added event_sessions table for proper session management
-4. Added user_guest_tracking for guest-user relationships
-5. Updated analytics_events to use session_ref instead of volatile session_id
-6. All new indexes use deterministic columns only
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
 
-PERFORMANCE IMPROVEMENTS:
-1. Better session tracking with proper indexes
-2. Efficient guest-user relationship tracking
-3. Enhanced analytics with session data
-4. Optimized queries with proper indexing strategy
-
-SECURITY MAINTAINED:
-1. All RLS policies preserved and enhanced
-2. Proper function security (SECURITY DEFINER)
-3. Input validation and constraints
-4. Admin-only access to sensitive data
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
 */

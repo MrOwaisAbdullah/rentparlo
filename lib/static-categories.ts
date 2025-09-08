@@ -94,8 +94,8 @@ export const STATIC_CATEGORIES: Category[] = [
   }
 ]
 
-// Popular categories (first 8)
-export const POPULAR_CATEGORIES = STATIC_CATEGORIES.filter(cat => cat.popular).slice(0, 8)
+// Popular categories (all 9)
+export const POPULAR_CATEGORIES = STATIC_CATEGORIES.filter(cat => cat.popular)
 
 // Emoji map for fallback icons
 export const CATEGORY_EMOJIS: Record<string, string> = {
