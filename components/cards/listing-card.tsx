@@ -827,6 +827,7 @@ export function ListingCard({
                     <WhatsAppButton
                       phoneNumber={listing.seller.phone}
                       sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
+                      size="auto"
                       className="!h-8 px-2 w-full flex-1 min-h-[36px]"
                     />
                 )}
@@ -1026,6 +1027,7 @@ export function ListingCard({
                     <WhatsAppButton
                       phoneNumber={listing.seller.phone}
                       sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
+                      size="auto"
                       className="h-8 px-2 w-full"
                     />
                   </div>

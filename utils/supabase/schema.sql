@@ -541,6 +541,10 @@ CREATE POLICY "Admins can view all users" ON public.users
 CREATE POLICY "Anyone can view basic user info" ON public.users
   FOR SELECT TO authenticated, anon USING (true);
 
+CREATE POLICY "Authenticated users can insert their own profile" ON public.users
+  FOR INSERT TO authenticated
+  WITH CHECK (id = auth.uid());
+
 -- Session policies
 CREATE POLICY "Admins can manage sessions" ON public.event_sessions
   FOR ALL TO authenticated
@@ -582,6 +586,10 @@ CREATE POLICY "Sellers can manage own profile" ON public.seller_profiles
 CREATE POLICY "Admins can manage seller profiles" ON public.seller_profiles
   FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "Authenticated users can insert their own seller profile" ON public.seller_profiles
+  FOR INSERT TO public
+  WITH CHECK (id = auth.uid());
 
 -- Subscription policies
 CREATE POLICY "Users can view own subscriptions" ON public.user_subscriptions

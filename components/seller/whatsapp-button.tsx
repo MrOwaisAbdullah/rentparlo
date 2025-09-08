@@ -12,7 +12,7 @@ interface WhatsAppButtonProps {
   sellerName?: string;
   className?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  size?: 'default' | 'compact';
+  size?: 'default' | 'compact' | 'auto';
 }
 
 export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>(({ 
@@ -42,7 +42,8 @@ export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>
     window.open(`https://wa.me/${whatsappPhone}?text=${encodedMessage}`, '_blank');
   };
 
-  const isCompact = size === 'compact';
+  // Determine if we should show compact version
+  const isCompact = size === 'compact' || (size === 'auto' && typeof window !== 'undefined' && window.innerWidth < 768);
 
   return (
     <>
@@ -51,7 +52,7 @@ export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>
         onClick={handleButtonClick}
         className={cn(
           'bg-[#25D366] hover:bg-[#25D366]/90 text-white font-medium transition-transform transform hover:scale-[1.02]',
-          isCompact ? 'p-2 w-16 h-12' : 'w-full h-12 gap-2',
+          isCompact ? 'p-2 w-12 h-12' : 'w-full h-12 gap-2',
           className
         )}
         data-whatsapp-button
@@ -59,8 +60,8 @@ export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>
         <Image
           src="/whatsapp.png"
           alt="Message on WhatsApp"
-          width={isCompact ? 32 : 24}
-          height={isCompact ? 32 : 24}
+          width={isCompact ? 24 : 24}
+          height={isCompact ? 24 : 24}
         />
         {!isCompact && (
           <span>WhatsApp</span>

@@ -304,17 +304,17 @@ export async function signOut() {
     }
     
     if (user) {
-      await logSecurityEvent('LOGOUT_SUCCESS', clientIP, { 
-        userId: user.id,
-        email: user.email
-      });
+      // await logSecurityEvent('LOGOUT_SUCCESS', clientIP, { 
+      //   userId: user.id,
+      //   email: user.email
+      // });
     }
 
     revalidatePath('/', 'layout');
     redirect('/');
   } catch (error) {
     console.error('Sign out error:', error);
-    await logSecurityEvent('LOGOUT_ERROR', clientIP, { error: error.message });
+    // await logSecurityEvent('LOGOUT_ERROR', clientIP, { error: error.message });
     redirect('/error');
   }
 }
@@ -338,9 +338,9 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
     });
 
     if (error) {
-      await logSecurityEvent('GOOGLE_SIGNUP_FAILED', clientIP, { 
-        error: error.message
-      });
+      // await logSecurityEvent('GOOGLE_SIGNUP_FAILED', clientIP, { 
+      //   error: error.message
+      // });
       return {
         success: false,
         error: 'Failed to initiate Google sign-up. Please try again.'
@@ -348,7 +348,7 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
     }
 
     if (data.url) {
-      await logSecurityEvent('GOOGLE_SIGNUP_INITIATED', clientIP);
+      // await logSecurityEvent('GOOGLE_SIGNUP_INITIATED', clientIP);
       redirect(data.url);
     }
 
@@ -358,7 +358,7 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
 
   } catch (error) {
     console.error('Google sign-up error:', error);
-    await logSecurityEvent('GOOGLE_SIGNUP_ERROR', clientIP, { error: error.message });
+    // await logSecurityEvent('GOOGLE_SIGNUP_ERROR', clientIP, { error: error.message });
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.'
@@ -385,9 +385,9 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     });
 
     if (error) {
-      await logSecurityEvent('GOOGLE_SIGNIN_FAILED', clientIP, { 
-        error: error.message
-      });
+      // await logSecurityEvent('GOOGLE_SIGNIN_FAILED', clientIP, { 
+      //   error: error.message
+      // });
       return {
         success: false,
         error: 'Failed to initiate Google sign-in. Please try again.'
@@ -395,7 +395,7 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     }
 
     if (data.url) {
-      await logSecurityEvent('GOOGLE_SIGNIN_INITIATED', clientIP);
+      // await logSecurityEvent('GOOGLE_SIGNIN_INITIATED', clientIP);
       redirect(data.url);
     }
 
@@ -405,7 +405,7 @@ export async function signInWithGoogle(): Promise<ActionResult> {
 
   } catch (error) {
     console.error('Google sign-in error:', error);
-    await logSecurityEvent('GOOGLE_SIGNIN_ERROR', clientIP, { error: error.message });
+    // await logSecurityEvent('GOOGLE_SIGNIN_ERROR', clientIP, { error: error.message });
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.'

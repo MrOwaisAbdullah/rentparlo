@@ -5,8 +5,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { POPULAR_CATEGORIES, getCategoryEmoji } from "@/lib/static-categories"
 
+import { Category } from "@/types";
+
 interface CategoryCardsProps {
-  categories?: never; // Make categories prop optional/unused
+  categories?: Category[]; // Accept categories prop
 }
 
 // Helper function to safely extract slug value
@@ -21,9 +23,9 @@ const getSlugValue = (slug: string | { current: string } | undefined): string =>
   return '';
 };
 
-export function CategoryCards({}: CategoryCardsProps) {
-  // Use static popular categories
-  const displayCategories = POPULAR_CATEGORIES;
+export function CategoryCards({ categories }: CategoryCardsProps) {
+  // Use passed categories or fall back to static popular categories
+  const displayCategories = categories && categories.length > 0 ? categories : POPULAR_CATEGORIES;
 
   if (!displayCategories || displayCategories.length === 0) {
     return (

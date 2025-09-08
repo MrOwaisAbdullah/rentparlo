@@ -149,8 +149,8 @@ export function BlogCard({
   if (variant === 'horizontal') {
     return (
       <Card className={cn("group overflow-hidden transition-all duration-300 hover:shadow-md py-0", className)}>
-        <div className="flex">
-          <div className="relative w-1/3 aspect-video overflow-hidden">
+        <div className="flex flex-col sm:flex-row">
+          <div className="relative sm:w-1/3 w-full aspect-video sm:aspect-auto sm:h-auto">
             <Image
               src={post.mainImage?.asset?.url || "/placeholder-blog-new.svg"}
               alt={post.mainImage?.alt || "Blog image"}
@@ -171,7 +171,7 @@ export function BlogCard({
             )}
           </div>
 
-          <CardContent className="flex-1 p-6">
+          <CardContent className="flex-1 p-6 sm:p-6">
             <div className="flex flex-col h-full">
               {showCategories && post.categories && post.categories.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">

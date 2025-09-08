@@ -53,8 +53,12 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
           // Handle category matching - convert common category names
           const normalizedCategory = category.toLowerCase();
           
+          // Debug logging
+          // console.log(`Matching item category: "${itemCategoryTitle}" with filter category: "${normalizedCategory}"`);
+          
           // Direct match with category slug or title
           if (itemCategoryTitle === normalizedCategory) {
+            // console.log(`Direct match found for ${item.title}`);
             return true;
           }
           
@@ -66,17 +70,29 @@ export default function ProductSwiper({ title, category, limit = 8, trending = f
             'sports': ['sports', 'recreation', 'fitness', 'events'],
             'fashion': ['fashion', 'clothing', 'accessories', 'wedding', 'wedding-couture'],
             'medical': ['medical', 'medical-equipment'],
+            'medical-equipment': ['medical', 'medical-equipment'],
             'construction': ['construction', 'construction-equipment'],
+            'construction-equipment': ['construction', 'construction-equipment'],
             'events': ['events'],
             'studio': ['studio']
           };
           
           const mappings = categoryMappings[normalizedCategory] || [normalizedCategory];
-          return mappings.some(mapping => 
+          const matches = mappings.some(mapping => 
             itemCategoryTitle.includes(mapping)
           );
+          
+          // if (matches) {
+          //   console.log(`Mapping match found for ${item.title} in category ${itemCategoryTitle}`);
+          // }
+          
+          return matches;
         })
         .slice(0, limit);
+
+      // Debug logging
+      // console.log(`Filtered ${filtered.length} listings for category ${category}`);
+      // console.log('Filtered listings:', filtered);
 
       setFilteredlistings(filtered);
       setLoading(false);

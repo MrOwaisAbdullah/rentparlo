@@ -5,7 +5,7 @@ export const STATIC_CATEGORIES: Category[] = [
   {
     _id: 'camera',
     title: 'Camera',
-    slug: 'camera-photography',
+    slug: 'camera',
     description: 'Professional cameras, lenses, and photography equipment',
     icon: undefined,
     order: 1,
@@ -35,7 +35,7 @@ export const STATIC_CATEGORIES: Category[] = [
   {
     _id: 'construction',
     title: 'Construction',
-    slug: 'construction',
+    slug: 'construction-equipment',
     description: 'Construction tools and equipment',
     icon: undefined,
     order: 4,
@@ -99,10 +99,9 @@ export const POPULAR_CATEGORIES = STATIC_CATEGORIES.filter(cat => cat.popular).s
 
 // Emoji map for fallback icons
 export const CATEGORY_EMOJIS: Record<string, string> = {
-  'camera-photography': '📷',
   'automobiles': '🚗',
   'medical-equipment': '🩺',
-  'construction': '🏗️',
+  'construction-equipment': '🏗️',
   'generators': '⚡',
   'wedding-couture': '💍',
   'events': '🎉',
@@ -110,7 +109,6 @@ export const CATEGORY_EMOJIS: Record<string, string> = {
   'advertisements': '📢',
   'camera': '📷',
   'medical': '⚕️',
-  'wedding': '💒',
   'default': '📦'
 }
 
