@@ -97,13 +97,14 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     setValue,
     watch,
     getValues,
-    reset
+    reset,
+    trigger
   } = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       name: user?.name || '',
       phone: user?.phone || '',
-      city: user?.city || 'Karachi',
+      city: (user.city || 'Karachi') as OnboardingFormData['city'],  
       role: user?.role || 'user',
       businessName: '',
       cnic: '',
@@ -117,15 +118,12 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
   const role = watch('role');
   const terms = watch('terms');
   
-  // Show error if user tries to submit without accepting terms
-  const termsErrorShown = React.useRef(false);
-  
+  // Clear error when terms are accepted
   React.useEffect(() => {
-    if (!terms && termsErrorShown.current) {
-      // Reset the error shown flag when terms become unchecked
-      termsErrorShown.current = false;
+    if (terms && error) {
+      setError(null);
     }
-  }, [terms]);
+  }, [terms, error]);
   
   // Use a ref to track the previous terms value to prevent flickering
   const termsRef = React.useRef(terms);
@@ -160,6 +158,11 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           const boolValue = value === true || value === 'true' || String(value).toLowerCase() === 'true';
           console.log(`Converting terms value ${value} to boolean:`, boolValue);
           setValue(key as keyof OnboardingFormData, boolValue);
+        } else if (key === 'city') {
+          // Ensure city is properly typed
+          const cityValue = value as OnboardingFormData['city'];
+          console.log(`Setting city value ${value} as typed:`, cityValue);
+          setValue(key as keyof OnboardingFormData, cityValue);
         } else {
           setValue(key as keyof OnboardingFormData, value);
         }
@@ -170,7 +173,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       const initialData = {
         name: user.name || '',
         phone: user.phone || '',
-        city: user.city || 'Karachi',
+        city: (user.city || 'Karachi') as OnboardingFormData['city'],
         role: user.role || 'user',
         businessName: '',
         cnic: '',
@@ -509,7 +512,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
               </div>
             )}
 
-            <div className="flex items-start space-x-2">
+            <div className={`flex items-start space-x-2 ${!terms && error ? 'animate-pulse' : ''}`}>
               <div className="flex items-center h-5">
                 <input
                   id="terms"
@@ -577,7 +580,18 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           )}
 
           {/* Step Content */}
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={(e) => {
+            console.log('Form onSubmit triggered', e);
+            e.preventDefault();
+            console.log('Calling handleSubmit');
+            const submitFunc = handleSubmit((data) => {
+              console.log('Inside handleSubmit callback with data:', data);
+              return onSubmit(data);
+            });
+            console.log('Got submit function, calling it');
+            submitFunc(e);
+            console.log('Finished calling submit function');
+          }}>
             <div className="mb-6">
               {renderStepContent()}
             </div>
@@ -596,12 +610,37 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
 
               {currentStep === filteredSteps.length - 1 ? (
                 <Button
-                  type="submit"
+                  type="button"
                   disabled={isLoading || !terms}
                   size="sm"
                   className="min-w-[100px]"
+                  onClick={async () => {
+                    console.log('Direct button click handler called');
+                    if (!terms) {
+                      setError('Please accept the terms and conditions to complete setup.');
+                      toast.error('Please accept the terms and conditions to complete setup.');
+                      return;
+                    }
+                    
+                    // Get current form values
+                    const rawFormData = getValues();
+                    console.log('Current raw form data:', rawFormData);
+                    
+                    // Ensure city is properly typed
+                    const cityValue = rawFormData.city as OnboardingFormData['city'];
+                    
+                    // Create properly typed form data
+                    const formData: OnboardingFormData = {
+                      ...rawFormData,
+                      city: cityValue
+                    };
+                    
+                    console.log('Typed form data:', formData);
+                    
+                    // Call onSubmit directly
+                    await onSubmit(formData);
+                  }}
                 >
-                  {console.log('Rendering Complete Setup button - isLoading:', isLoading, 'terms:', terms)}
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
