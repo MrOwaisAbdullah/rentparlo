@@ -69,6 +69,31 @@ export async function getUserById(userId: string): Promise<User | null> {
   return data
 }
 
+// Client-side version of getUserById for use in client components
+export async function getUserByIdClient(userId: string): Promise<User | null> {
+  const supabase = createBrowserClient()
+  
+  const { data, error } = await supabase
+    .from('users')
+    .select(`
+      *,
+      seller_profiles (*)
+    `)
+    .eq('id', userId)
+    .single()
+
+  if (error) {
+    // Don't log as error if user simply doesn't exist - this is expected in many cases
+    if (error.code !== 'PGRST116') {
+      console.error('Error fetching user:', error)
+    }
+    return null
+  }
+
+  console.log('User data fetched (client):', data); // Debugging
+  return data
+}
+
 // Get user by email
 export async function getUserByEmail(email: string): Promise<User | null> {
   const supabase = await createClient()

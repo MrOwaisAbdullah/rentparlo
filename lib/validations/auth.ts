@@ -119,13 +119,30 @@ export const sellerRegistrationSchema = z.object({
   path: ["confirmPassword"]
 });
 
-/**
- * Multi-step registration schema that handles both user and seller types
- */
+/**\n * Multi-step registration schema that handles both user and seller types\n */
 export const getRegistrationSchema = () => z.union([
   userRegistrationSchema,
   sellerRegistrationSchema
 ]);
+
+/**
+ * Simplified registration schema for initial sign-up
+ */
+export const simplifiedRegistrationSchema = z.object({
+  email: z.string()
+    .email('Please enter a valid email address')
+    .toLowerCase()
+    .refine(email => !email.includes('+'), 'Email aliases are not allowed'),
+  
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
 
 /**
  * Contact form validation schema
@@ -150,13 +167,12 @@ export const contactFormSchema = z.object({
   urgency: z.enum(['Low', 'Medium', 'High'])
 });
 
-/**
- * Type definitions derived from schemas
- */
+/**\n * Type definitions derived from schemas\n */
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type UserRegistrationFormData = z.infer<typeof userRegistrationSchema>;
 export type SellerRegistrationFormData = z.infer<typeof sellerRegistrationSchema>;
 export type RegistrationFormData = z.infer<ReturnType<typeof getRegistrationSchema>>;
+export type SimplifiedRegistrationFormData = z.infer<typeof simplifiedRegistrationSchema>;
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 
 /**

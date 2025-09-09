@@ -37,7 +37,8 @@ CREATE TABLE public.users (
   notification_preferences JSONB DEFAULT '{"email": true, "sms": false, "push": true}'::jsonb,
   privacy_settings JSONB DEFAULT '{"profile_visible": true, "contact_info_visible": false}'::jsonb,
   preferred_language TEXT DEFAULT 'en' CHECK (preferred_language IN ('en', 'ur')),
-  timezone TEXT DEFAULT 'Asia/Karachi'
+  timezone TEXT DEFAULT 'Asia/Karachi',
+  guest_id TEXT -- Add guest_id column that was missing
 );
 
 -- SESSION MANAGEMENT
@@ -260,6 +261,18 @@ CREATE TABLE public.support_tickets (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- AUTHENTICATION LOGS
+CREATE TABLE public.auth_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN ('login', 'logout', 'register', 'failed_login', 'password_reset', 'email_verified', 'google_oauth_initiated', 'google_oauth_failed', 'google_oauth_exception')),
+  ip_address INET,
+  user_agent TEXT,
+  success BOOLEAN NOT NULL,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- =============================================
 -- 2. CONSTRAINTS
 -- =============================================
@@ -345,6 +358,12 @@ CREATE INDEX idx_tickets_status ON public.support_tickets(status);
 CREATE INDEX idx_cities_name ON public.cities(name);
 CREATE INDEX idx_cities_province ON public.cities(province);
 
+-- Auth logs indexes
+CREATE INDEX idx_auth_logs_user_id ON public.auth_logs(user_id);
+CREATE INDEX idx_auth_logs_action ON public.auth_logs(action);
+CREATE INDEX idx_auth_logs_success ON public.auth_logs(success);
+CREATE INDEX idx_auth_logs_created_at ON public.auth_logs(created_at);
+
 -- =============================================
 -- 4. ROW LEVEL SECURITY (RLS)
 -- =============================================
@@ -381,7 +400,7 @@ CREATE POLICY "Users can update own profile" ON public.users
 -- Session policies
 CREATE POLICY "Admins can manage sessions" ON public.event_sessions
   FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+  USING (auth.jwt() ->> 'role' = 'admin');
 CREATE POLICY "Anyone can create sessions" ON public.event_sessions
   FOR INSERT TO authenticated, anon
   WITH CHECK (true);
@@ -470,12 +489,12 @@ CREATE POLICY "Anyone can view cities" ON public.cities
 
 -- Update timestamp function
 CREATE OR REPLACE FUNCTION public.update_modified_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Session management function
 CREATE OR REPLACE FUNCTION public.get_or_create_session(
@@ -485,7 +504,7 @@ CREATE OR REPLACE FUNCTION public.get_or_create_session(
   p_user_agent TEXT DEFAULT NULL,
   p_referrer TEXT DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID AS $
 DECLARE
   v_session_id UUID;
   v_existing_session UUID;
@@ -512,11 +531,11 @@ BEGIN
     RETURN v_session_id;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- End session function
 CREATE OR REPLACE FUNCTION public.end_session(p_session_id UUID)
-RETURNS VOID AS $$
+RETURNS VOID AS $
 BEGIN
   UPDATE public.event_sessions
   SET
@@ -525,7 +544,7 @@ BEGIN
     is_bounce = (page_views <= 1)
   WHERE session_id = p_session_id AND ended_at IS NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Link guest to user
 CREATE OR REPLACE FUNCTION public.link_guest_to_user(
@@ -534,7 +553,7 @@ CREATE OR REPLACE FUNCTION public.link_guest_to_user(
   p_ip_address INET DEFAULT NULL,
   p_user_agent TEXT DEFAULT NULL
 )
-RETURNS VOID AS $$
+RETURNS VOID AS $
 BEGIN
   INSERT INTO public.user_guest_tracking (user_id, guest_id, ip_address, user_agent, last_seen)
   VALUES (p_user_id, p_guest_id, p_ip_address, p_user_agent, NOW())
@@ -544,7 +563,7 @@ BEGIN
     session_count = user_guest_tracking.session_count + 1,
     is_active = true;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Get seller analytics function
 CREATE OR REPLACE FUNCTION public.get_seller_analytics(seller_id UUID)
@@ -556,7 +575,7 @@ RETURNS TABLE(
   views_by_day JSONB
 )
 LANGUAGE plpgsql
-AS $$
+AS $
 BEGIN
   RETURN QUERY
   SELECT
@@ -568,11 +587,11 @@ BEGIN
   FROM analytics_events ae
   WHERE ae.user_id = seller_id;
 END;
-$$;
+$;
 
 -- Function to calculate banner CTR
 CREATE OR REPLACE FUNCTION public.calculate_banner_ctr(impressions INTEGER, clicks INTEGER)
-RETURNS DECIMAL(5,4) AS $$
+RETURNS DECIMAL(5,4) AS $
 BEGIN
   IF impressions = 0 THEN
     RETURN 0.0000;
@@ -580,7 +599,7 @@ BEGIN
     RETURN ROUND((clicks::DECIMAL / impressions::DECIMAL) * 100, 4);
   END IF;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Function to get banner analytics summary
 CREATE OR REPLACE FUNCTION public.get_banner_analytics_summary(
@@ -603,7 +622,7 @@ RETURNS TABLE(
   top_browsers JSONB
 )
 LANGUAGE plpgsql
-AS $$
+AS $
 BEGIN
   RETURN QUERY
   SELECT
@@ -629,26 +648,28 @@ BEGIN
     AND (p_end_date IS NULL OR bp.date <= p_end_date)
   GROUP BY bp.banner_id, bp.placement;
 END;
-$$;
+$;
 
 -- SECURITY DEFINER function for user profile creation
 CREATE OR REPLACE FUNCTION public.create_user_profile_after_signup(
-    p_id UUID,
-    p_email TEXT,
-    p_phone TEXT DEFAULT NULL,
-    p_role TEXT DEFAULT 'user',
-    p_city TEXT DEFAULT NULL,
-    p_country TEXT DEFAULT 'Pakistan',
-    p_is_verified BOOLEAN DEFAULT FALSE,
-    p_email_verified BOOLEAN DEFAULT FALSE,
-    p_active BOOLEAN DEFAULT TRUE,
-    p_guest_id TEXT DEFAULT NULL,
+    p_id                     UUID,
+    p_email                  TEXT,
+    p_phone                  TEXT DEFAULT NULL,
+    p_role                   TEXT DEFAULT 'user',
+    p_city                   TEXT DEFAULT NULL,
+    p_country                TEXT DEFAULT 'Pakistan',
+    p_is_verified            BOOLEAN DEFAULT FALSE,
+    p_email_verified         BOOLEAN DEFAULT FALSE,
+    p_active                 BOOLEAN DEFAULT TRUE,
+    p_guest_id               TEXT DEFAULT NULL,
     p_notification_preferences JSONB DEFAULT '{"email":true,"sms":false,"push":true}'::jsonb,
-    p_preferred_language TEXT DEFAULT 'en'
-) RETURNS VOID AS $$
+    p_preferred_language     TEXT DEFAULT 'en'
+) RETURNS VOID
+AS $func$
 BEGIN
     RAISE NOTICE 'create_user_profile_after_signup called for %', p_id;
-    PERFORM set_config('row_security', 'off', true);
+
+    -- Insert user profile, bypassing RLS by using SECURITY DEFINER
     INSERT INTO public.users (
         id, email, phone, role, city, country,
         is_verified, email_verified, active,
@@ -658,36 +679,37 @@ BEGIN
         p_is_verified, p_email_verified, p_active,
         p_guest_id, p_notification_preferences, p_preferred_language
     );
+
     RAISE NOTICE 'User % inserted successfully', p_id;
 EXCEPTION
     WHEN OTHERS THEN
         RAISE NOTICE 'Error in create_user_profile_after_signup: %', SQLERRM;
         RAISE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$func$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- SECURITY DEFINER function for seller profile creation
 CREATE OR REPLACE FUNCTION public.create_seller_profile_after_signup(
-    p_id UUID,
-    p_username TEXT,
-    p_business_name TEXT DEFAULT NULL,
-    p_owner_cnic TEXT DEFAULT NULL,
-    p_address_line1 TEXT DEFAULT NULL,
-    p_is_verified BOOLEAN DEFAULT FALSE,
-    p_is_top_seller BOOLEAN DEFAULT FALSE,
-    p_tier TEXT DEFAULT 'basic',
-    p_tier_points INTEGER DEFAULT 0,
-    p_verification_status TEXT DEFAULT 'pending',
+    p_id                     UUID,
+    p_username               TEXT,
+    p_business_name          TEXT DEFAULT NULL,
+    p_owner_cnic             TEXT DEFAULT NULL,
+    p_address_line1          TEXT DEFAULT NULL,
+    p_is_verified            BOOLEAN DEFAULT FALSE,
+    p_is_top_seller          BOOLEAN DEFAULT FALSE,
+    p_tier                   TEXT DEFAULT 'basic',
+    p_tier_points            INTEGER DEFAULT 0,
+    p_verification_status   TEXT DEFAULT 'pending',
     p_verification_documents JSONB DEFAULT '{"cnic_front": null, "cnic_back": null}'::jsonb,
-    p_city TEXT DEFAULT NULL,
-    p_phone TEXT DEFAULT NULL,
-    p_email TEXT DEFAULT NULL
-)
-RETURNS VOID AS $$
+    p_city                   TEXT DEFAULT NULL,
+    p_phone                  TEXT DEFAULT NULL,
+    p_email                  TEXT DEFAULT NULL
+) RETURNS VOID
+AS $func$
 BEGIN
-    RAISE NOTICE 'create_seller_profile_after_signup function called for seller %', p_id;
-    PERFORM set_config('row_security', 'off', true);
+    RAISE NOTICE 'create_seller_profile_after_signup called for seller %', p_id;
 
+    -- Insert seller profile, bypassing RLS by using SECURITY DEFINER
     INSERT INTO public.seller_profiles (
         id, username, business_name, owner_cnic, address_line1,
         is_verified, is_top_seller, tier, tier_points, verification_status,
@@ -697,13 +719,14 @@ BEGIN
         p_is_verified, p_is_top_seller, p_tier, p_tier_points, p_verification_status,
         p_verification_documents, p_city, p_phone, p_email
     );
+
     RAISE NOTICE 'Seller % inserted successfully within function', p_id;
 EXCEPTION
     WHEN OTHERS THEN
         RAISE NOTICE 'Error in create_seller_profile_after_signup: %', SQLERRM;
         RAISE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$func$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================
 -- 6. GRANTS FOR FUNCTIONS

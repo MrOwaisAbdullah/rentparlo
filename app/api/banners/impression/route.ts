@@ -23,8 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get Supabase client
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
     
     // Get user and session information
     const { data: { user } } = await supabase.auth.getUser()

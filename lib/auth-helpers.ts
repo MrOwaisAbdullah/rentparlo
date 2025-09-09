@@ -8,10 +8,10 @@ export async function getCurrentUser(): Promise<User | null> {
   try {
     const supabase = await createClient();
     
-    // Get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get the current user (secure method that contacts Supabase Auth server)
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
     
-    if (sessionError || !session?.user) {
+    if (authError || !authUser) {
       return null;
     }
 
@@ -22,7 +22,7 @@ export async function getCurrentUser(): Promise<User | null> {
         *,
         seller_profiles (*)
       `)
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
 
     if (profileError) {
@@ -43,8 +43,11 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function getCurrentSession() {
   try {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    if (authError || !authUser) {
+      return null;
+    }
+    return { user: authUser };
   } catch (error) {
     console.error('Error getting current session:', error);
     return null;

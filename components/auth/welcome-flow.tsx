@@ -71,7 +71,8 @@ export function WelcomeFlow({ user }: WelcomeFlowProps) {
     handleSubmit,
     formState: { errors, isValid },
     setValue,
-    watch
+    watch,
+    reset
   } = useForm<WelcomeFormData>({
     resolver: zodResolver(welcomeSchema),
     defaultValues: {
@@ -84,6 +85,17 @@ export function WelcomeFlow({ user }: WelcomeFlowProps) {
   });
 
   const formData = watch();
+
+  // Reset form when user data changes
+  React.useEffect(() => {
+    reset({
+      name: user?.name || '',
+      phone: user?.phone || '',
+      city: user?.city || 'Karachi',
+      role: user?.role || 'user',
+      terms: false
+    });
+  }, [user, reset]);
 
   const steps = [
     {
@@ -188,14 +200,20 @@ export function WelcomeFlow({ user }: WelcomeFlowProps) {
         return (
           <div className="space-y-6">
             {/* Profile Image */}
-            {user.profileImage && (
+            {(user.profileImage || formData.name) && (
               <div className="flex justify-center">
                 <div className="relative">
-                  <img
-                    src={user.profileImage}
-                    alt="Profile"
-                    className="w-20 h-20 rounded-full border-4 border-white shadow-lg"
-                  />
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-white shadow-lg">
+                      <User className="w-8 h-8 text-primary" />
+                    </div>
+                  )}
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
@@ -266,15 +284,15 @@ export function WelcomeFlow({ user }: WelcomeFlowProps) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Name:</span>
-                  <span className="font-medium">{formData.name}</span>
+                  <span className="font-medium">{formData.name || 'Not provided'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Phone:</span>
-                  <span className="font-medium">{formData.phone}</span>
+                  <span className="font-medium">{formData.phone || 'Not provided'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">City:</span>
-                  <span className="font-medium">{formData.city}</span>
+                  <span className="font-medium">{formData.city || 'Not provided'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Account Type:</span>
@@ -299,6 +317,17 @@ export function WelcomeFlow({ user }: WelcomeFlowProps) {
                 <Store className="h-4 w-4" />
                 <AlertDescription>
                   As a seller, you'll need to complete verification after this step to start listing items.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* OAuth Note */}
+            {user.profileImage && (
+              <Alert>
+                <User className="h-4 w-4" />
+                <AlertDescription>
+                  We've pre-filled your profile with information from your Google account. 
+                  You can update any details above if needed.
                 </AlertDescription>
               </Alert>
             )}

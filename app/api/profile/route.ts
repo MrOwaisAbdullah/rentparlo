@@ -385,6 +385,71 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH - Partially update user profile (for onboarding completion)
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    
+    // Validate and filter allowed fields for partial update
+    const allowedFields = [
+      'name',
+      'phone',
+      'city',
+      'role',
+      'onboarding_completed',
+      'profile_image_url'
+    ]
+
+    const updates = Object.keys(body)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = body[key]
+        return obj
+      }, {} as any)
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { error: 'No valid fields to update' },
+        { status: 400 }
+      )
+    }
+
+    const success = await updateUserProfile(user.id, updates)
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Failed to update user profile' },
+        { status: 500 }
+      )
+    }
+
+    // Get updated user data
+    const updatedUser = await getUserById(user.id)
+
+    return NextResponse.json({
+      success: true,
+      data: updatedUser
+    })
+
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    return NextResponse.json(
+      { error: 'Failed to update profile' },
+      { status: 500 }
+    )
+  }
+}
+
 // DELETE - Delete user account (soft delete)
 export async function DELETE(request: NextRequest) {
   try {

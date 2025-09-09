@@ -11,13 +11,17 @@ export const metadata: Metadata = {
 };
 
 interface AuthErrorPageProps {
-  searchParams: {
+  searchParams: Promise<{
+    message?: string;
+  }> | {
     message?: string;
   };
 }
 
-export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
-  const errorMessage = searchParams.message || 'An unknown error occurred during authentication';
+export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
+  // Handle both Promise and resolved searchParams
+  const resolvedSearchParams = searchParams instanceof Promise ? await searchParams : searchParams;
+  const errorMessage = resolvedSearchParams.message || 'An unknown error occurred during authentication';
 
   const getErrorDetails = (message: string) => {
     const lowerMessage = message.toLowerCase();
@@ -51,6 +55,14 @@ export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
         title: 'Unauthorized Client',
         description: 'The authentication service is not properly configured.',
         suggestion: 'Please contact support for assistance.'
+      };
+    }
+    
+    if (lowerMessage.includes('verification') || lowerMessage.includes('invalid') || lowerMessage.includes('expired')) {
+      return {
+        title: 'Verification Failed',
+        description: 'The verification link is invalid or has expired.',
+        suggestion: 'Please request a new verification email or try signing in again.'
       };
     }
     

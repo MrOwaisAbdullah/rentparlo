@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('Seller profile creation request body:', body);
+    
     const {
       username,
       business_name,
@@ -23,13 +25,23 @@ export async function POST(request: NextRequest) {
       email,
       city,
       address_line1,
-      owner_cnic
+      owner_cnic,
+      whatsapp
     } = body;
 
     // Validate required fields
-    if (!username || !owner_name || !phone || !email || !city) {
+    if (!owner_name || !phone || !email || !city) {
+      const missingFields = [];
+      if (!owner_name) missingFields.push('owner_name');
+      if (!phone) missingFields.push('phone');
+      if (!email) missingFields.push('email');
+      if (!city) missingFields.push('city');
+      
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { 
+          error: 'Missing required fields',
+          missingFields
+        },
         { status: 400 }
       );
     }
@@ -39,7 +51,7 @@ export async function POST(request: NextRequest) {
       .from('seller_profiles')
       .select('id')
       .eq('id', user.id)
-      .maybeSingle(); // Changed from .single() to .maybeSingle()
+      .maybeSingle();
 
     if (existingProfileError) {
       console.error('Error checking existing profile:', existingProfileError);
@@ -56,12 +68,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate username if not provided
+    let finalUsername = username || user.email.split('@')[0];
+    
     // Check if username is available
     const { data: existingUsername, error: usernameError } = await supabase
       .from('seller_profiles')
       .select('username')
-      .eq('username', username)
-      .maybeSingle(); // Changed from .single() to .maybeSingle()
+      .eq('username', finalUsername)
+      .maybeSingle();
 
     if (usernameError) {
       console.error('Error checking username availability:', usernameError);
@@ -72,53 +87,46 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a unique username if needed
-    let finalUsername = username;
     if (existingUsername) {
       const timestamp = Date.now();
-      finalUsername = `${username}_${timestamp}`;
+      finalUsername = `${finalUsername}_${timestamp}`;
     }
     
     // Create seller profile
     const { data: sellerProfile, error: profileError } = await supabase
       .from('seller_profiles')
-      .insert({
+      .insert([{
         id: user.id,
         username: finalUsername,
         business_name: business_name || '',
-        owner_name,
-        owner_cnic,
-        address_line1,
-        city,
-        phone,
-        email,
+        owner_name: owner_name,
+        owner_cnic: owner_cnic || null,
+        address_line1: address_line1 || '',
+        city: city,
+        phone: phone,
+        email: email,
         tier: 'basic',
         tier_points: 0,
         verification_status: 'pending',
         is_verified: false,
         is_top_seller: false,
-        verification_documents: {},
-        business_hours: {
-          monday: { open: '09:00', close: '18:00', closed: false },
-          tuesday: { open: '09:00', close: '18:00', closed: false },
-          wednesday: { open: '09:00', close: '18:00', closed: false },
-          thursday: { open: '09:00', close: '18:00', closed: false },
-          friday: { open: '09:00', close: '18:00', closed: false },
-          saturday: { open: '09:00', close: '18:00', closed: false },
-          sunday: { open: '09:00', close: '18:00', closed: true }
-        },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+        verification_documents: '{}'
+      }])
       .select()
       .single();
 
     if (profileError) {
       console.error('Seller profile creation error:', profileError);
       return NextResponse.json(
-        { error: 'Failed to create seller profile' },
+        { 
+          error: 'Failed to create seller profile', 
+          details: profileError.message 
+        },
         { status: 500 }
       );
     }
+
+    console.log('Seller profile created successfully:', sellerProfile);
 
     return NextResponse.json({
       success: true,
@@ -129,7 +137,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Create seller profile error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }

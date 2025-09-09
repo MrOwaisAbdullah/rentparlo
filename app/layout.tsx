@@ -4,7 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { ConditionalCategoryBar } from "@/components/layout/conditional-category-bar";
 import { Footer } from "@/components/layout/footer";
-import { QueryProvider } from "@/components/query-provider";
+import { Providers } from "@/components/providers";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { SavedItemsProvider } from "@/contexts/SavedItemsContext";
 import { MobileBanner } from "@/components/ads/mobile-banner";
@@ -31,7 +31,7 @@ export default async function RootLayout({
       <body
         className={`${lato.variable} ${poppins.variable} antialiased`}
       >
-        <QueryProvider>
+        <Providers>
           <BannerProvider>
             <SavedItemsProvider>
               <Header user={user} />
@@ -41,7 +41,7 @@ export default async function RootLayout({
               <MobileBanner />
             </SavedItemsProvider>
           </BannerProvider>
-        </QueryProvider>
+        </Providers>
       </body>
     </html>
   );

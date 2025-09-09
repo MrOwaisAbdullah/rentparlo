@@ -104,7 +104,44 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
       };
     }
 
-    // Update last login timestamp if needed
+    // Check if user exists in our users table
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    // If user doesn't exist in our users table, create a profile for them
+    if (!userProfile && !profileError) {
+      // Get user metadata from auth
+      const userMetadata = authData.user.user_metadata || {};
+      
+      // Create user profile using SECURITY DEFINER function
+      const { error: createProfileError } = await supabase.rpc('create_user_profile_after_signup', {
+        p_id: authData.user.id,
+        p_email: authData.user.email,
+        p_phone: userMetadata.phone || null,
+        p_role: userMetadata.role || 'user',
+        p_city: userMetadata.city || null,
+        p_country: 'Pakistan',
+        p_is_verified: false,
+        p_email_verified: authData.user.email_confirmed_at ? true : false,
+        p_active: true,
+        p_guest_id: `guest_${Date.now()}`,
+        p_notification_preferences: {
+          email: true,
+          sms: false,
+          push: true
+        },
+        p_preferred_language: 'en'
+      });
+
+      if (createProfileError) {
+        console.error('Profile creation error:', createProfileError.message);
+      }
+    }
+
+    // Update last login timestamp if user exists
     if (authData.user) {
       await supabase
         .from('users')
@@ -375,7 +412,7 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=signup`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -433,8 +470,8 @@ export async function handleOAuthCallback(code: string, provider: string, type?:
     }
     
     if (data.user) {
-      // Check if this is a new user
-      const { data: existingUser } = await supabase
+      // Check if this is a new user or existing user
+      const { data: existingUser, error: userError } = await supabase
         .from('users')
         .select('id, onboarding_completed')
         .eq('id', data.user.id)
@@ -443,7 +480,7 @@ export async function handleOAuthCallback(code: string, provider: string, type?:
       let isNewUser = false;
       let needsOnboarding = false;
         
-      if (!existingUser) {
+      if (!existingUser && !userError) {
         isNewUser = true;
         // Create user profile for new OAuth user using SECURITY DEFINER function
         const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
@@ -470,7 +507,7 @@ export async function handleOAuthCallback(code: string, provider: string, type?:
         } else {
           needsOnboarding = true;
         }
-      } else {
+      } else if (existingUser) {
         // Existing user - check if they need onboarding
         needsOnboarding = !existingUser.onboarding_completed;
       }
@@ -498,7 +535,11 @@ export async function handleOAuthCallback(code: string, provider: string, type?:
       let redirectTo = '/dashboard';
       
       if (type === 'signup' || needsOnboarding) {
+        // New users or users who haven't completed onboarding go to welcome page
         redirectTo = '/auth/welcome';
+      } else if (redirectTo === '/' || redirectTo === '/auth/login' || redirectTo === '/auth/register') {
+        // Existing users go to dashboard unless they have a specific destination
+        redirectTo = '/dashboard';
       }
       
       return {

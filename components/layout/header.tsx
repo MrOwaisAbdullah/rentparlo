@@ -18,6 +18,7 @@ import {
 import { signOutAndRedirect } from '@/lib/auth-actions';
 import { SavedItemsHeaderIcon } from './saved-items-header-icon';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
   user: User | null;
@@ -25,6 +26,10 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Determine if we should show the dashboard link
+  const showDashboard = user && user.onboarding_completed;
 
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 relative">
@@ -78,18 +83,29 @@ export function Header({ user }: HeaderProps) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                     <Link href="/profile">
-                       <UserIcon className="mr-2 h-4 w-4" />
-                       <span>Profile</span>
-                     </Link>
-                  </DropdownMenuItem>
+                  {showDashboard ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          <span>Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile">
+                          <UserIcon className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem asChild>
+                      <Link href="/auth/welcome">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Complete Setup</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <form action={signOutAndRedirect}>
                     <DropdownMenuItem asChild>

@@ -5,7 +5,9 @@ import { CategoryBarWrapper } from './category-bar-wrapper';
 
 export function ConditionalCategoryBar() {
   const pathname = usePathname();
-  const show = !pathname.startsWith('/dashboard');
+  
+  // Hide category bar on dashboard pages and welcome page
+  const show = !pathname.startsWith('/dashboard') && !pathname.startsWith('/auth');
 
   return <CategoryBarWrapper show={show} />;
 }

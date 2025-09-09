@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { resendVerification } from '@/lib/auth-actions';
 
 export function EmailVerificationContent() {
   const searchParams = useSearchParams();
@@ -43,17 +44,22 @@ export function EmailVerificationContent() {
       setIsResending(true);
       setResendError(null);
       
-      // TODO: Implement resend verification email
-      // const result = await resendVerificationEmail();
+      if (!email) {
+        throw new Error('Email address not found');
+      }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the actual resend verification email function
+      const result = await resendVerification(email);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to resend verification email');
+      }
       
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 5000);
       
     } catch (error) {
-      setResendError('Failed to resend verification email. Please try again.');
+      setResendError(error instanceof Error ? error.message : 'Failed to resend verification email. Please try again.');
     } finally {
       setIsResending(false);
     }
@@ -197,10 +203,10 @@ export function EmailVerificationContent() {
           >
             {content.showContinue && (
               <Button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/auth/welcome')}
                 className="w-full"
               >
-                Continue to Dashboard
+                Continue to Setup
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}

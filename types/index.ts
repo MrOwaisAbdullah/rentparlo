@@ -25,9 +25,7 @@ export interface NotificationPreferences {
   push: boolean;
 }
 
-/**
- * Basic user information (stored in Supabase)
- */
+/**\n * Basic user information (stored in Supabase)\n */
 export interface User {
   id: string;
   email: string;
@@ -50,6 +48,9 @@ export interface User {
   notification_preferences: NotificationPreferences;
   preferred_language: UserLanguage;
   bio?: string;
+  profile_image_url?: string;
+  onboarding_completed: boolean; // Add this field
+  name?: string; // Add this field
 }
 
 /**

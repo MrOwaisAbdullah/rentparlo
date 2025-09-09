@@ -23,19 +23,28 @@ interface AuthResult {
   redirectTo?: string
 }
 
+interface SimplifiedSignUpData {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  city: string;
+  role: 'user' | 'seller';
+}
+
 interface SignUpData {
-  email: string
-  password: string
-  name: string
-  phone: string
-  city: string
-  role: 'user' | 'seller'
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  city: string;
+  role: 'user' | 'seller';
   sellerData?: {
-    username?: string
-    businessName?: string
-    cnic?: string
-    address?: string
-  }
+    username?: string;
+    businessName?: string;
+    cnic?: string;
+    address?: string;
+  };
 }
 
 interface SignInData {
@@ -116,6 +125,7 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
       email: formData.email,
       password: formData.password,
       options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
         data: {
           name: formData.name,
           phone: formData.phone,
@@ -147,21 +157,28 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
       }
     }
 
-    // Create user profile in database
-    const userProfile = await upsertUser({
-      id: authData.user.id,
-      email: formData.email,
-      name: formData.name,
-      phone: formData.phone,
-      city: formData.city,
-      role: formData.role,
-      is_verified: false,
-      email_verified: false,
-      onboarding_completed: formData.role === 'user', // Users complete onboarding immediately
-      created_at: new Date().toISOString()
-    })
+    // Create user profile in database using SECURITY DEFINER function
+    const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
+        p_id: authData.user.id,
+        p_email: formData.email,
+        p_phone: formData.phone,
+        p_role: formData.role,
+        p_city: formData.city,
+        p_country: 'Pakistan',
+        p_is_verified: false,
+        p_email_verified: false,
+        p_active: true,
+        p_guest_id: `guest_${Date.now()}`,
+        p_notification_preferences: {
+          email: true,
+          sms: false,
+          push: true
+        },
+        p_preferred_language: 'en'
+    });
 
-    if (!userProfile) {
+    if (profileError) {
+      console.error('Profile creation error:', profileError.message);
       return {
         success: false,
         error: 'Failed to create user profile'
@@ -213,6 +230,131 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
 
   } catch (error) {
     console.error('Sign up error:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    }
+  }
+}
+
+/**
+ * Sign up new user with simplified registration flow
+ */
+export async function signUpSimplified(formData: SimplifiedSignUpData): Promise<AuthResult> {
+  try {
+    const supabase = await createClient()
+    
+    // Get client IP for logging and rate limiting
+    const headersList = await headers()
+    const forwardedFor = headersList.get('x-forwarded-for')
+    const ipAddress = forwardedFor ? forwardedFor.split(',')[0] : null
+
+    // Validate required fields
+    if (!formData.email || !formData.password || !formData.name) {
+      return {
+        success: false,
+        error: 'Missing required fields'
+      }
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      return {
+        success: false,
+        error: 'Invalid email format'
+      }
+    }
+
+    // Password validation
+    if (formData.password.length < 8) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters long'
+      }
+    }
+
+    // Sign up with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+        data: {
+          name: formData.name,
+          phone: formData.phone,
+          city: formData.city,
+          role: formData.role
+        }
+      }
+    })
+
+    if (authError) {
+      await logAuthEvent(
+        null,
+        'register',
+        false,
+        ipAddress,
+        undefined,
+        authError.message
+      )
+      return {
+        success: false,
+        error: authError.message
+      }
+    }
+
+    if (!authData.user) {
+      return {
+        success: false,
+        error: 'Failed to create user account'
+      }
+    }
+
+    // Create user profile in database using SECURITY DEFINER function
+    const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
+        p_id: authData.user.id,
+        p_email: formData.email,
+        p_phone: formData.phone,
+        p_role: formData.role,
+        p_city: formData.city,
+        p_country: 'Pakistan',
+        p_is_verified: false,
+        p_email_verified: false,
+        p_active: true,
+        p_guest_id: `guest_${Date.now()}`,
+        p_notification_preferences: {
+          email: true,
+          sms: false,
+          push: true
+        },
+        p_preferred_language: 'en'
+    });
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError.message);
+      return {
+        success: false,
+        error: 'Failed to create user profile'
+      }
+    }
+
+    // Log successful registration
+    await logAuthEvent(
+      authData.user.id,
+      'register',
+      true,
+      ipAddress
+    )
+
+    return {
+      success: true,
+      user: authData.user,
+      redirectTo: '/auth/verify-email' // Always redirect to email verification for simplified registration
+    }
+
+  } catch (error) {
+    console.error('Simplified sign up error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred'
@@ -277,7 +419,7 @@ export async function signUpWithRateLimit(formData: SignUpData): Promise<AuthRes
 /**
  * Sign in user
  */
-export async function signIn(formData: SignInData): Promise<AuthResult> {
+export async function signIn(formData: SignInData, redirectTo?: string): Promise<AuthResult> {
   try {
     const supabase = await createClient()
     
@@ -322,6 +464,13 @@ export async function signIn(formData: SignInData): Promise<AuthResult> {
       }
     }
 
+    // Get user profile to check onboarding status
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('onboarding_completed, role')
+      .eq('id', authData.user.id)
+      .single();
+
     // Update last login
     await upsertUser({
       id: authData.user.id,
@@ -336,10 +485,18 @@ export async function signIn(formData: SignInData): Promise<AuthResult> {
       ipAddress
     )
 
+    // Determine redirect path
+    let finalRedirectTo = redirectTo || '/dashboard';
+    
+    // If user hasn't completed onboarding, redirect to welcome page
+    if (userProfile && !userProfile.onboarding_completed) {
+      finalRedirectTo = '/auth/welcome';
+    }
+
     return {
       success: true,
       user: authData.user,
-      redirectTo: '/dashboard'
+      redirectTo: finalRedirectTo
     }
 
   } catch (error) {
@@ -640,7 +797,7 @@ export async function signInWithGoogle(): Promise<AuthResult> {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=signup`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'

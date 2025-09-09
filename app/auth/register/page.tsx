@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthLayout } from '@/components/auth/auth-layout';
-import { RegisterForm } from '@/components/auth/register-form';
+import { SimplifiedRegisterForm } from '@/components/auth/simplified-register-form';
 
 export const metadata: Metadata = {
   title: 'Create Account | RentParLo.pk',
@@ -15,7 +15,7 @@ export default function RegisterPage() {
       subtitle="Join thousands of users and sellers on RentParLo.pk"
       showBackButton
     >
-      <RegisterForm />
+      <SimplifiedRegisterForm />
       
       {/* Sign In Link */}
       <div className="text-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
