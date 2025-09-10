@@ -364,10 +364,8 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
   try {
     const supabase = await createClient();
     
-    // Use VERCEL_URL in production, fallback to NEXT_PUBLIC_SITE_URL, then localhost
-    const siteUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Force production URL for OAuth redirects
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL; // CHANGE THIS TO YOUR ACTUAL DOMAIN
     
     console.log('OAuth signup site URL:', siteUrl);
     console.log('Full signup redirect URL:', `${siteUrl}/auth/callback?type=signup`);
@@ -384,9 +382,6 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
     });
 
     if (error) {
-      // await logSecurityEvent('GOOGLE_SIGNUP_FAILED', clientIP, { 
-      //   error: error.message
-      // });
       return {
         success: false,
         error: 'Failed to initiate Google sign-up. Please try again.'
@@ -394,8 +389,7 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
     }
 
     if (data.url) {
-      // await logSecurityEvent('GOOGLE_SIGNUP_INITIATED', clientIP);
-      // Return the URL for the frontend to handle the redirect
+      console.log('Redirecting to OAuth signup URL:', data.url);
       return {
         success: true,
         redirectUrl: data.url
@@ -409,7 +403,6 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
 
   } catch (error: any) {
     console.error('Google sign-up error:', error);
-    // await logSecurityEvent('GOOGLE_SIGNUP_ERROR', clientIP, { error: error.message });
     
     // Check if this is a redirect error that should not be caught
     if (error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
@@ -431,12 +424,10 @@ export async function signInWithGoogle(): Promise<ActionResult> {
   try {
     const supabase = await createClient();
     
-    // Use VERCEL_URL in production, fallback to NEXT_PUBLIC_SITE_URL, then localhost
-    const siteUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Force production URL for OAuth redirects
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL; // CHANGE THIS TO YOUR ACTUAL DOMAIN
     
-    console.log('OAuth site URL:', siteUrl);
+    console.log('OAuth sign-in site URL:', siteUrl);
     console.log('Full redirect URL:', `${siteUrl}/auth/callback`);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -451,9 +442,6 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     });
 
     if (error) {
-      // await logSecurityEvent('GOOGLE_SIGNIN_FAILED', clientIP, { 
-      //   error: error.message
-      // });
       console.error('Supabase OAuth error:', error);
       return {
         success: false,
@@ -462,8 +450,7 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     }
 
     if (data.url) {
-      // await logSecurityEvent('GOOGLE_SIGNIN_INITIATED', clientIP);
-      // Return the URL for the frontend to handle the redirect
+      console.log('Redirecting to OAuth URL:', data.url);
       return {
         success: true,
         redirectUrl: data.url
@@ -477,7 +464,6 @@ export async function signInWithGoogle(): Promise<ActionResult> {
 
   } catch (error: any) {
     console.error('Google sign-in error:', error);
-    // await logSecurityEvent('GOOGLE_SIGNIN_ERROR', clientIP, { error: error.message });
     
     // Check if this is a redirect error that should not be caught
     if (error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
