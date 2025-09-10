@@ -100,7 +100,8 @@ export async function PUT(request: NextRequest) {
         'gender',
         'preferred_language',
         'notification_preferences',
-        'privacy_settings'
+        'privacy_settings',
+        'onboarding_completed'  // Add this field
       ]
 
       const userUpdates = Object.keys(profileData)

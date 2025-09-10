@@ -118,8 +118,8 @@ export default function WelcomePage() {
           // Small delay to allow for UI update
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Refresh the page to get updated user data
-          window.location.reload();
+          // Redirect to dashboard instead of reloading
+          router.push('/dashboard');
         }}
       />
     </div>
