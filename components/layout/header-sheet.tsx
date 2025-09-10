@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Menu,
   X,
@@ -13,17 +13,23 @@ import {
   LogIn,
   UserPlus,
   LogOut,
-  User as UserIcon
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Separator } from "../ui/separator";
-import UniversalSearchBar from "@/components/search/universal-search-bar";
+  User as UserIcon,
+  Home,
+  Search,
+  BookmarkIcon
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import UniversalSearchBar from '@/components/search/universal-search-bar';
 import type { User } from '@/types';
-import { signOutAndRedirect } from "@/lib/auth-actions";
-import { useSavedItems } from "@/contexts/SavedItemsContext";
-import { Bookmark } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { signOutAndRedirect } from '@/lib/auth-actions';
+import { useSavedItems } from '@/contexts/SavedItemsContext';
+import { Bookmark } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/use-auth';
+import { Logo } from '@/components/logo';
+import { getUserByIdClient } from '@/lib/supabase-queries-client';
 
 interface HeaderSheetProps {
   user: User | null;
@@ -32,6 +38,29 @@ interface HeaderSheetProps {
 export function HeaderSheet({ user }: HeaderSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { totalItems } = useSavedItems();
+  const { user: authUser } = useAuth();
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!authUser) {
+        setLoadingProfile(false);
+        return;
+      }
+      
+      try {
+        const profile = await getUserByIdClient(authUser.id);
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [authUser]);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -44,13 +73,8 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
         <div className="flex flex-col h-full">
           {/* Sheet Header */}
           <div className="p-6 border-b flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">
-                  RP
-                </span>
-              </div>
-              <span className="font-bold text-xl text-primary">RentParlo</span>
+            <div className="flex items-center">
+              <Logo className="h-8 w-auto" />
             </div>
             <Button
               variant="ghost"
@@ -84,9 +108,29 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
 
             {/* Mobile Navigation */}
             <div className="space-y-2 pt-4 border-t">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-base py-4"
+                asChild
+              >
+                <Link href="/" onClick={() => setIsOpen(false)}>
+                  <Home className="h-5 w-5 mr-3" />
+                  Home
+                </Link>
+              </Button>
 
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-base py-4"
+                asChild
+              >
+                <Link href="/search" onClick={() => setIsOpen(false)}>
+                  <Search className="h-5 w-5 mr-3" />
+                  Search
+                </Link>
+              </Button>
 
-            <Button
+              <Button
                 variant="ghost"
                 className="w-full justify-start text-base py-4"
                 asChild
@@ -114,8 +158,8 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
               >
                 <Link href="/saved" onClick={() => setIsOpen(false)} className="flex items-center justify-between w-full">
                   <div className="flex items-center">
-                    <Bookmark className="h-5 w-5 mr-3" />
-                    Saved Items
+                  <BookmarkIcon className="h-5 w-5 mr-3" />
+                  Saved Items
                   </div>
                   {totalItems > 0 && (
                     <Badge variant="destructive" className="h-6 w-6 flex items-center justify-center rounded-full p-0">
@@ -127,11 +171,11 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
 
               <Separator className="my-4" />
 
-              {user ? (
+              {authUser ? (
                 <>
                   <div className="px-4 py-2">
-                    <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{authUser.email}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{authUser?.role}</p>
                   </div>
                   <Separator />
                   <Button
@@ -149,12 +193,19 @@ export function HeaderSheet({ user }: HeaderSheetProps) {
                     className="w-full justify-start text-lg py-6"
                     asChild
                   >
-                    <Link href="/profile" onClick={() => setIsOpen(false)}>
+                    <Link 
+                      href={
+                        userProfile?.role === 'seller' && userProfile?.seller_profiles?.username
+                          ? `/seller/${userProfile.seller_profiles.username}`
+                          : '/profile'
+                      }
+                      onClick={() => setIsOpen(false)}
+                    >
                       <UserIcon className="h-5 w-5 mr-3" />
                       Profile
                     </Link>
                   </Button>
-                  {user?.role === 'seller' && (
+                  {authUser?.role === 'seller' && (
                      <Button
                         variant="ghost"
                         className="w-full text-lg py-4"

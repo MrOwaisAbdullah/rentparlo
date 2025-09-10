@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LogIn, User as UserIcon, LayoutDashboard, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { signOutAndRedirect } from '@/lib/auth-actions';
 import { SavedItemsHeaderIcon } from './saved-items-header-icon';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { getUserByIdClient } from '@/lib/supabase-queries-client';
 
 interface HeaderProps {
   user: User | null;
@@ -27,9 +29,31 @@ interface HeaderProps {
 export function Header({ user }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   // Determine if we should show the dashboard link
   const showDashboard = user && user.onboarding_completed;
+  
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) {
+        setLoadingProfile(false);
+        return;
+      }
+      
+      try {
+        const profile = await getUserByIdClient(user.id);
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 relative">
@@ -92,7 +116,13 @@ export function Header({ user }: HeaderProps) {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/profile">
+                        <Link 
+                          href={
+                            userProfile?.role === 'seller' && userProfile?.seller_profiles?.username
+                              ? `/seller/${userProfile.seller_profiles.username}`
+                              : '/profile'
+                          }
+                        >
                           <UserIcon className="mr-2 h-4 w-4" />
                           <span>Profile</span>
                         </Link>

@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RoleSelector } from '@/components/auth/role-selector';
+import { ProfileImageUpload } from '@/components/forms/profile-image-upload';
+import { VerificationUpload } from '@/components/verification/verification-upload';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -44,6 +46,17 @@ interface User {
 interface OnboardingDirectProps {
   user: User;
   onComplete: () => void;
+}
+
+interface VerificationDocument {
+  id: string;
+  documentType: 'cnic_front' | 'cnic_back' | 'business_license' | 'bank_statement';
+  fileName: string;
+  fileUrl: string;
+  status: 'pending' | 'under_review' | 'approved' | 'rejected' | 'resubmit_required';
+  uploadedAt: string;
+  rejectionReason?: string;
+  fileSize?: number;
 }
 
 const pakistaniCities = [
@@ -89,6 +102,9 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(user?.profileImage || null);
+  const [verificationDocuments, setVerificationDocuments] = React.useState<VerificationDocument[]>([]);
+  const [verificationStatus, setVerificationStatus] = React.useState<'pending' | 'under_review' | 'approved' | 'rejected'>('pending');
   
   const {
     register,
@@ -262,19 +278,26 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       setIsLoading(true);
       setError(null);
 
-      // Update user profile with onboarding completion
+      // Update user profile with onboarding completion and profile image
+      const profileUpdateData: any = {
+        name: data.name,
+        phone: data.phone || null,
+        city: data.city || null,
+        role: data.role,
+        onboarding_completed: true
+      };
+
+      // Add profile image URL if available
+      if (profileImageUrl) {
+        profileUpdateData.profile_image_url = profileImageUrl;
+      }
+
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          name: data.name,
-          phone: data.phone || null,
-          city: data.city || null,
-          role: data.role,
-          onboarding_completed: true
-        })
+        body: JSON.stringify(profileUpdateData)
       });
 
       const result = await response.json();
@@ -295,7 +318,8 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           whatsapp: data.whatsapp || null,
           address_line1: data.address || '',
           city: data.city || '',
-          email: user.email
+          email: user.email,
+          verification_status: verificationDocuments.length > 0 ? 'under_review' : 'pending'
         };
         
         console.log('Creating seller profile with data:', sellerData);
@@ -362,6 +386,71 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     }
   };
 
+  const handleProfileImageUpload = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/profile/image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload image');
+    }
+
+    const result = await response.json();
+    return result.imageUrl;
+  };
+
+  const handleVerificationUpload = async (file: File, documentType: string): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', documentType);
+
+    const response = await fetch('/api/verification/documents', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload document');
+    }
+
+    const result = await response.json();
+    
+    // Update the local state with the new document
+    setVerificationDocuments(prev => {
+      const updated = prev.filter(doc => doc.documentType !== documentType);
+      updated.push({
+        id: result.document.id,
+        documentType: result.document.documentType,
+        fileName: result.document.fileName,
+        fileUrl: result.document.fileUrl,
+        status: result.document.status,
+        uploadedAt: result.document.uploadedAt,
+        fileSize: file.size
+      });
+      return updated;
+    });
+  };
+
+  const handleVerificationDelete = async (documentId: string, documentType: string): Promise<void> => {
+    const response = await fetch(`/api/verification/documents?id=${documentId}&type=${documentType}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete document');
+    }
+
+    // Update the local state by removing the document
+    setVerificationDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
   const renderStepContent = () => {
     // Check if currentStep is valid
     if (currentStep < 0 || currentStep >= filteredSteps.length) {
@@ -398,6 +487,19 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 placeholder="Enter your full name"
               />
               {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <Label>Profile Picture (Optional)</Label>
+              <ProfileImageUpload
+                value={profileImageUrl}
+                onChange={setProfileImageUrl}
+                onUpload={handleProfileImageUpload}
+                maxSizeInMB={5}
+                acceptedFormats={['image/jpeg', 'image/png', 'image/webp']}
+                placeholder="Upload profile picture"
+              />
+              <p className="text-xs text-muted-foreground mt-1">JPG, PNG, or WebP up to 5MB</p>
             </div>
 
             <div>
@@ -467,6 +569,18 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
               />
               {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
               <p className="text-xs text-muted-foreground mt-1">Full address for verification</p>
+            </div>
+
+            <div>
+              <Label>Verification Documents</Label>
+              <p className="text-xs text-muted-foreground mb-2">Upload required documents for verification</p>
+              <VerificationUpload
+                documents={verificationDocuments}
+                verificationStatus={verificationStatus}
+                onUpload={handleVerificationUpload}
+                onDelete={handleVerificationDelete}
+                isLoading={isLoading}
+              />
             </div>
 
             <div>

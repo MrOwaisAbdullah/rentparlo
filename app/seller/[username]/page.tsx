@@ -4,22 +4,27 @@ import { SellerProfileHeader } from '@/components/seller/seller-profile-header';
 import { SellerProfileTabs, SellerProfileTabContent } from '@/components/seller/seller-profile-tabs';
 import { SellerStats } from '@/components/seller/seller-stats';
 import { AdBanner } from '@/components/ads/ad-banner';
-import { mockSeller, mockHotRentalListings, mockHotRentalProductsListings, mockRentalProductsListings, mockSellerAnalytics } from '@/app/sellerProfileMockData';
 import { ClientProductListingSection } from '@/components/seller/client-product-listing-section';
+import { SellerProfileActions } from '@/components/seller/seller-profile-actions';
+import { getSellerProfileByUsername } from '@/lib/supabase-queries';
+import { mockHotRentalListings, mockHotRentalProductsListings, mockRentalProductsListings, mockSellerAnalytics } from '@/app/sellerProfileMockData';
 
 interface SellerPageProps {
-  params: {
+  params: Promise<{
     username: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: SellerPageProps): Promise<Metadata> {
-  // In a real app, you would fetch seller data here
-  const seller = mockSeller;
+  // Await params before using
+  const { username } = await params;
+  
+  // Fetch actual seller data
+  const seller = await getSellerProfileByUsername(username);
   
   if (!seller) {
     return {
-      title: 'Seller Not Found | RentParlo.pk',
+      title: 'Seller Not Found | RentParLo.pk',
       description: 'The requested seller profile could not be found.',
     };
   }
@@ -27,8 +32,8 @@ export async function generateMetadata({ params }: SellerPageProps): Promise<Met
   const displayName = seller.profile.business_name || seller.profile.username;
   
   return {
-    title: `${displayName} - Seller Profile | RentParlo.pk`,
-    description: `Browse rental items from ${displayName} on RentParlo.pk. Verified seller with ${seller.listingCount} listings in ${seller.city}, ${seller.state}.`,
+    title: `${displayName} - Seller Profile | RentParLo.pk`,
+    description: `Browse rental items from ${displayName} on RentParLo.pk. Verified seller with listings in ${seller.city}, ${seller.state}.`,
     keywords: [
       displayName,
       'rental items',
@@ -41,18 +46,17 @@ export async function generateMetadata({ params }: SellerPageProps): Promise<Met
 }
 
 export default async function SellerPage({ params }: SellerPageProps) {
-  // In the Server Component, we can access params directly
-  const { username } = params;
+  // Await params before using
+  const { username } = await params;
   
-  // In a real app, you would fetch seller data based on username
-  // For now, we'll use mock data
-  const seller = mockSeller;
+  // Fetch actual seller data based on username
+  const seller = await getSellerProfileByUsername(username);
   
-  if (!seller || seller.profile.username !== username) {
+  if (!seller) {
     notFound();
   }
 
-  // Mock analytics data for the seller stats component
+  // Mock analytics data for the seller stats component (in a real app, you would fetch this)
   const sellerStatsData = {
     customer_rating: 4.8,
     total_reviews: 156,
@@ -98,6 +102,8 @@ export default async function SellerPage({ params }: SellerPageProps) {
           {/* About Us Tab */}
           <SellerProfileTabContent value="about">
             <div className="space-y-8">
+              {/* Seller Stats */}
+              <SellerStats stats={sellerStatsData} />
 
               {/* Additional seller information */}
               <div className="bg-muted/30 rounded-lg p-6">
@@ -105,7 +111,7 @@ export default async function SellerPage({ params }: SellerPageProps) {
                 <div className="space-y-4 text-muted-foreground">
                   <p>
                     Welcome to our rental service! We specialize in providing high-quality electronics 
-                    and equipment for rent in Lahore and surrounding areas.
+                    and equipment for rent in {seller.city} and surrounding areas.
                   </p>
                   <p>
                     With over {Math.floor((Date.now() - new Date(seller.profile.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30))} months 
@@ -121,6 +127,12 @@ export default async function SellerPage({ params }: SellerPageProps) {
             </div>
           </SellerProfileTabContent>
         </SellerProfileTabs>
+        
+        {/* Edit Profile Button for Owner */}
+        <SellerProfileActions 
+          sellerId={seller.id} 
+          username={seller.profile.username} 
+        />
       </div>
     </div>
   );

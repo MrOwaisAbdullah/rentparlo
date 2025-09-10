@@ -91,3 +91,66 @@ export async function trackAnalyticsEventClient(eventData: Partial<AnalyticsEven
     return false
   }
 }
+
+/** 
+ * ===================================================== 
+ * PROFILE QUERIES 
+ * ===================================================== 
+ */ 
+  
+// Get current user profile with seller profile if applicable 
+export async function getUserProfile(): Promise<{ user: User; sellerProfile?: SellerProfile } | null> { 
+  const supabase = createClient() 
+  
+  const { data: { user } } = await supabase.auth.getUser() 
+  
+  if (!user) { 
+    return null 
+  } 
+  
+  // Get user data with seller profile if applicable 
+  const { data: userData, error: userError } = await supabase 
+    .from('users') 
+    .select(` 
+      *, 
+      seller_profiles (*) 
+    `) 
+    .eq('id', user.id) 
+    .single() 
+  
+  if (userError) { 
+    console.error('Error fetching user profile:', userError) 
+    return null 
+  } 
+  
+  return { 
+    user: userData, 
+    sellerProfile: userData.seller_profiles || undefined 
+  } 
+} 
+  
+// Update user profile 
+export async function updateUserProfile(updates: Partial<User>): Promise<{ success: boolean; error?: string }> { 
+  const supabase = createClient() 
+  
+  const { data: { user } } = await supabase.auth.getUser() 
+  
+  if (!user) { 
+    return { success: false, error: 'User not authenticated' } 
+  } 
+  
+  const { error } = await supabase 
+    .from('users') 
+    .update({ 
+      ...updates, 
+      updated_at: new Date().toISOString() 
+    }) 
+    .eq('id', user.id) 
+  
+  if (error) { 
+    console.error('Error updating user profile:', error) 
+    return { success: false, error: error.message } 
+  } 
+  
+  return { success: true } 
+}

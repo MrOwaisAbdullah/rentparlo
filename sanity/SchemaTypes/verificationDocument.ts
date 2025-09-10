@@ -111,14 +111,14 @@ export const verificationDocument = defineType({
       title: 'Verified By',
       type: 'string',
       description: 'Admin user ID who verified this document',
-      hidden: ({document}) => !['approved', 'rejected'].includes(document?.verificationStatus)
+      hidden: ({document}) => !['approved', 'rejected'].includes(document?.verificationStatus as string)
     }),
     defineField({
       name: 'verifiedAt',
       title: 'Verified At',
       type: 'datetime',
       description: 'When the document was verified',
-      hidden: ({document}) => !['approved', 'rejected'].includes(document?.verificationStatus),
+      hidden: ({document}) => !['approved', 'rejected'].includes(document?.verificationStatus as string),
       options: {
         dateFormat: 'YYYY-MM-DD',
         timeFormat: 'HH:mm'
