@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/';
   const type = searchParams.get('type'); // 'signup' or undefined for signin
 
+  console.log('OAuth callback received:', { code, next, type });
+
   if (code) {
     try {
       const supabase = await createClient();
@@ -20,61 +22,69 @@ export async function GET(request: NextRequest) {
         return redirect(`/auth/error?message=${encodeURIComponent(error.message)}`);
       }
 
+      console.log('OAuth session data received:', { user: data.user?.id, email: data.user?.email });
+
       if (data.user) {
         // Check if this is a new user or existing user
         const { data: existingUser, error: fetchError } = await supabase
           .from('users')
-          .select('id, onboarding_completed, role, name, phone, city')
+          .select('id, onboarding_completed, role, name, phone, city, login_count')
           .eq('id', data.user.id)
           .single();
+
+        console.log('User lookup result:', { existingUser, fetchError });
 
         let isNewUser = false;
         let needsOnboarding = false;
 
         if (fetchError || !existingUser) {
           isNewUser = true;
-          // Create user profile for new OAuth user
-          const { error: profileError } = await supabase
-            .from('users')
-            .insert({
-              id: data.user.id,
-              email: data.user.email!,
-              name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split('@')[0],
-              profile_image_url: data.user.user_metadata?.avatar_url,
-              role: 'user', // Default role, can be changed during onboarding
-              country: 'Pakistan',
-              is_verified: false,
-              email_verified: data.user.email_confirmed_at ? true : false,
-              phone_verified: false,
-              active: true,
-              onboarding_completed: false, // New Google users need onboarding
-              guest_id: `guest_${Date.now()}`,
-              notification_preferences: {
-                email: true,
-                sms: false,
-                push: true,
-                marketing: false,
-                security_alerts: true
-              },
-              privacy_settings: {
-                profile_visible: true,
-                contact_info_visible: false,
-                activity_visible: true,
-                location_sharing: false
-              },
-              preferred_language: 'en',
-              timezone: 'Asia/Karachi',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+          console.log('Creating new user profile for:', data.user.id);
+          
+          // Create user profile for new OAuth user using SECURITY DEFINER function
+          const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
+            p_id: data.user.id,
+            p_email: data.user.email!,
+            p_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split('@')[0],
+            p_profile_image_url: data.user.user_metadata?.avatar_url,
+            p_role: 'user', // Default role, can be changed during onboarding
+            p_country: 'Pakistan',
+            p_is_verified: false,
+            p_email_verified: data.user.email_confirmed_at ? true : false,
+            p_phone_verified: false,
+            p_active: true,
+            p_onboarding_completed: false, // New Google users need onboarding
+            p_guest_id: `guest_${Date.now()}`,
+            p_notification_preferences: {
+              email: true,
+              sms: false,
+              push: true,
+              marketing: false,
+              security_alerts: true
+            },
+            p_privacy_settings: {
+              profile_visible: true,
+              contact_info_visible: false,
+              activity_visible: true,
+              location_sharing: false
+            },
+            p_preferred_language: 'en',
+            p_timezone: 'Asia/Karachi',
+            p_city: null,
+            p_state: null,
+            p_phone: null,
+            p_bio: null
+          });
 
           if (profileError) {
             console.error('OAuth profile creation error:', profileError);
             // Don't fail the login, just log the error
           } else {
+            console.log('Successfully created user profile for:', data.user.id);
             needsOnboarding = true;
           }
         } else {
+          console.log('Existing user found:', existingUser.id);
           // Existing user - check if they need onboarding
           needsOnboarding = !existingUser.onboarding_completed;
           
@@ -111,6 +121,7 @@ export async function GET(request: NextRequest) {
           redirectTo = '/dashboard';
         }
 
+        console.log('Redirecting user to:', redirectTo);
         return redirect(redirectTo);
       }
     } catch (error: any) {
@@ -133,5 +144,6 @@ export async function GET(request: NextRequest) {
   }
 
   // No code parameter, redirect to error
+  console.log('No code parameter in OAuth callback');
   return redirect('/auth/error?message=Invalid%20callback');
 }

@@ -26,7 +26,7 @@ interface ActionResult {
   data?: any;
   fieldErrors?: Record<string, string>;
   redirectUrl?: string;
-  redirectTo?: string; // Add redirectTo to the interface
+  redirectTo?: string;
 }
 
 // Security logging function
