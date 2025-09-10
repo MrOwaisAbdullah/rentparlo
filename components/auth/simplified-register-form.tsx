@@ -10,10 +10,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signUpSimplified, signInWithGoogle } from '@/lib/auth-actions';
+import { signUpSimplified } from '@/lib/auth-actions';
 import { simplifiedRegistrationSchema, type SimplifiedRegistrationFormData } from '@/lib/validations/auth';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { signInWithGoogle as signInWithGoogleAction } from '@/app/auth/login/actions';
 
 interface SimplifiedRegisterFormProps {
   onSuccess?: () => void;
@@ -92,12 +93,22 @@ export function SimplifiedRegisterForm({
       setIsLoading(true);
       setError(null);
       
-      const result = await signInWithGoogle();
+      const result: any = await signInWithGoogleAction();
       
       if (!result.success) {
         setError(result.error || 'Google sign-up failed');
+        return;
       }
-      // If successful, the action will redirect automatically
+      
+      // If successful and we have a redirect URL, redirect the user
+      if (result.redirectUrl) {
+        window.location.href = result.redirectUrl;
+        return;
+      }
+      
+      // If no redirect URL, there might be an issue
+      setError('Failed to initiate Google sign-up. Please try again.');
+      
     } catch (error) {
       setError('Failed to sign up with Google. Please try again.');
       console.error('Google sign-up error:', error);

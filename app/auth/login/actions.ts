@@ -403,7 +403,7 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
 }
 
 // Google OAuth sign-in
-export async function signInWithGoogle(): Promise<ActionResult> {
+export async function signInWithGoogle(): Promise<ActionResult & { redirectUrl?: string }> {
   const clientIP = await getClientIP();
   
   try {
@@ -412,7 +412,7 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=signup`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -424,24 +424,37 @@ export async function signInWithGoogle(): Promise<ActionResult> {
       // await logSecurityEvent('GOOGLE_SIGNIN_FAILED', clientIP, { 
       //   error: error.message
       // });
+      console.error('Supabase OAuth error:', error);
       return {
         success: false,
-        error: 'Failed to initiate Google sign-in. Please try again.'
+        error: `OAuth Error: ${error.message || 'Failed to initiate Google sign-in'}`
       };
     }
 
     if (data.url) {
       // await logSecurityEvent('GOOGLE_SIGNIN_INITIATED', clientIP);
-      redirect(data.url);
+      // Return the URL for the frontend to handle the redirect
+      return {
+        success: true,
+        redirectUrl: data.url
+      };
     }
 
     return {
-      success: true
+      success: false,
+      error: 'Failed to get redirect URL from OAuth provider'
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google sign-in error:', error);
     // await logSecurityEvent('GOOGLE_SIGNIN_ERROR', clientIP, { error: error.message });
+    
+    // Check if this is a redirect error that should not be caught
+    if (error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+      // Rethrow redirect errors so Next.js can handle them properly
+      throw error;
+    }
+    
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.'

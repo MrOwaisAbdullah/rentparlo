@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
       if (data.user) {
         // Check if this is a new user or existing user
-        const { data: existingUser } = await supabase
+        const { data: existingUser, error: fetchError } = await supabase
           .from('users')
           .select('id, onboarding_completed, role, name, phone, city')
           .eq('id', data.user.id)
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         let isNewUser = false;
         let needsOnboarding = false;
 
-        if (!existingUser) {
+        if (fetchError || !existingUser) {
           isNewUser = true;
           // Create user profile for new OAuth user
           const { error: profileError } = await supabase
@@ -95,13 +95,14 @@ export async function GET(request: NextRequest) {
           .from('users')
           .update({ 
             last_login: new Date().toISOString(),
-            login_count: supabase.sql`login_count + 1`
+            login_count: existingUser ? (existingUser.login_count || 0) + 1 : 1
           })
           .eq('id', data.user.id);
 
         // Determine redirect path
         let redirectTo = next;
 
+        // If this is explicitly a signup request OR user needs onboarding
         if (type === 'signup' || needsOnboarding) {
           // New users or users who haven't completed onboarding go to welcome page
           redirectTo = '/auth/welcome';
@@ -112,9 +113,22 @@ export async function GET(request: NextRequest) {
 
         return redirect(redirectTo);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('OAuth callback error:', error);
-      return redirect(`/auth/error?message=${encodeURIComponent('Authentication failed')}`);
+      console.error('Error type:', typeof error);
+      console.error('Error digest:', error?.digest);
+      
+      // Don't catch redirect errors - let them propagate
+      if (error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+        console.log('Redirect error detected, letting it propagate');
+        // Let redirect errors propagate naturally
+        throw error;
+      }
+      
+      // For all other errors, redirect to error page
+      const errorMessage = error?.message || 'Authentication failed';
+      console.log('Redirecting to error page with message:', errorMessage);
+      return redirect(`/auth/error?message=${encodeURIComponent(errorMessage)}`);
     }
   }
 

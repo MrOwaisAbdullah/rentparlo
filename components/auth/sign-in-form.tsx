@@ -90,13 +90,23 @@ export function SignInForm({
       if (provider === 'google') {
         // Import the Google sign-in action dynamically
         try {
-          const { signInWithGoogle } = await import('@/lib/auth-actions');
-          const result = await signInWithGoogle();
+          const { signInWithGoogle } = await import('@/app/auth/login/actions');
+          const result: any = await signInWithGoogle();
           
           if (!result.success) {
             setError(result.error || 'Google sign-in failed');
+            return;
           }
-          // If successful, the action will redirect automatically
+          
+          // If successful and we have a redirect URL, redirect the user
+          if (result.redirectUrl) {
+            window.location.href = result.redirectUrl;
+            return;
+          }
+          
+          // If no redirect URL, there might be an issue
+          setError('Failed to initiate Google sign-in. Please try again.');
+          
         } catch (importError) {
           setError('Google sign-in is not available yet');
         }

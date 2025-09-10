@@ -74,7 +74,7 @@ export function Header({ user }: HeaderProps) {
           <div className="hidden lg:flex items-center space-x-2 flex-1 max-w-2xl mx-8">
             <UniversalSearchBar
               variant="header"
-              placeholder="Try 'DSLR camera', 'Car', 'Laptop'..."
+              placeholder="Try 'DSLR camera', 'Car'..."
               showLocationFilter={true}
               size="sm"
               onSearch={(query, filters) => {

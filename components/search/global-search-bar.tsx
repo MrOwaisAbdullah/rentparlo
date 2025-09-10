@@ -127,7 +127,7 @@ export function GlobalSearchBar({ variant = "inline", className }: GlobalSearchB
       <div className="flex-1 flex items-center space-x-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Try 'DSLR camera', 'Car', 'Laptop'..."
+          placeholder="Try 'DSLR camera', 'Car'..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={handleKeyPress}

@@ -19,6 +19,7 @@ import { sanitizeFormData } from '@/lib/security/sanitization';
 import { cn } from '@/lib/utils';
 import { handleAuthError, validateEmail, validatePhone, validateCNIC, validatePassword, validateUsername } from '@/lib/auth-validation';
 import Image from 'next/image';
+import { signInWithGoogle as signInWithGoogleAction } from '@/app/auth/login/actions';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -318,17 +319,33 @@ export function RegisterForm({
       setIsLoading(true);
       setError(null);
       
-      const result = await signInWithGoogle();
+      const result: any = await signInWithGoogleAction();
       
       if (!result.success) {
         // Use our enhanced error handling
         const errorMessage = handleAuthError({ message: result.error || 'Google sign-up failed', code: result.errorCode });
         setError(errorMessage);
+        return;
       }
-      // If successful, the action will redirect automatically
+      
+      // If successful and we have a redirect URL, redirect the user
+      if (result.redirectUrl) {
+        window.location.href = result.redirectUrl;
+        return;
+      }
+      
+      // If no redirect URL, there might be an issue
+      setError('Failed to initiate Google sign-up. Please try again.');
+      
     } catch (error: any) {
+      // Don't show redirect errors to the user as they're expected
+      if (error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+        // This is a redirect - don't show error to user
+        return;
+      }
+      
       const errorMessage = handleAuthError(error);
-      setError(errorMessage);
+      setError(errorMessage || 'Failed to sign up with Google. Please try again.');
       console.error('Google sign-up error:', error);
     } finally {
       setIsLoading(false);
