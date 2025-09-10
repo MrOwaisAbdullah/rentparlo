@@ -25,6 +25,8 @@ interface ActionResult {
   error?: string;
   data?: any;
   fieldErrors?: Record<string, string>;
+  redirectUrl?: string;
+  redirectTo?: string; // Add redirectTo to the interface
 }
 
 // Security logging function
@@ -362,10 +364,15 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
   try {
     const supabase = await createClient();
     
+    // Use VERCEL_URL in production, fallback to NEXT_PUBLIC_SITE_URL, then localhost
+    const siteUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=signup`,
+        redirectTo: `${siteUrl}/auth/callback?type=signup`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -385,16 +392,28 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
 
     if (data.url) {
       // await logSecurityEvent('GOOGLE_SIGNUP_INITIATED', clientIP);
-      redirect(data.url);
+      // Return the URL for the frontend to handle the redirect
+      return {
+        success: true,
+        redirectUrl: data.url
+      };
     }
 
     return {
-      success: true
+      success: false,
+      error: 'Failed to get redirect URL from OAuth provider'
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google sign-up error:', error);
     // await logSecurityEvent('GOOGLE_SIGNUP_ERROR', clientIP, { error: error.message });
+    
+    // Check if this is a redirect error that should not be caught
+    if (error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+      // Rethrow redirect errors so Next.js can handle them properly
+      throw error;
+    }
+    
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.'
@@ -403,16 +422,21 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
 }
 
 // Google OAuth sign-in
-export async function signInWithGoogle(): Promise<ActionResult & { redirectUrl?: string }> {
+export async function signInWithGoogle(): Promise<ActionResult> {
   const clientIP = await getClientIP();
   
   try {
     const supabase = await createClient();
     
+    // Use VERCEL_URL in production, fallback to NEXT_PUBLIC_SITE_URL, then localhost
+    const siteUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        redirectTo: `${siteUrl}/auth/callback`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -529,10 +553,13 @@ export async function handleOAuthCallback(code: string, provider: string, type?:
       await supabase
         .from('users')
         .update({ 
-          last_login: new Date().toISOString(),
-          login_count: supabase.sql`login_count + 1`
+          last_login: new Date().toISOString()
         })
         .eq('id', data.user.id);
+      
+      // Increment login count separately
+      await supabase
+        .rpc('increment_user_login_count', { user_id: data.user.id });
         
       await logSecurityEvent('OAUTH_LOGIN_SUCCESS', clientIP, { 
         userId: data.user.id,

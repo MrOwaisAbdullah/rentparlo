@@ -1765,8 +1765,188 @@ COMMENT ON FUNCTION public.register_user_with_validation IS 'Registers a new use
 COMMENT ON FUNCTION public.register_seller_with_validation IS 'Registers a new seller with validation and clear error messages';
 
 -- =============================================
--- 12. COMMENTS AND SUMMARY
+-- 12. AUTHENTICATION CONSTRAINTS UPDATE
+-- Adding missing unique constraints and improving validation
 -- =============================================
+
+-- Add unique constraints to users table (excluding NULLs)
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_unique ON public.users (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_phone_unique ON public.users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_guest_id_unique ON public.users (guest_id) WHERE guest_id IS NOT NULL;
+
+-- Add unique constraints to seller_profiles table
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_username_unique ON public.seller_profiles (username);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_cnic_unique ON public.seller_profiles (owner_cnic) WHERE owner_cnic IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_phone_unique ON public.seller_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_email_unique ON public.seller_profiles (email) WHERE email IS NOT NULL;
+
+-- Add format validation constraints
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_cnic_format 
+CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
 
 -- Comments for documentation
 COMMENT ON TABLE public.users IS 'Core user management with authentication';
