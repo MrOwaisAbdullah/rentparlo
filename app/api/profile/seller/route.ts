@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         verification_status: 'pending',
         is_verified: false,
         is_top_seller: false,
-        verification_documents: '{}'
+        verification_documents: {}
       }])
       .select()
       .single();

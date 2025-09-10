@@ -106,7 +106,7 @@ export const sellerRegistrationSchema = z.object({
   
   cnic: z.string()
     .regex(/^\d{5}-\d{7}-\d{1}$/, 'CNIC must be in format XXXXX-XXXXXXX-X')
-    .optional(),
+    .min(1, 'CNIC number is required for sellers'),
   
   address: z.string()
     .min(10, 'Address must be at least 10 characters long')

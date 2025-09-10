@@ -6,7 +6,7 @@ const sanityClient = createSanityClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   useCdn: false,
-  token: process.env.SANITY_API_WRITE_TOKEN!,
+  token: process.env.SANITY_API_TOKEN!,
   apiVersion: '2024-01-01'
 });
 
@@ -60,21 +60,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Sanity
+    // Upload to Sanity with better error handling
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    const asset = await sanityClient.assets.upload('image', uint8Array, {
-      filename: `${user.id}_${documentType}_${Date.now()}.${file.name.split('.').pop()}`,
-      title: `${documentType.replace('_', ' ').toUpperCase()} - ${user.id}`,
-      description: `Verification document for seller ${user.id}`,
-      metadata: {
-        userId: user.id,
-        documentType,
-        originalFileName: file.name,
-        uploadedAt: new Date().toISOString()
-      }
-    });
+    let asset;
+    try {
+      asset = await sanityClient.assets.upload('image', uint8Array, {
+        filename: `${user.id}_${documentType}_${Date.now()}.${file.name.split('.').pop()}`,
+        title: `${documentType.replace('_', ' ').toUpperCase()} - ${user.id}`,
+        description: `Verification document for seller ${user.id}`,
+        metadata: {
+          userId: user.id,
+          documentType,
+          originalFileName: file.name,
+          uploadedAt: new Date().toISOString()
+        }
+      });
+    } catch (uploadError: any) {
+      console.error('Sanity upload error:', uploadError);
+      return NextResponse.json(
+        { error: `Failed to upload document to storage: ${uploadError.message || 'Permission denied'}` },
+        { status: 500 }
+      );
+    }
 
     if (!asset) {
       return NextResponse.json(

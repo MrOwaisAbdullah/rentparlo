@@ -252,7 +252,9 @@ export function WelcomeContent() {
               is_top_seller: false,
               tier: 'basic',
               tier_points: 0,
+              tier_last_updated: new Date().toISOString(),
               verification_status: 'pending',
+              verification_documents: {}, // Initialize as empty object instead of JSON string
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
