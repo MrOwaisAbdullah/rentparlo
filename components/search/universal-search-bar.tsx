@@ -118,7 +118,7 @@ export function UniversalSearchBar({
       case "hero":
         return "e.g., Camera, Car, Wedding Hall...";
       case "header":
-        return "Try 'DSLR camera', 'Car', 'Advertising Banner'...";
+        return "Try 'camera', 'Car', 'Ad'...";
       case "inline":
         return "Search for rental items...";
       default:
@@ -538,6 +538,7 @@ export function UniversalSearchBar({
                 cityPlaceholder="City"
                 areaPlaceholder="Area"
                 className="flex-nowrap"
+                size={size}
               />
             </div>
           )}
@@ -583,6 +584,7 @@ export function UniversalSearchBar({
                 role="combobox"
                 autoComplete="off"
                 aria-describedby={`${searchInputId}-description`}
+                size={size}
               />
 
               <Search
@@ -696,15 +698,25 @@ export function UniversalSearchBar({
                 variant === "hero" || variant === "inline" ? "w-full" : "shrink-0 sm:w-auto"
               )}
               disabled={isSearching}
+              size={size}
               aria-label={
                 isSearching ? "Searching in progress" : "Start search"
               }
-              aria-describedby={
-                isSearching ? `${searchFormId}-status` : undefined
-              }
             >
-              <Search className="w-4 h-4 mr-2" aria-hidden="true" />
-              {isSearching ? "Searching..." : "Search"}
+              {isSearching ? (
+                <>
+                  <InlineLoading
+                    size="sm"
+                    text="Searching"
+                    className="text-primary-foreground"
+                  />
+                </>
+              ) : (
+                <>
+                  <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Search
+                </>
+              )}
             </Button>
 
             {/* Hidden status for screen readers */}

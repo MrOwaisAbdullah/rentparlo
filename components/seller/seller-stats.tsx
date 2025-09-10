@@ -33,8 +33,8 @@ interface SellerStatsProps {
 }
 
 export function SellerStats({ analytics, seller }: SellerStatsProps) {
-  // Handle missing created_at gracefully
-  const joinDate = seller.created_at ? new Date(seller.created_at) : new Date();
+  // Handle missing seller or created_at gracefully
+  const joinDate = (seller && seller.created_at) ? new Date(seller.created_at) : new Date();
   const monthsActive = Math.max(1, Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
   
   // Ensure all analytics values are valid numbers

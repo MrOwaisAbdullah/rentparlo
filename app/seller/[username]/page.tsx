@@ -57,7 +57,17 @@ export default async function SellerPage({ params }: SellerPageProps) {
   }
 
   // Mock analytics data for the seller stats component (in a real app, you would fetch this)
-  const sellerStatsData = {
+  const analyticsData = {
+    totalViews: 1250,
+    totalContactClicks: 89,
+    totalWhatsAppClicks: 156,
+    totalListings: 24,
+    activeListings: 18,
+    avgSessionDuration: 180, // 3 minutes
+    uniqueUsers: 420
+  };
+
+  const sellerData = {
     customer_rating: 4.8,
     total_reviews: 156,
     total_sales: 89,
@@ -103,7 +113,10 @@ export default async function SellerPage({ params }: SellerPageProps) {
           <SellerProfileTabContent value="about">
             <div className="space-y-8">
               {/* Seller Stats */}
-              <SellerStats stats={sellerStatsData} />
+              <SellerStats 
+                analytics={analyticsData}
+                seller={sellerData}
+              />
 
               {/* Additional seller information */}
               <div className="bg-muted/30 rounded-lg p-6">

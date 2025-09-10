@@ -28,6 +28,7 @@ interface ComboboxProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function Combobox({
@@ -37,11 +38,30 @@ export function Combobox({
   placeholder = "Select...",
   searchPlaceholder = "Search...",
   emptyMessage = "No results found",
-  className
+  className,
+  size = "md"
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   const selectedLabel = options.find((option) => option.value === value)?.label || placeholder;
+
+  // Get size classes based on size prop
+  const sizeClasses = React.useMemo(() => {
+    switch (size) {
+      case "sm":
+        return {
+          button: "h-8 text-sm",
+        };
+      case "lg":
+        return {
+          button: "h-12 text-base",
+        };
+      default:
+        return {
+          button: "h-10 text-sm",
+        };
+    }
+  }, [size]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -50,7 +70,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between", className)}
+          className={cn("w-full justify-between", sizeClasses.button, className)}
         >
           <span className="truncate">{selectedLabel}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -98,6 +118,7 @@ interface CityAreaComboboxProps {
   cityPlaceholder?: string;
   areaPlaceholder?: string;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function CityAreaCombobox({
@@ -108,7 +129,8 @@ export function CityAreaCombobox({
   onAreaChange,
   cityPlaceholder = "Select city...",
   areaPlaceholder = "Select area...",
-  className
+  className,
+  size = "md"
 }: CityAreaComboboxProps) {
   const cityOptions = cities.map(city => ({ value: city, label: city }));
   const areaOptions = selectedCity 
@@ -129,6 +151,7 @@ export function CityAreaCombobox({
           placeholder={cityPlaceholder}
           searchPlaceholder="Search cities..."
           emptyMessage="No cities found"
+          size={size}
         />
       </div>
       
@@ -141,6 +164,7 @@ export function CityAreaCombobox({
             placeholder={areaPlaceholder}
             searchPlaceholder="Search areas..."
             emptyMessage="No areas found"
+            size={size}
           />
         </div>
       )}

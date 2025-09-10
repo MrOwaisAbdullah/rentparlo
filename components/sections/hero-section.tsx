@@ -119,13 +119,13 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
       const mobileImageUrl = currentBanner.mobileImage?.asset?.url
         ? getOptimizedImageUrl(
             currentBanner.mobileImage,
-            { width: 1024, height: 340 },
+            { width: 1024, height: 400 },
             defaultBackground
           )
         : currentBanner.image?.asset?.url
           ? getOptimizedImageUrl(
               currentBanner.image,
-              { width: 1024, height: 340 },
+              { width: 1024, height: 400 },
               defaultBackground
             )
           : defaultBackground;
@@ -134,11 +134,11 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
       return mobileImageUrl || defaultBackground;
     }
 
-    // For desktop, use desktop image
+    // For desktop, use desktop image with appropriate dimensions for variable height
     const desktopImageUrl = currentBanner.image?.asset?.url
       ? getOptimizedImageUrl(
           currentBanner.image,
-          { width: 1920, height: 400 },
+          { width: 1920, height: 700 },
           defaultBackground
         )
       : defaultBackground;
@@ -162,7 +162,8 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
 
   return (
     <section className="relative bg-muted/20">
-      <div className="relative h-[400px] bg-cover bg-center bg-no-repeat overflow-hidden">
+      {/* Hero Banner with Responsive Height - Optimized for search bar visibility */}
+      <div className="relative h-[350px] md:h-[450px] lg:h-[calc(100vh-250px)] min-h-[350px] max-h-[700px] bg-cover bg-center bg-no-repeat overflow-visible">
         {/* Banner Slider with Smooth Animations */}
         <AnimatePresence mode="wait">
           {currentBanner ? (
@@ -178,10 +179,10 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
                 src={getImageUrl()}
                 alt={getImageAlt()}
                 fill
-                className="object-cover"
+                className="object-cover object-center"
                 priority
               />
-              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute inset-0 bg-black/20"></div>
 
               <div className="container mx-auto px-4 relative z-10 h-full flex flex-col justify-center">
                 <div className="max-w-4xl mx-auto text-center text-white">
@@ -189,7 +190,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    className="text-3xl md:text-5xl font-bold mb-4"
+                    className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4"
                   >
                     {currentBanner.title}
                   </motion.h1>
@@ -197,7 +198,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    className="text-lg md:text-xl mb-8 text-white/90"
+                    className="text-lg md:text-xl lg:text-2xl mb-8 text-white/90"
                   >
                     {currentBanner.subtitle}
                   </motion.p>
@@ -214,14 +215,14 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
                 className="w-full h-full bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: `url(${defaultBackground})` }}
               />
-              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute inset-0 bg-black/20"></div>
 
               <div className="container mx-auto px-4 relative z-10 h-full flex flex-col justify-center">
                 <div className="max-w-4xl mx-auto text-center text-white">
-                  <h1 className="text-3xl md:text-5xl font-bold mb-4">
+                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">
                     Find Top Rental Items in Pakistan
                   </h1>
-                  <p className="text-lg md:text-xl mb-8 text-white/90">
+                  <p className="text-lg md:text-xl lg:text-2xl mb-8 text-white/90">
                     Search the best rental items in Pakistan for all your
                     temporary needs.
                   </p>
@@ -236,7 +237,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
           <>
             <button
               onClick={goToPrevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-all duration-300"
+              className="absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer z-20 hidden md:block bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-all duration-300"
               aria-label="Previous slide"
             >
               <svg
@@ -256,7 +257,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
             </button>
             <button
               onClick={goToNextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 hidden md:block bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-all duration-300"
+              className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer z-20 hidden md:block bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-all duration-300"
               aria-label="Next slide"
             >
               <svg
@@ -279,12 +280,12 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
 
         {/* Pagination Dots */}
         {activeBanners.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
             {activeBanners.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${
                   index === currentIndex ? "bg-white" : "bg-white/50"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
@@ -292,21 +293,22 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
             ))}
           </div>
         )}
+
+        {/* Hero Search Bar - Fully visible and overlapping with proper spacing */}
+        <div className="container mx-auto px-4 absolute -bottom-24 lg:bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/3 z-30 w-full max-w-6xl">
+          <UniversalSearchBar
+            variant="hero"
+            placeholder="e.g., Camera, Car, Wedding Hall..."
+            showLocationFilter={true}
+            size="lg"
+            className="max-w-4xl mx-auto shadow-xl"
+          />
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 -mt-16 relative z-30">
-        <UniversalSearchBar
-          variant="hero"
-          placeholder="e.g., Camera, Car, Wedding Hall..."
-          showLocationFilter={true}
-          size="lg"
-          className="max-w-4xl mx-auto"
-        />
-      </div>
-
-      {/* Bottom Banner - Leaderboard */}
-      <div className="w-full bg-background">
-        <div className="container mx-auto px-4 pt-6 pb-4">
+      {/* Bottom Banner - Leaderboard with proper spacing */}
+      <div className="w-full bg-background pt-56 lg:pt-32">
+        <div className="container mx-auto px-4 pt-8 pb-6">
           <AdBanner 
             placement="homepage-bottom" 
             className="mx-auto w-full" 
