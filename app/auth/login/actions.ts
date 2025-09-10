@@ -369,6 +369,9 @@ export async function signUpWithGoogle(): Promise<ActionResult> {
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     
+    console.log('OAuth signup site URL:', siteUrl);
+    console.log('Full signup redirect URL:', `${siteUrl}/auth/callback?type=signup`);
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -432,6 +435,9 @@ export async function signInWithGoogle(): Promise<ActionResult> {
     const siteUrl = process.env.VERCEL_URL 
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    
+    console.log('OAuth site URL:', siteUrl);
+    console.log('Full redirect URL:', `${siteUrl}/auth/callback`);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
