@@ -256,19 +256,6 @@ export function SimplifiedRegisterForm({
           </>
         )}
 
-        {/* Sign In Link */}
-        <div className="text-center pt-2">
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Already have an account?{' '}
-            <Link
-              href="/auth/login"
-              className="text-primary font-medium hover:underline transition-all duration-200 hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 py-0.5"
-              tabIndex={isLoading ? -1 : 0}
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
       </form>
     </div>
   );

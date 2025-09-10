@@ -14,7 +14,8 @@ import {
   logAuthEvent,
   isUsernameAvailable 
 } from './supabase-queries'
-import { handleAuthError } from '@/lib/auth-validation';
+import { headers } from 'next/headers'
+import { handleAuthError } from '@/lib/auth-validation'
 
 interface AuthResult {
   success: boolean
@@ -145,9 +146,12 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
         undefined,
         authError.message
       )
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(authError);
       return {
         success: false,
-        error: authError.message
+        error: errorMessage,
+        errorCode: authError.code
       }
     }
 
@@ -300,9 +304,12 @@ export async function signUpSimplified(formData: SimplifiedSignUpData): Promise<
         undefined,
         authError.message
       )
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(authError);
       return {
         success: false,
-        error: authError.message
+        error: errorMessage,
+        errorCode: authError.code
       }
     }
 
@@ -455,9 +462,12 @@ export async function signIn(formData: SignInData, redirectTo?: string): Promise
         undefined,
         authError.message
       )
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(authError);
       return {
         success: false,
-        error: authError.message
+        error: errorMessage,
+        errorCode: authError.code
       }
     }
 
@@ -527,9 +537,12 @@ export async function signOut(): Promise<AuthResult> {
     const { error } = await supabase.auth.signOut()
     
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -573,9 +586,12 @@ export async function resetPassword(email: string): Promise<AuthResult> {
     })
 
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -612,9 +628,12 @@ export async function updatePassword(newPassword: string): Promise<AuthResult> {
     })
 
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -657,9 +676,12 @@ export async function resendVerification(email: string): Promise<AuthResult> {
     })
 
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -697,9 +719,12 @@ export async function verifyEmailAndCompleteOnboarding(userId: string): Promise<
       .single()
 
     if (userError) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(userError);
       return {
         success: false,
-        error: userError.message
+        error: errorMessage,
+        errorCode: userError.code
       }
     }
 
@@ -757,9 +782,12 @@ export async function sendCustomVerificationEmail(email: string): Promise<AuthRe
       .single()
 
     if (userError) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(userError);
       return {
         success: false,
-        error: 'User not found'
+        error: errorMessage,
+        errorCode: userError.code
       }
     }
 
@@ -778,9 +806,12 @@ export async function sendCustomVerificationEmail(email: string): Promise<AuthRe
     })
 
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -817,9 +848,12 @@ export async function signInWithGoogle(): Promise<AuthResult> {
     })
 
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -871,9 +905,12 @@ export async function signInWithGoogleEnhanced(): Promise<AuthResult> {
         error.message
       )
       
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 
@@ -972,9 +1009,12 @@ export async function refreshSession(): Promise<AuthResult> {
     const { data, error } = await supabase.auth.refreshSession()
     
     if (error) {
+      // Use enhanced error handling
+      const errorMessage = handleAuthError(error);
       return {
         success: false,
-        error: error.message
+        error: errorMessage,
+        errorCode: error.code
       }
     }
 

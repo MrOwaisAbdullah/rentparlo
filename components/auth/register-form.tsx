@@ -17,6 +17,7 @@ import { uploadProfileImage } from '@/app/auth/upload-image/actions';
 import { type RegistrationFormData, getRegistrationSchema } from '@/lib/validations/auth';
 import { sanitizeFormData } from '@/lib/security/sanitization';
 import { cn } from '@/lib/utils';
+import { handleAuthError, validateEmail, validatePhone, validateCNIC, validatePassword, validateUsername } from '@/lib/auth-validation';
 import Image from 'next/image';
 
 interface RegisterFormProps {
@@ -285,7 +286,9 @@ export function RegisterForm({
 
       if (!result.success) {
         if (result.error) {
-          setError(result.error);
+          // Use our enhanced error handling
+          const errorMessage = handleAuthError({ message: result.error, code: result.errorCode });
+          setError(errorMessage);
         }
       } else {
         // If successful, handle redirect or success callback
@@ -300,8 +303,9 @@ export function RegisterForm({
           }
         }
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      const errorMessage = handleAuthError(err);
+      setError(errorMessage);
       console.error('Registration error:', err);
     } finally {
       setIsLoading(false);
@@ -317,11 +321,14 @@ export function RegisterForm({
       const result = await signInWithGoogle();
       
       if (!result.success) {
-        setError(result.error || 'Google sign-up failed');
+        // Use our enhanced error handling
+        const errorMessage = handleAuthError({ message: result.error || 'Google sign-up failed', code: result.errorCode });
+        setError(errorMessage);
       }
       // If successful, the action will redirect automatically
-    } catch (error) {
-      setError('Failed to sign up with Google. Please try again.');
+    } catch (error: any) {
+      const errorMessage = handleAuthError(error);
+      setError(errorMessage);
       console.error('Google sign-up error:', error);
     } finally {
       setIsLoading(false);

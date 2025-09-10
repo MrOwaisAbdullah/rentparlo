@@ -55,7 +55,7 @@ export function AdBanner({
   return (
     <Card
       className={cn(
-        "overflow-hidden cursor-pointer hover:shadow-md transition-shadow py-0",
+        "overflow-hidden cursor-pointer hover:shadow-md transition-shadow py-0 mb-4",
         className
       )}
     >

@@ -1,0 +1,19 @@
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Enhanced authentication constraints for email, phone, CNIC, and username uniqueness.
+- Format validation for Pakistani phone numbers and CNIC numbers.
+- Helper functions for checking user and seller uniqueness.
+- Enhanced registration functions with validation and clear error messages.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow. It also ensures data integrity by enforcing uniqueness constraints on critical user information.
+*/
