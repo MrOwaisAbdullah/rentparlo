@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const userId = user?.id
     
     // Get IP address and user agent
-    const headersList = headers()
+    const headersList = await headers()
     const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || ''
     const userAgent = headersList.get('user-agent') || ''
     const referrer = headersList.get('referer') || ''
@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
       .from('banner_clicks')
       .insert([{
         banner_id: bannerId,
-        placement: placement,
-        banner_size: bannerSize,
-        user_id: userId,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        referrer: referrer,
-        target_url: targetUrl,
+        placement: placement || null, // Explicitly handle null values
+        banner_size: bannerSize || null, // Explicitly handle null values
+        user_id: userId || null, // Explicitly handle null values
+        ip_address: ipAddress || null, // Explicitly handle null values
+        user_agent: userAgent || null, // Explicitly handle null values
+        referrer: referrer || null, // Explicitly handle null values
+        target_url: targetUrl || null, // Explicitly handle null values
         ...trackingData,
         created_at: new Date().toISOString()
       }])

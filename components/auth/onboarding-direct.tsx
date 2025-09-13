@@ -29,6 +29,7 @@ const onboardingSchema = z.object({
   cnic: z.string().regex(/^\d{5}-\d{7}-\d{1}$/, 'CNIC must be in format XXXXX-XXXXXXX-X').optional().or(z.string().length(0)),
   address: z.string().min(10, 'Address must be at least 10 characters').optional().or(z.string().length(0)),
   whatsapp: z.string().regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani WhatsApp number').optional().or(z.string().length(0)),
+  referralCode: z.string().optional(),
   terms: z.boolean().refine(val => val === true, 'You must accept the terms')
 });
 
@@ -122,6 +123,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       cnic: '',
       address: '',
       whatsapp: '',
+      referralCode: '',
       terms: false
     }
   });
@@ -202,6 +204,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         cnic: '',
         address: '',
         whatsapp: '',
+        referralCode: '',
         terms: false
       };
       
@@ -322,6 +325,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           city: data.city || '',
           area: data.area || null,
           email: user.email,
+          referral_code: data.referralCode || null,
           verification_status: verificationDocuments.length > 0 ? 'under_review' : 'pending'
         };
         
@@ -613,6 +617,15 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 </div>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="referralCode">Coupon Code (Optional)</Label>
+              <Input
+                id="referralCode"
+                {...register('referralCode')}
+                placeholder="Enter coupon or referral code"
+              />
+            </div>
 
             <div className={`flex items-start space-x-2 ${!terms && error ? 'animate-pulse' : ''}`}>
               <div className="flex items-center h-5">

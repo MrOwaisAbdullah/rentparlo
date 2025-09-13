@@ -278,6 +278,7 @@ export interface AnalyticsEvent {
   os?: string;
   browser?: string;
   session_id: string;
+  metadata?: Record<string, any>; // Add metadata field for storing additional event data
   created_at: string;
 }
 

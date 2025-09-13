@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { SafetyNoticeModal } from '@/components/seller/safety-notice-modal';
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface MapButtonProps {
   locationUrl: string;
@@ -23,8 +24,22 @@ export function MapButton({
     setShowSafetyModal(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setShowSafetyModal(false);
+    
+    // Track map click
+    try {
+      await trackAnalyticsEventClient({
+        event_type: 'map_click',
+        metadata: { 
+          location_url: locationUrl,
+          seller_name: sellerName 
+        }
+      });
+    } catch (error) {
+      console.error('Error tracking map click:', error);
+    }
+    
     if (onClick) onClick();
     window.open(locationUrl, '_blank');
   };

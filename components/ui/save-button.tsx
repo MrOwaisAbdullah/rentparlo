@@ -5,6 +5,7 @@ import { Listing } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackAnalyticsEventClient } from "@/lib/supabase-queries-client";
 
 interface SaveButtonProps {
   listing: Listing;
@@ -16,9 +17,20 @@ export function SaveButton({ listing, className }: SaveButtonProps) {
 
   const isSaved = state.savedItems.some((item) => item._id === listing._id);
 
-  const handleToggleSave = (e: React.MouseEvent) => {
+  const handleToggleSave = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a link
     e.stopPropagation();
+
+    // Track the save event
+    try {
+      await trackAnalyticsEventClient({
+        event_type: 'save',
+        listing_id: listing._id,
+        metadata: { action: isSaved ? 'remove' : 'add' }
+      });
+    } catch (error) {
+      console.error('Error tracking save event:', error);
+    }
 
     if (isSaved) {
       dispatch({ type: "REMOVE_FROM_SAVED_ITEMS", id: listing._id });

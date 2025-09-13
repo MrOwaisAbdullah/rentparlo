@@ -11,6 +11,7 @@ import { getSanityImageUrl } from "@/sanity/lib/image"
 import { Listing, ListingImage, ListingBadge } from "@/types"
 import { WhatsAppButton } from "@/components/seller/whatsapp-button"
 import { SaveButton } from "@/components/ui/save-button"
+import { trackAnalyticsEventClient } from "@/lib/supabase-queries-client"
 
 interface ListingCardProps {
   // Original individual props
@@ -255,7 +256,21 @@ export function ListingCard({
     const swiperImageUrl = listing?.images?.[0] ? getSanityImageUrl(listing.images[0]) : "/placeholder.svg";
 
     return (
-      <Link href={`/listing/${listing?.slug?.current || listing?._id}`} className="flex-shrink-0 block transform transition-transform duration-300 hover:-translate-y-1">
+      <Link href={`/listing/${listing?.slug?.current || listing?._id}`} className="flex-shrink-0 block transform transition-transform duration-300 hover:-translate-y-1"
+        onClick={async (e) => {
+          // Track listing click
+          if (listing?._id) {
+            try {
+              await trackAnalyticsEventClient({
+                event_type: 'listing_click',
+                listing_id: listing._id
+              });
+            } catch (error) {
+              console.error('Error tracking listing click:', error);
+            }
+          }
+        }}
+      >
         <Card className="w-72 sm:w-80 h-full py-0 gap-1 bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col transform hover:-translate-y-1 hover:border-primary/10 hover:ring-1 hover:ring-primary/20">
           <div className="relative">
             <div className="aspect-[4/3] overflow-hidden">
@@ -415,6 +430,20 @@ export function ListingCard({
                     e.preventDefault();
                     e.stopPropagation();
                     const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
+                    
+                    // Track the share event
+                    try {
+                      await trackAnalyticsEventClient({
+                        event_type: 'share',
+                        listing_id: listing?._id,
+                        metadata: { 
+                          method: navigator.share ? 'native' : 'clipboard',
+                          url: url
+                        }
+                      });
+                    } catch (error) {
+                      console.error('Error tracking share event:', error);
+                    }
                     
                     if (navigator.share) {
                       try {

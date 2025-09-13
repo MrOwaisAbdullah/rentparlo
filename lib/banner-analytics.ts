@@ -6,8 +6,8 @@ import { createClient } from '@/utils/supabase/client';
 
 interface BannerImpressionData {
   banner_id: string;
-  placement: string;
-  banner_size: string;
+  placement?: string;
+  banner_size?: string;
   user_id?: string;
   guest_id?: string;
   session_ref?: string;

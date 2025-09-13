@@ -363,6 +363,7 @@ export async function trackAnalyticsEvent(eventData: Partial<AnalyticsEvent> & {
   ip_address?: string;
   user_agent?: string;
   referrer?: string;
+  metadata?: Record<string, any>; // Add metadata support
 }): Promise<boolean> {
   try {
     const supabase = await createClient() // Use server client for proper authentication
@@ -391,28 +392,41 @@ export async function trackAnalyticsEvent(eventData: Partial<AnalyticsEvent> & {
     // For server-side tracking, we want to ensure we always have a guest_id
     // If we have a user_id, we still want to track the guest_id for continuity
     let guestId = eventData.guest_id;
+    let userId = eventData.user_id;
     
-    // If we have a user_id but no guest_id, try to get it from the user profile
-    if (eventData.user_id && !guestId) {
+    // If we have a user_id, check if the user exists in our database
+    if (userId) {
       try {
-        const { data: userProfile, error: userError } = await supabase
+        const { data: userExists, error: userError } = await supabase
           .from('users')
-          .select('guest_id')
-          .eq('id', eventData.user_id)
+          .select('id, guest_id')
+          .eq('id', userId)
           .single();
         
-        if (!userError && userProfile?.guest_id) {
-          guestId = userProfile.guest_id;
+        if (userError || !userExists) {
+          // User doesn't exist, nullify the user_id
+          userId = null;
+        } else if (userExists.guest_id) {
+          // Use the guest_id from the user profile
+          guestId = userExists.guest_id;
         }
       } catch (error) {
-        console.warn('Could not fetch user profile guest_id:', error);
+        console.warn('Could not verify user existence:', error);
+        // If we can't verify, nullify the user_id to avoid FK constraint errors
+        userId = null;
       }
+    }
+    
+    // If we still don't have a guest_id, generate one
+    if (!guestId) {
+      guestId = 'guest-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     }
     
     const { error } = await supabase
       .from('analytics_events')
       .insert({
         ...eventData,
+        user_id: userId, // Use verified user_id or null
         guest_id: guestId, // Ensure guest_id is always set
         session_ref: sessionId,
         created_at: new Date().toISOString()

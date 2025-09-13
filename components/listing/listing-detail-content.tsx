@@ -141,6 +141,20 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
     const url = window.location.href;
     let copied = false;
     
+    // Track the share event
+    try {
+      await trackAnalyticsEventClient({
+        event_type: 'share',
+        listing_id: listing._id,
+        metadata: { 
+          method: navigator.share ? 'native' : 'clipboard',
+          url: url
+        }
+      });
+    } catch (error) {
+      console.error('Error tracking share event:', error);
+    }
+    
     if (navigator.share) {
       try {
         await navigator.share({

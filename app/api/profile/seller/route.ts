@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
       area,
       address_line1,
       owner_cnic,
-      whatsapp
+      whatsapp,
+      referral_code
     } = body;
 
     // Validate required fields
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
         verification_status: 'pending',
         is_verified: false,
         is_top_seller: false,
+        referral_code: referral_code || null,
         verification_documents: {}
       }])
       .select()

@@ -46,7 +46,7 @@ CREATE TABLE public.users (
 CREATE TABLE public.event_sessions (
   session_id UUID PRIMARY KEY,
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  guest_id UUID,
+  guest_id TEXT,
   ip_address INET,
   user_agent TEXT,
   referrer TEXT,
@@ -65,7 +65,7 @@ CREATE TABLE public.event_sessions (
 -- GUEST TRACKING
 CREATE TABLE public.user_guest_tracking (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  guest_id UUID NOT NULL,
+  guest_id TEXT NOT NULL,
   ip_address INET,
   user_agent TEXT,
   first_seen TIMESTAMPTZ DEFAULT NOW(),
@@ -102,6 +102,7 @@ CREATE TABLE public.seller_profiles (
   response_time_avg INTEGER DEFAULT 0,
   customer_rating DECIMAL(3,2) DEFAULT 0.0,
   total_reviews INTEGER DEFAULT 0,
+  referral_code TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -121,7 +122,7 @@ CREATE TABLE public.seller_tier_history (
 -- SUBSCRIPTION PACKAGES
 CREATE TABLE public.subscription_packages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   price NUMERIC(10,2) NOT NULL,
   currency TEXT DEFAULT 'PKR',
   max_listings INTEGER NOT NULL,
@@ -145,16 +146,17 @@ CREATE TABLE public.user_subscriptions (
   transaction_id TEXT,
   payment_method TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, package_id)
 );
 
 -- ANALYTICS EVENTS
 CREATE TABLE public.analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   listing_id TEXT, -- Made nullable to allow profile view tracking
-  event_type TEXT NOT NULL CHECK (event_type IN ('view', 'contact_click', 'WhatsApp_click', 'share', 'save', 'search')),
+  event_type TEXT NOT NULL CHECK (event_type IN ('view', 'profile_view', 'contact_click', 'WhatsApp_click', 'map_click', 'banner_impression', 'banner_click', 'search', 'share', 'save', 'listing_click')),
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  guest_id UUID,
+  guest_id TEXT,
   session_ref UUID REFERENCES public.event_sessions(session_id) ON DELETE SET NULL,
   ip_address INET,
   user_agent TEXT,
@@ -169,10 +171,10 @@ CREATE TABLE public.analytics_events (
 CREATE TABLE public.banner_impressions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   banner_id TEXT NOT NULL, -- Sanity document ID
-  placement TEXT NOT NULL, -- Placement location (homepage-top, category-sidebar, etc.)
-  banner_size TEXT NOT NULL, -- Size of the banner (leaderboard, medium-rectangle, etc.)
+  placement TEXT, -- Placement location (homepage-top, category-sidebar, etc.)
+  banner_size TEXT, -- Size of the banner (leaderboard, medium-rectangle, etc.)
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  guest_id UUID, -- For anonymous users
+  guest_id TEXT, -- For anonymous users
   session_ref UUID REFERENCES public.event_sessions(session_id) ON DELETE SET NULL,
   ip_address INET,
   user_agent TEXT,
@@ -196,7 +198,7 @@ CREATE TABLE public.banner_clicks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   banner_id TEXT NOT NULL, -- Sanity document ID
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  guest_id UUID,
+  guest_id TEXT,
   session_ref UUID REFERENCES public.event_sessions(session_id) ON DELETE SET NULL,
   location TEXT,
   device_type TEXT CHECK (device_type IN ('mobile', 'tablet', 'desktop')),
@@ -312,6 +314,8 @@ CREATE INDEX idx_tier_history_seller ON public.seller_tier_history(seller_id);
 CREATE INDEX idx_subscriptions_user ON public.user_subscriptions(user_id);
 CREATE INDEX idx_subscriptions_status ON public.user_subscriptions(status);
 CREATE INDEX idx_subscriptions_active ON public.user_subscriptions(user_id) WHERE status = 'active';
+CREATE UNIQUE INDEX idx_subscription_packages_name ON public.subscription_packages(name);
+CREATE UNIQUE INDEX idx_user_subscriptions_user_package ON public.user_subscriptions(user_id, package_id);
 
 -- Analytics indexes
 CREATE INDEX idx_analytics_listing ON public.analytics_events(listing_id);
@@ -469,6 +473,9 @@ CREATE POLICY "Admins can view banner clicks" ON public.banner_clicks
 CREATE POLICY "Admins can manage banner impressions" ON public.banner_impressions
   FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Anyone can track banner impressions" ON public.banner_impressions
+  FOR INSERT TO authenticated, anon
+  WITH CHECK (true);
 
 -- Daily performance policies
 CREATE POLICY "Admins can manage banner performance daily" ON public.banner_performance_daily
@@ -501,7 +508,7 @@ $ LANGUAGE plpgsql;
 -- Session management function
 CREATE OR REPLACE FUNCTION public.get_or_create_session(
   p_user_id UUID DEFAULT NULL,
-  p_guest_id UUID DEFAULT NULL,
+  p_guest_id TEXT DEFAULT NULL,
   p_ip_address INET DEFAULT NULL,
   p_user_agent TEXT DEFAULT NULL,
   p_referrer TEXT DEFAULT NULL
@@ -551,7 +558,7 @@ $ LANGUAGE plpgsql SECURITY DEFINER;
 -- Link guest to user
 CREATE OR REPLACE FUNCTION public.link_guest_to_user(
   p_user_id UUID,
-  p_guest_id UUID,
+  p_guest_id TEXT,
   p_ip_address INET DEFAULT NULL,
   p_user_agent TEXT DEFAULT NULL
 )

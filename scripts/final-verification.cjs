@@ -4,11 +4,11 @@
  */
 
 // Simple check that doesn't require external dependencies
-async function verifyFileSystem() {
+function verifyFileSystem() {
   try {
-    // Use dynamic import for fs
-    const fsPromises = await import('fs/promises');
-    const path = await import('path');
+    // Use require for fs in CommonJS
+    const fs = require('fs');
+    const path = require('path');
     
     console.log('🔍 Verifying Analytics Tracking System Implementation...\n');
     
@@ -25,12 +25,11 @@ async function verifyFileSystem() {
     let allFilesExist = true;
     
     for (const file of criticalFiles) {
-      const fullPath = path.default.join(process.cwd(), file);
-      try {
-        await fsPromises.access(fullPath);
-        console.log(`✅ ${file}`);
-      } catch (error) {
-        console.log(`❌ ${file} - MISSING`);
+      const fullPath = path.join(__dirname, '..', file);
+      if (fs.existsSync(fullPath)) {
+        console.log('✅ ' + file);
+      } else {
+        console.log('❌ ' + file + ' - MISSING');
         allFilesExist = false;
       }
     }
@@ -58,16 +57,11 @@ async function verifyFileSystem() {
   }
 }
 
-// Run verification if script is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  verifyFileSystem()
-    .then(success => {
-      process.exit(success ? 0 : 1);
-    })
-    .catch(error => {
-      console.error('Error during verification:', error);
-      process.exit(1);
-    });
-}
+// Export for use as module
+module.exports = { verifyFileSystem };
 
-export { verifyFileSystem };
+// Run verification if script is executed directly (CommonJS)
+if (require.main === module) {
+  const success = verifyFileSystem();
+  process.exit(success ? 0 : 1);
+}

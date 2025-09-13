@@ -492,15 +492,22 @@ export function EnhancedAdBanner({
       // Track detailed impression analytics
       const trackingData = initializeBannerTrackingData(
         banner._id,
-        placement,
-        banner.size || "leaderboard",
+        placement, // This should always be provided as it's a required prop
+        banner.size || "leaderboard", // Fallback to default size
         userId,
         sessionId
       );
       
-      // Add user ID and session ID if available
+      // Add user ID and session ID if available (these are already set by initializeBannerTrackingData)
+      // But let's make sure they're set correctly
       if (userId) trackingData.user_id = userId;
       if (sessionId) trackingData.session_ref = sessionId;
+      
+      // Add guest ID if available
+      if (typeof window !== 'undefined') {
+        const guestId = localStorage.getItem('rentparlo_guest_id');
+        if (guestId) trackingData.guest_id = guestId;
+      }
       
       trackBannerImpression(trackingData);
     }
@@ -518,14 +525,20 @@ export function EnhancedAdBanner({
       // Track detailed click analytics
       const trackingData = initializeBannerTrackingData(
         banner._id,
-        placement,
-        banner.size || "leaderboard",
+        placement, // This should always be provided as it's a required prop
+        banner.size || "leaderboard", // Fallback to default size
         userId,
         sessionId
       );
       
       // Add click-specific data
-      trackingData.page_url = banner.targetUrl;
+      trackingData.target_url = banner.targetUrl;
+      
+      // Add guest ID if available
+      if (typeof window !== 'undefined') {
+        const guestId = localStorage.getItem('rentparlo_guest_id');
+        if (guestId) trackingData.guest_id = guestId;
+      }
       
       trackBannerClick(trackingData);
 

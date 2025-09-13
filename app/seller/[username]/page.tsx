@@ -57,7 +57,7 @@ async function trackProfileView(sellerId: string) {
     // Track the profile view
     await trackAnalyticsEvent({
       event_type: 'profile_view',
-      user_id: sellerId,
+      metadata: { seller_id: sellerId },
       referrer: referer,
       user_agent: userAgent
     });

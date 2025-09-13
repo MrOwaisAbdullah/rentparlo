@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Phone } from 'lucide-react';
 import { SafetyNoticeModal } from '@/components/seller/safety-notice-modal';
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface CallButtonProps {
   phoneNumber: string;
@@ -23,8 +24,23 @@ export function CallButton({
     setShowSafetyModal(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setShowSafetyModal(false);
+    
+    // Track call click
+    try {
+      await trackAnalyticsEventClient({
+        event_type: 'contact_click',
+        metadata: { 
+          contact_method: 'phone',
+          phone_number: phoneNumber,
+          seller_name: sellerName 
+        }
+      });
+    } catch (error) {
+      console.error('Error tracking call click:', error);
+    }
+    
     if (onClick) onClick();
     window.location.href = `tel:${phoneNumber}`;
   };

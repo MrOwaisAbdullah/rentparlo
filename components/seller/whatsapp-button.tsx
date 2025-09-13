@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { SafetyNoticeModal } from '@/components/seller/safety-notice-modal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 
 interface WhatsAppButtonProps {
   phoneNumber: string;
@@ -29,16 +30,40 @@ export const WhatsAppButton = forwardRef<HTMLButtonElement, WhatsAppButtonProps>
   const whatsappPhone = cleanPhone.startsWith('92') ? cleanPhone : `92${cleanPhone.replace(/^0/, '')}`;
   const encodedMessage = encodeURIComponent(message.replace('{sellerName}', sellerName));
 
-  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleButtonClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    
+    // Track WhatsApp click
+    try {
+      // We'll track this when the user confirms in the safety modal
+    } catch (error) {
+      console.error('Error tracking WhatsApp click:', error);
+    }
+    
     setShowSafetyModal(true);
     if (onClick) {
       onClick(e);
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setShowSafetyModal(false);
+    
+    // Track WhatsApp click
+    try {
+      // You'll need to pass listingId and sellerId to track this properly
+      // For now, we'll just track the event type
+      await trackAnalyticsEventClient({
+        event_type: 'WhatsApp_click',
+        metadata: { 
+          phone_number: whatsappPhone,
+          seller_name: sellerName 
+        }
+      });
+    } catch (error) {
+      console.error('Error tracking WhatsApp click:', error);
+    }
+    
     window.open(`https://wa.me/${whatsappPhone}?text=${encodedMessage}`, '_blank');
   };
 

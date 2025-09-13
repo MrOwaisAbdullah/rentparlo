@@ -34,7 +34,7 @@ const SAMPLE_USERS = [
     email: 'admin@rentparlo.pk',
     password: 'Admin123!',
     name: 'Admin User',
-    phone: '+923001234567',
+    phone: '03001234567',
     role: 'admin'
   },
   // Sample Sellers
@@ -43,7 +43,7 @@ const SAMPLE_USERS = [
     email: 'ahmed@photography.com',
     password: 'Seller123!',
     name: 'Ahmed Khan',
-    phone: '+923001234568',
+    phone: '03001234568',
     role: 'seller'
   },
   {
@@ -51,7 +51,7 @@ const SAMPLE_USERS = [
     email: 'sara@electronics.com',
     password: 'Seller123!',
     name: 'Sara Ahmed',
-    phone: '+923001234569',
+    phone: '03001234569',
     role: 'seller'
   },
   {
@@ -59,7 +59,7 @@ const SAMPLE_USERS = [
     email: 'ali@cars.com',
     password: 'Seller123!',
     name: 'Ali Hassan',
-    phone: '+923001234570',
+    phone: '03001234570',
     role: 'seller'
   },
   {
@@ -67,7 +67,7 @@ const SAMPLE_USERS = [
     email: 'fatima@medical.com',
     password: 'Seller123!',
     name: 'Fatima Sheikh',
-    phone: '+923001234571',
+    phone: '03001234571',
     role: 'seller'
   },
   {
@@ -75,7 +75,7 @@ const SAMPLE_USERS = [
     email: 'hassan@tools.com',
     password: 'Seller123!',
     name: 'Hassan Malik',
-    phone: '+923001234572',
+    phone: '03001234572',
     role: 'seller'
   },
   // Sample Regular Users
@@ -84,7 +84,7 @@ const SAMPLE_USERS = [
     email: 'user1@example.com',
     password: 'User123!',
     name: 'Muhammad Raza',
-    phone: '+923001234573',
+    phone: '03001234573',
     role: 'user'
   },
   {
@@ -92,7 +92,7 @@ const SAMPLE_USERS = [
     email: 'user2@example.com',
     password: 'User123!',
     name: 'Ayesha Khan',
-    phone: '+923001234574',
+    phone: '03001234574',
     role: 'user'
   },
   {
@@ -100,7 +100,7 @@ const SAMPLE_USERS = [
     email: 'user3@example.com',
     password: 'User123!',
     name: 'Omar Sheikh',
-    phone: '+923001234575',
+    phone: '03001234575',
     role: 'user'
   }
 ]
@@ -213,7 +213,7 @@ async function insertSellerProfiles() {
       city: 'Karachi',
       state: 'Sindh',
       country: 'Pakistan',
-      phone: '+923001234568',
+      phone: '03001234568',
       email: 'ahmed@photography.com',
       is_verified: true,
       is_top_seller: true,
@@ -232,7 +232,7 @@ async function insertSellerProfiles() {
       city: 'Lahore',
       state: 'Punjab',
       country: 'Pakistan',
-      phone: '+923001234569',
+      phone: '03001234569',
       email: 'sara@electronics.com',
       is_verified: true,
       is_top_seller: false,
@@ -251,7 +251,7 @@ async function insertSellerProfiles() {
       city: 'Islamabad',
       state: 'ICT',
       country: 'Pakistan',
-      phone: '+923001234570',
+      phone: '03001234570',
       email: 'ali@cars.com',
       is_verified: true,
       is_top_seller: true,
@@ -270,7 +270,7 @@ async function insertSellerProfiles() {
       city: 'Karachi',
       state: 'Sindh',
       country: 'Pakistan',
-      phone: '+923001234571',
+      phone: '03001234571',
       email: 'fatima@medical.com',
       is_verified: true,
       is_top_seller: false,
@@ -289,7 +289,7 @@ async function insertSellerProfiles() {
       city: 'Lahore',
       state: 'Punjab',
       country: 'Pakistan',
-      phone: '+923001234572',
+      phone: '03001234572',
       email: 'hassan@tools.com',
       is_verified: true,
       is_top_seller: false,
@@ -589,7 +589,7 @@ async function insertSupportTickets() {
     {
       user_id: '77777777-7777-7777-7777-777777777777',
       subject: 'Account Verification Issue',
-      message: 'I am having trouble verifying my seller account. Please help.',
+      description: 'I am having trouble verifying my seller account. Please help.',
       category: 'verification',
       priority: 'medium',
       status: 'open',
@@ -599,7 +599,7 @@ async function insertSupportTickets() {
     {
       user_id: '33333333-3333-3333-3333-333333333333',
       subject: 'Listing Not Appearing in Search',
-      message: 'My electronics listings are not showing up in search results.',
+      description: 'My electronics listings are not showing up in search results.',
       category: 'listing',
       priority: 'high',
       status: 'in_progress',
@@ -609,7 +609,7 @@ async function insertSupportTickets() {
     {
       user_id: '44444444-4444-4444-4444-444444444444',
       subject: 'Payment Processing Problem',
-      message: 'Having issues with subscription payment processing.',
+      description: 'Having issues with subscription payment processing.',
       category: 'billing',
       priority: 'urgent',
       status: 'resolved',
@@ -619,7 +619,7 @@ async function insertSupportTickets() {
     {
       user_id: '88888888-8888-8888-8888-888888888888',
       subject: 'Website Loading Slowly',
-      message: 'The website is loading very slowly on my mobile device.',
+      description: 'The website is loading very slowly on my mobile device.',
       category: 'technical',
       priority: 'low',
       status: 'closed',
@@ -760,6 +760,10 @@ async function seedDatabase() {
     console.log('\n Phase 2: Inserting users into public.users')
     await insertPublicUsers()
     
+    // Wait a bit for public.users to be fully created
+    console.log('⏳ Waiting for public.users to be fully created...')
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
     // Insert seller profiles
     console.log('\n Phase 3: Inserting seller profiles')
     await insertSellerProfiles()
@@ -813,8 +817,6 @@ async function seedDatabase() {
 }
 
 // Run the seeding process
-if (process.argv[1] === new URL(import.meta.url).pathname) {
-  seedDatabase()
-}
+seedDatabase()
 
 export { seedDatabase }

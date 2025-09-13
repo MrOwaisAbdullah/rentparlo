@@ -99,10 +99,13 @@ async function trackPageView(listingId: string, listingSlug: string, sellerId?: 
     if (sellerId) {
       await trackAnalyticsEvent({
         event_type: 'profile_view',
-        user_id: sellerId,
+        metadata: { 
+          seller_id: sellerId,
+          source: 'listing_view',
+          ...(listingId && { listing_id: listingId }) // Only include listing_id if it exists
+        },
         referrer: referer,
-        user_agent: userAgent,
-        metadata: { source: 'listing_view' }
+        user_agent: userAgent
       });
     }
   } catch (error) {
