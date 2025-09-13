@@ -25,6 +25,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from '@/lib/utils';
+import { CityAreaCombobox } from '@/components/ui/combobox';
+import { CITY_AREAS } from '@/lib/area-utils';
 
 interface Subcategory {
   _id: string;
@@ -202,25 +204,20 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [], onNa
           <CardTitle className="text-sm font-medium flex items-center"><MapPin className="w-4 h-4 mr-2" /> Location</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <Popover open={localFilters.open} onOpenChange={(open) => setLocalFilters(prev => ({ ...prev, open }))}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={localFilters.open} className="w-full justify-between">
-                {localFilters.location !== 'any' ? pakistaniCities.find((city) => city === localFilters.location) : "Select city..."}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0 z-[9999]">
-              <Command>
-                <CommandInput placeholder="Search city..." />
-                <CommandList>
-                  <CommandEmpty>No city found.</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem onSelect={() => setLocalFilters(prev => ({ ...prev, location: 'any', open: false }))}>Any location</CommandItem>
-                    {pakistaniCities.map((city) => <CommandItem key={city} onSelect={() => setLocalFilters(prev => ({ ...prev, location: city, open: false }))}><Check className={cn("mr-2 h-4 w-4", localFilters.location === city ? "opacity-100" : "opacity-0")} />{city}</CommandItem>)}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <CityAreaCombobox
+            cities={Object.keys(CITY_AREAS)}
+            selectedCity={localFilters.location === 'any' ? '' : localFilters.location}
+            selectedArea={''}
+            onCityChange={(city) => {
+              setLocalFilters(prev => ({
+                ...prev,
+                location: city || 'any'
+              }));
+            }}
+            onAreaChange={() => {}}
+            className="flex-nowrap"
+            size="md"
+          />
         </CardContent>
       </Card>
 

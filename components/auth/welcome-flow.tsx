@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle, ArrowRight, MapPin, Phone, User, Store } from 'lucide-react';
+import { CheckCircle, ArrowRight, MapPin, Phone, User, Store, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,6 +13,10 @@ import { FormField } from '@/components/forms/form-field';
 import { RoleSelector } from '@/components/auth/role-selector';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { VerificationUpload } from '@/components/verification/verification-upload';
+import { CityAreaCombobox } from '@/components/ui/combobox';
+import { Label } from '@/components/ui/label';
+import { CITY_AREAS } from '@/lib/area-utils';
 
 const welcomeSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -23,7 +27,24 @@ const welcomeSchema = z.object({
     'Hyderabad', 'Bahawalpur', 'Sargodha', 'Sukkur', 'Larkana'
   ]),
   role: z.enum(['user', 'seller']),
+  businessName: z.string().optional(),
+  cnic: z.string().optional(),
   terms: z.boolean().refine(val => val === true, 'You must accept the terms')
+}).refine(data => {
+  if (data.role === 'seller') return data.businessName && data.businessName.length >= 2;
+  return true;
+}, {
+  message: 'Business name is required for sellers',
+  path: ['businessName'],
+}).refine(data => {
+  if (data.role === 'seller') {
+    const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+    return !!data.cnic && cnicRegex.test(data.cnic);
+  }
+  return true;
+}, {
+  message: 'A valid CNIC is required for sellers (e.g., 12345-1234567-1)',
+  path: ['cnic'],
 });
 
 type WelcomeFormData = z.infer<typeof welcomeSchema>;
@@ -42,426 +63,213 @@ interface WelcomeFlowProps {
   user: User;
 }
 
+function ProfileImageUpload({ initialImageUrl, onUploadSuccess }: { initialImageUrl?: string, onUploadSuccess: (url: string) => void }) {
+  const [preview, setPreview] = React.useState(initialImageUrl);
+  const [isUploading, setIsUploading] = React.useState(false);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/profile/image', { method: 'POST', body: formData });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Upload failed');
+      setPreview(result.imageUrl);
+      onUploadSuccess(result.imageUrl);
+      toast.success('Profile picture updated!');
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center space-y-4 mb-6">
+      <div className="relative">
+        <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 border-dashed">
+          {preview ? <img src={preview} alt="Profile Preview" className="w-full h-full rounded-full object-cover" /> : <User className="w-10 h-10 text-muted-foreground" />}
+        </div>
+        {isUploading && <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}
+      </div>
+      <Button asChild variant="outline" size="sm">
+        <label htmlFor="profile-image-upload" className="cursor-pointer">
+          {isUploading ? 'Uploading...' : 'Upload Picture'}
+          <input id="profile-image-upload" type="file" className="sr-only" onChange={handleFileChange} disabled={isUploading} accept="image/png, image/jpeg, image/webp" />
+        </label>
+      </Button>
+    </div>
+  );
+}
+
 const pakistaniCities = [
-  { value: 'Karachi', label: 'Karachi' },
-  { value: 'Lahore', label: 'Lahore' },
-  { value: 'Islamabad', label: 'Islamabad' },
-  { value: 'Rawalpindi', label: 'Rawalpindi' },
-  { value: 'Faisalabad', label: 'Faisalabad' },
-  { value: 'Multan', label: 'Multan' },
-  { value: 'Peshawar', label: 'Peshawar' },
-  { value: 'Quetta', label: 'Quetta' },
-  { value: 'Sialkot', label: 'Sialkot' },
-  { value: 'Gujranwala', label: 'Gujranwala' },
-  { value: 'Hyderabad', label: 'Hyderabad' },
-  { value: 'Bahawalpur', label: 'Bahawalpur' },
-  { value: 'Sargodha', label: 'Sargodha' },
-  { value: 'Sukkur', label: 'Sukkur' },
-  { value: 'Larkana', label: 'Larkana' }
+  { value: 'Karachi', label: 'Karachi' }, { value: 'Lahore', label: 'Lahore' }, { value: 'Islamabad', label: 'Islamabad' },
+  { value: 'Rawalpindi', label: 'Rawalpindi' }, { value: 'Faisalabad', label: 'Faisalabad' }, { value: 'Multan', label: 'Multan' },
+  { value: 'Peshawar', label: 'Peshawar' }, { value: 'Quetta', label: 'Quetta' }, { value: 'Sialkot', label: 'Sialkot' },
+  { value: 'Gujranwala', label: 'Gujranwala' }, { value: 'Hyderabad', label: 'Hyderabad' }, { value: 'Bahawalpur', label: 'Bahawalpur' },
+  { value: 'Sargodha', label: 'Sargodha' }, { value: 'Sukkur', label: 'Sukkur' }, { value: 'Larkana', label: 'Larkana' }
 ];
 
 export function WelcomeFlow({ user }: WelcomeFlowProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = React.useState(user?.profileImage);
   const router = useRouter();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid },
-    setValue,
-    watch,
-    reset
-  } = useForm<WelcomeFormData>({
-    resolver: zodResolver(welcomeSchema),
-    defaultValues: {
-      name: user?.name || '',
-      phone: user?.phone || '',
-      city: user?.city || 'Karachi',
-      role: user?.role || 'user',
-      terms: false
-    }
+  const { handleSubmit, formState: { errors, isValid }, setValue, setError: setFieldError, watch, reset } = useForm<WelcomeFormData>({
+    resolver: zodResolver(welcomeSchema), mode: 'onChange',
+    defaultValues: { name: user?.name || '', phone: user?.phone || '', city: user?.city || 'Karachi', role: user?.role || 'user', terms: false, businessName: '', cnic: '' }
   });
 
   const formData = watch();
 
-  // Reset form when user data changes
+  const baseSteps = [
+    { id: 'profile', title: 'Welcome to RentParLo.pk!', subtitle: 'Let\'s complete your profile to get started' },
+    { id: 'role', title: 'Choose Your Role', subtitle: 'How do you plan to use RentParLo.pk?' },
+  ];
+  const sellerSteps = [
+    { id: 'business', title: 'Business Details', subtitle: 'Tell us about your business' },
+    { id: 'verification', title: 'Verification Documents', subtitle: 'Upload documents to verify your seller account' },
+  ];
+  const finalStep = { id: 'review', title: 'Almost Done!', subtitle: 'Review your information and accept our terms' };
+
+  const steps = React.useMemo(() => formData.role === 'seller' ? [...baseSteps, ...sellerSteps, finalStep] : [...baseSteps, finalStep], [formData.role]);
+
   React.useEffect(() => {
-    reset({
-      name: user?.name || '',
-      phone: user?.phone || '',
-      city: user?.city || 'Karachi',
-      role: user?.role || 'user',
-      terms: false
-    });
+    reset({ name: user?.name || '', phone: user?.phone || '', city: user?.city || 'Karachi', role: user?.role || 'user', terms: false });
+    setProfileImageUrl(user?.profileImage);
   }, [user, reset]);
 
-  const steps = [
-    {
-      title: 'Welcome to RentParLo.pk!',
-      subtitle: 'Let\'s complete your profile to get started',
-      content: 'profile'
-    },
-    {
-      title: 'Choose Your Role',
-      subtitle: 'How do you plan to use RentParLo.pk?',
-      content: 'role'
-    },
-    {
-      title: 'Almost Done!',
-      subtitle: 'Review your information and accept our terms',
-      content: 'review'
-    }
-  ];
-
   const onSubmit = async (data: WelcomeFormData) => {
+    setIsLoading(true); setError(null);
     try {
-      setIsLoading(true);
-      setError(null);
-
-      // Update user profile
       const response = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: data.name,
-          phone: data.phone,
-          city: data.city,
-          role: data.role,
-          onboarding_completed: true
-        })
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.name, phone: data.phone, city: data.city, role: data.role, onboarding_completed: true, profile_image_url: profileImageUrl })
       });
-
       const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to update profile');
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to complete profile');
-      }
-
-      // If user chose seller role, create seller profile
       if (data.role === 'seller') {
-        const sellerResponse = await fetch('/api/profile/seller', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username: user.email.split('@')[0],
-            business_name: '', // Will be filled later
-            owner_name: data.name,
-            phone: data.phone,
-            email: user.email,
-            city: data.city
-          })
+        const sellerResponse = await fetch('/api/profile', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileType: 'seller', username: user.email.split('@')[0], business_name: data.businessName, owner_cnic: data.cnic })
         });
-
         if (!sellerResponse.ok) {
-          console.error('Failed to create seller profile, but continuing...');
+          const sellerResult = await sellerResponse.json();
+          toast.error(`Could not create seller profile: ${sellerResult.error}`);
         }
       }
-
-      toast.success('Welcome to RentParLo.pk! Your profile has been completed.');
-      
-      // Redirect based on role
-      if (data.role === 'seller') {
-        router.push('/seller/verification');
-      } else {
-        router.push('/dashboard');
+      toast.success('Welcome! Your profile has been completed.');
+      router.push('/dashboard?onboarding=complete');
+    } catch (err: any) {
+      const errorMessage = err?.message || 'An unknown error occurred';
+      toast.error(errorMessage);
+      setError(errorMessage);
+      if (errorMessage.toLowerCase().includes('phone')) {
+        setFieldError('phone', { type: 'manual', message: errorMessage });
       }
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Profile completion error:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-      setError(null);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      setError(null);
-    }
-  };
+  const handleNext = () => { if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1); };
+  const handlePrevious = () => { if (currentStep > 0) setCurrentStep(currentStep - 1); };
 
   const renderStepContent = () => {
-    switch (steps[currentStep].content) {
-      case 'profile':
-        return (
+    switch (steps[currentStep].id) {
+      case 'profile': return (
+        <div className="space-y-4">
+          <ProfileImageUpload initialImageUrl={profileImageUrl} onUploadSuccess={setProfileImageUrl} />
+          <FormField id="name" label="Full Name" value={formData.name} error={errors.name?.message} required icon={User} onChange={v => setValue('name', v as string)} />
+          <FormField id="phone" label="Phone Number" type="tel" placeholder="03XX XXXXXXX" value={formData.phone} error={errors.phone?.message} required icon={Phone} onChange={v => setValue('phone', v as string)} />
+          <div>
+            <Label htmlFor="city">City</Label>
+            <CityAreaCombobox
+              cities={Object.keys(CITY_AREAS)}
+              selectedCity={formData.city || ''}
+              selectedArea={""}
+              onCityChange={(value) => setValue('city', value as any)}
+              onAreaChange={() => {}} // No area selection needed in this form
+              cityPlaceholder="Select a city"
+              className="flex-nowrap"
+              size="md"
+            />
+            {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
+          </div>
+        </div>
+      );
+      case 'role': return <RoleSelector selected={formData.role} onSelect={role => setValue('role', role)} />;
+      case 'business': return (
+        <div className="space-y-4">
+          <FormField id="businessName" label="Business Name" placeholder="Your business or shop name" value={formData.businessName || ''} error={errors.businessName?.message} required icon={Store} onChange={v => setValue('businessName', v as string)} />
+          <FormField id="cnic" label="Owner CNIC" placeholder="XXXXX-XXXXXXX-X" value={formData.cnic || ''} error={errors.cnic?.message} required icon={User} description="Required for verification." onChange={v => setValue('cnic', v as string)} />
+        </div>
+      );
+      case 'verification': return (
+        <div>
+          <p className="text-sm text-muted-foreground mb-6">Please upload clear images of the front and back of your CNIC.</p>
           <div className="space-y-6">
-            {/* Profile Image */}
-            {(user.profileImage || formData.name) && (
-              <div className="flex justify-center">
-                <div className="relative">
-                  {user.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt="Profile"
-                      className="w-20 h-20 rounded-full border-4 border-white shadow-lg"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-white shadow-lg">
-                      <User className="w-8 h-8 text-primary" />
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <FormField
-                id="name"
-                label="Full Name"
-                placeholder="Enter your full name"
-                value={formData.name}
-                error={errors.name?.message}
-                required
-                icon={User}
-                onChange={(value) => setValue('name', value as string)}
-              />
-
-              <FormField
-                id="phone"
-                label="Phone Number"
-                type="tel"
-                placeholder="03XX XXXXXXX"
-                value={formData.phone}
-                error={errors.phone?.message}
-                required
-                icon={Phone}
-                description="Pakistani mobile number format"
-                onChange={(value) => setValue('phone', value as string)}
-              />
-
-              <FormField
-                id="city"
-                label="City"
-                type="select"
-                options={pakistaniCities}
-                value={formData.city}
-                error={errors.city?.message}
-                required
-                icon={MapPin}
-                onChange={(value) => setValue('city', value as any)}
-              />
+            <VerificationUpload documentType="cnic_front" label="CNIC Front Side" userId={user.id} />
+            <VerificationUpload documentType="cnic_back" label="CNIC Back Side" userId={user.id} />
+          </div>
+        </div>
+      );
+      case 'review': return (
+        <div className="space-y-6">
+          <div className="bg-muted/50 rounded-lg p-6 space-y-4">
+            <h4 className="font-semibold">Profile Summary</h4>
+            <div className="grid gap-3 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Name:</span><span className="font-medium">{formData.name}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Phone:</span><span className="font-medium">{formData.phone}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Account Type:</span><span className="font-medium capitalize">{formData.role}</span></div>
+              {formData.role === 'seller' && (
+                <>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Business:</span><span className="font-medium">{formData.businessName}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">CNIC:</span><span className="font-medium">{formData.cnic}</span></div>
+                </>
+              )}
             </div>
           </div>
-        );
-
-      case 'role':
-        return (
-          <div className="space-y-6">
-            <RoleSelector
-              selected={formData.role}
-              onSelect={(role) => setValue('role', role)}
-            />
-          </div>
-        );
-
-      case 'review':
-        return (
-          <div className="space-y-6">
-            {/* Summary */}
-            <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-              <h4 className="font-semibold">Profile Summary</h4>
-              <div className="grid gap-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
-                  <span className="font-medium">{user.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Name:</span>
-                  <span className="font-medium">{formData.name || 'Not provided'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Phone:</span>
-                  <span className="font-medium">{formData.phone || 'Not provided'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">City:</span>
-                  <span className="font-medium">{formData.city || 'Not provided'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Account Type:</span>
-                  <span className="font-medium capitalize">{formData.role}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Terms */}
-            <FormField
-              id="terms"
-              label="I agree to the Terms of Service and Privacy Policy"
-              type="checkbox"
-              value={formData.terms}
-              error={errors.terms?.message}
-              required
-              onChange={(value) => setValue('terms', value as boolean)}
-            />
-
-            {formData.role === 'seller' && (
-              <Alert>
-                <Store className="h-4 w-4" />
-                <AlertDescription>
-                  As a seller, you'll need to complete verification after this step to start listing items.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {/* OAuth Note */}
-            {user.profileImage && (
-              <Alert>
-                <User className="h-4 w-4" />
-                <AlertDescription>
-                  We've pre-filled your profile with information from your Google account. 
-                  You can update any details above if needed.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
+          <FormField id="terms" label="I agree to the Terms of Service and Privacy Policy" type="checkbox" value={formData.terms} error={errors.terms?.message} required onChange={v => setValue('terms', v as boolean)} />
+        </div>
+      );
+      default: return null;
     }
   };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
       <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Progress Bar */}
         <div className="mb-8">
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Step {currentStep + 1} of {steps.length}</span>
-            <span>{Math.round(((currentStep + 1) / steps.length) * 100)}%</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <motion.div
-              className="bg-primary h-2 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2"><span>Step {currentStep + 1} of {steps.length}</span><span>{Math.round(((currentStep + 1) / steps.length) * 100)}%</span></div>
+          <div className="w-full bg-muted rounded-full h-2"><motion.div className="bg-primary h-2 rounded-full" initial={{ width: 0 }} animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }} transition={{ duration: 0.3 }} /></div>
         </div>
-
-        {/* Main Card */}
         <Card className="border-0 shadow-lg">
           <CardHeader className="text-center pb-6">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <CardTitle className="text-2xl mb-2">
-                {steps[currentStep].title}
-              </CardTitle>
-              <p className="text-muted-foreground">
-                {steps[currentStep].subtitle}
-              </p>
+            <motion.div key={currentStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <CardTitle className="text-2xl mb-2">{steps[currentStep].title}</CardTitle>
+              <p className="text-muted-foreground">{steps[currentStep].subtitle}</p>
             </motion.div>
           </CardHeader>
-
           <CardContent className="px-6 pb-6">
-            {/* Error Alert */}
+            <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>{renderStepContent()}</motion.div>
             <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-6"
-                >
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
+              {error && !errors.phone && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-6"><Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert></motion.div>}
             </AnimatePresence>
-
-            {/* Step Content */}
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {renderStepContent()}
-            </motion.div>
-
-            {/* Navigation */}
             <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 0 || isLoading}
-              >
-                Previous
-              </Button>
-
-              {currentStep === steps.length - 1 ? (
-                <Button
-                  type="submit"
-                  disabled={!isValid || isLoading}
-                  className="min-w-[120px]"
-                >
-                  {isLoading ? (
-                    'Completing...'
-                  ) : (
-                    <div className="flex items-center">
-                      Complete Setup
-                      <CheckCircle className="ml-2 h-4 w-4" />
-                    </div>
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={isLoading}
-                  className="min-w-[120px]"
-                >
-                  <div className="flex items-center">
-                    Continue
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </div>
-                </Button>
-              )}
+              <Button type="button" variant="outline" onClick={handlePrevious} disabled={currentStep === 0 || isLoading}>Previous</Button>
+              {currentStep === steps.length - 1 ? <Button type="submit" disabled={!isValid || isLoading} className="min-w-[120px]">{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Complete Setup'}</Button> : <Button type="button" onClick={handleNext} disabled={isLoading} className="min-w-[120px]">Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>}
             </div>
           </CardContent>
         </Card>
-
-        {/* Skip Option (for non-essential steps) */}
-        {currentStep === 1 && (
-          <div className="text-center mt-4">
-            <button
-              type="button"
-              className="text-sm text-muted-foreground hover:text-foreground underline"
-              onClick={() => {
-                setValue('role', 'user');
-                handleNext();
-              }}
-            >
-              Skip and continue as a regular user
-            </button>
-          </div>
-        )}
       </form>
     </div>
   );

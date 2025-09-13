@@ -7,6 +7,8 @@ import { AdBanner } from '@/components/ads/ad-banner';
 import { ClientProductListingSection } from '@/components/seller/client-product-listing-section';
 import { SellerProfileActions } from '@/components/seller/seller-profile-actions';
 import { getSellerProfileByUsername } from '@/lib/supabase-queries';
+import { trackAnalyticsEvent } from '@/lib/supabase-queries';
+import { headers } from 'next/headers';
 import { mockHotRentalListings, mockHotRentalProductsListings, mockRentalProductsListings, mockSellerAnalytics } from '@/app/sellerProfileMockData';
 
 interface SellerPageProps {
@@ -45,6 +47,26 @@ export async function generateMetadata({ params }: SellerPageProps): Promise<Met
   };
 }
 
+// Track seller profile view
+async function trackProfileView(sellerId: string) {
+  try {
+    const headersList = await headers();
+    const userAgent = headersList.get('user-agent') || '';
+    const referer = headersList.get('referer') || '';
+    
+    // Track the profile view
+    await trackAnalyticsEvent({
+      event_type: 'profile_view',
+      user_id: sellerId,
+      referrer: referer,
+      user_agent: userAgent
+    });
+  } catch (error) {
+    console.error('Error tracking profile view:', error);
+    // Don't fail the page load for analytics errors
+  }
+}
+
 export default async function SellerPage({ params }: SellerPageProps) {
   // Await params before using
   const { username } = await params;
@@ -55,6 +77,9 @@ export default async function SellerPage({ params }: SellerPageProps) {
   if (!seller) {
     notFound();
   }
+
+  // Track profile view (fire and forget)
+  trackProfileView(seller.id);
 
   // Mock analytics data for the seller stats component (in a real app, you would fetch this)
   const analyticsData = {

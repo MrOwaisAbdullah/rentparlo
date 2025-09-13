@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       phone,
       email,
       city,
+      area,
       address_line1,
       owner_cnic,
       whatsapp
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
         owner_cnic: owner_cnic || null,
         address_line1: address_line1 || '',
         city: city,
+        area: area || null,
         phone: phone,
         email: email,
         tier: 'basic',

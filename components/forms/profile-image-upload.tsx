@@ -204,7 +204,8 @@ export function ProfileImageUpload({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="relative inline-block"
+              className="relative inline-block group cursor-pointer"
+              onClick={handleClick}
             >
               <Avatar className={cn(config.avatar, 'ring-2 ring-border')}>
                 <AvatarImage 
@@ -216,6 +217,10 @@ export function ProfileImageUpload({
                   <Camera className="h-8 w-8 text-muted-foreground" />
                 </AvatarFallback>
               </Avatar>
+
+              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Upload className="h-8 w-8 text-white" />
+              </div>
               
               {/* Loading overlay */}
               {isUploading && (
@@ -228,43 +233,21 @@ export function ProfileImageUpload({
                 </motion.div>
               )}
               
-              {/* Action buttons */}
-              {!isUploading && (
-                <div className="absolute -top-2 -right-2 flex gap-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="h-6 w-6 rounded-full p-0"
-                    onClick={handleClick}
-                    disabled={disabled}
-                  >
-                    <Camera className="h-3 w-3" />
-                  </Button>
-                  {allowRemove && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      className="h-6 w-6 rounded-full p-0"
-                      onClick={handleRemove}
-                      disabled={disabled}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              )}
-              
-              {/* Success indicator */}
-              {value && !isUploading && !hasError && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1"
+              {/* Remove button */}
+              {!isUploading && allowRemove && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the avatar click
+                    handleRemove();
+                  }}
+                  disabled={disabled}
                 >
-                  <Check className="h-3 w-3 text-white" />
-                </motion.div>
+                  <X className="h-3 w-3" />
+                </Button>
               )}
             </motion.div>
           ) : (

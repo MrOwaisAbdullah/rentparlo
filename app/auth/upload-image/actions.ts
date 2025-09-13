@@ -11,7 +11,7 @@ const sanityClient = createClient({
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   apiVersion: '2024-01-01',
   useCdn: false,
-  token: process.env.SANITY_API_WRITE_TOKEN!
+  token: process.env.SANITY_API_TOKEN!
 });
 
 // Validation schema for image upload
@@ -92,8 +92,8 @@ export async function uploadProfileImage(formData: FormData): Promise<UploadResu
       };
     }
 
-    // Generate optimized image URL
-    const imageUrl = `https://cdn.sanity.io/images/${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}/${process.env.NEXT_PUBLIC_SANITY_DATASET}/${asset._id}-${asset.metadata.dimensions.width}x${asset.metadata.dimensions.height}.${asset.extension}?w=400&h=400&fit=crop&crop=face&auto=format`;
+    // The asset object contains the raw URL
+    const imageUrl = asset.url;
 
     return {
       success: true,

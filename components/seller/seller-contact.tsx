@@ -43,8 +43,7 @@ export function SellerContact({
       try {
         await trackAnalyticsEventClient({
           event_type: 'contact_click',
-          user_id: seller.id,
-          metadata: { contact_method: 'email', source: 'seller_profile' }
+          metadata: { contact_method: 'email', source: 'seller_profile', seller_id: seller.id }
         });
       } catch (error) {
         console.error('Error tracking email contact:', error);

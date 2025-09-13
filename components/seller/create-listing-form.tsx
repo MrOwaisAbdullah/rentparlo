@@ -25,6 +25,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { CityAreaCombobox } from '@/components/ui/combobox';
+import { CITY_AREAS } from '@/lib/area-utils';
 import FileUpload from "@/components/kokonutui/file-upload";
 
 interface User {
@@ -593,38 +595,25 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
           {/* Step 2: Location & Delivery */}
           {currentStep === 2 && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Select onValueChange={(value) => form.setValue('location.city', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select a city" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAKISTANI_CITIES.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.location?.city && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.location.city.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="area">Area *</Label>
-                  <Input
-                    id="area"
-                    {...form.register('location.area')}
-                    placeholder="e.g., Gulshan, Model Town"
-                    className="mt-1"
-                  />
-                  {form.formState.errors.location?.area && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.location.area.message}</p>
-                  )}
-                </div>
+              <div>
+                <Label>Location *</Label>
+                <CityAreaCombobox
+                  cities={Object.keys(CITY_AREAS)}
+                  selectedCity={watchedValues.location?.city || ""}
+                  selectedArea={watchedValues.location?.area || ""}
+                  onCityChange={(value) => form.setValue('location.city', value)}
+                  onAreaChange={(value) => form.setValue('location.area', value)}
+                  cityPlaceholder="Select a city"
+                  areaPlaceholder="Select an area"
+                  className="flex-nowrap"
+                  size="md"
+                />
+                {form.formState.errors.location?.city && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.location.city.message}</p>
+                )}
+                {form.formState.errors.location?.area && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.location.area.message}</p>
+                )}
               </div>
 
               <div>

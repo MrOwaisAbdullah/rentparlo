@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { getAreasForCity } from '@/lib/area-utils';
+import { getAreasForCity, getCitiesWithAreas } from '@/lib/area-utils';
 
 interface ComboboxOption {
   value: string;
@@ -71,19 +71,12 @@ export function Combobox({
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between", sizeClasses.button, className)}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
         >
           <span className="truncate">{selectedLabel}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-full p-0", "z-[999999]")} style={{ zIndex: 999999 }}>
+      <PopoverContent container={typeof window !== 'undefined' ? document.body : undefined} className={cn("w-full p-0", "z-[99999]")}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList className="max-h-[200px] overflow-y-auto overscroll-y-contain">
@@ -94,20 +87,12 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    // Defer the state change to next tick to avoid event timing issues
                     setTimeout(() => {
                       onValueChange(currentValue === value ? "" : currentValue);
                       setOpen(false);
                     }, 0);
                   }}
                   className="combobox-item-clickable"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
                 >
                   <Check
                     className={cn(
@@ -127,7 +112,6 @@ export function Combobox({
 }
 
 interface CityAreaComboboxProps {
-  cities: string[];
   selectedCity: string;
   selectedArea: string;
   onCityChange: (city: string) => void;
@@ -136,10 +120,10 @@ interface CityAreaComboboxProps {
   areaPlaceholder?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  showAllAreasOption?: boolean;
 }
 
 export function CityAreaCombobox({
-  cities,
   selectedCity,
   selectedArea,
   onCityChange,
@@ -147,16 +131,21 @@ export function CityAreaCombobox({
   cityPlaceholder = "Select city...",
   areaPlaceholder = "Select area...",
   className,
-  size = "md"
+  size = "md",
+  showAllAreasOption = true
 }: CityAreaComboboxProps) {
+  // Get all cities with areas defined
+  const cities = React.useMemo(() => getCitiesWithAreas(), []);
   const cityOptions = cities.map(city => ({ value: city, label: city }));
+  
+  // Get areas for the selected city
   const areaOptions = selectedCity 
     ? getAreasForCity(selectedCity).map(area => ({ value: area, label: area }))
     : [];
 
   return (
-    <div className={cn("flex gap-2 flex-nowrap", className)}>
-      <div className="w-1/2">
+    <div className={cn("flex gap-2 flex-nowrap flex-col sm:flex-row", className)}>
+      <div className="w-full sm:w-1/2">
         <Combobox
           options={cityOptions}
           value={selectedCity}
@@ -173,12 +162,13 @@ export function CityAreaCombobox({
       </div>
       
       {selectedCity && areaOptions.length > 0 && (
-        <div className="w-1/2">
+        <div className="w-full sm:w-1/2">
           <Combobox
-            options={[
-              { value: "", label: "All Areas" },
-              ...areaOptions
-            ]}
+            options={
+              showAllAreasOption 
+                ? [{ value: "", label: "All Areas" }, ...areaOptions]
+                : areaOptions
+            }
             value={selectedArea}
             onValueChange={onAreaChange}
             placeholder={areaPlaceholder}

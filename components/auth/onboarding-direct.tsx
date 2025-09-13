@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RoleSelector } from '@/components/auth/role-selector';
 import { ProfileImageUpload } from '@/components/forms/profile-image-upload';
 import { VerificationUpload } from '@/components/verification/verification-upload';
+import { CityAreaCombobox } from '@/components/search/city-area-combobox';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -23,6 +23,7 @@ const onboardingSchema = z.object({
     'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
     'Hyderabad', 'Bahawalpur', 'Sargodha', 'Sukkur', 'Larkana'
   ]).optional(),
+  area: z.string().optional(),
   role: z.enum(['user', 'seller']),
   businessName: z.string().min(2, 'Business name must be at least 2 characters').optional().or(z.string().length(0)),
   cnic: z.string().regex(/^\d{5}-\d{7}-\d{1}$/, 'CNIC must be in format XXXXX-XXXXXXX-X').optional().or(z.string().length(0)),
@@ -58,12 +59,6 @@ interface VerificationDocument {
   rejectionReason?: string;
   fileSize?: number;
 }
-
-const pakistaniCities = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
-  'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
-  'Hyderabad', 'Bahawalpur', 'Sargodha', 'Sukkur', 'Larkana'
-];
 
 // Simple localStorage helper
 const saveOnboardingState = (state: any) => {
@@ -121,6 +116,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       name: user?.name || '',
       phone: user?.phone || '',
       city: (user.city || 'Karachi') as OnboardingFormData['city'],  
+      area: '',
       role: user?.role || 'user',
       businessName: '',
       cnic: '',
@@ -129,6 +125,17 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       terms: false
     }
   });
+
+  const [localCity, setLocalCity] = React.useState<string>(getValues('city') || 'Karachi');
+  const [localArea, setLocalArea] = React.useState<string>(getValues('area') || '');
+
+  React.useEffect(() => {
+    setValue('city', localCity as any, { shouldValidate: true, shouldDirty: true });
+  }, [localCity, setValue]);
+
+  React.useEffect(() => {
+    setValue('area', localArea, { shouldValidate: true, shouldDirty: true });
+  }, [localArea, setValue]);
 
   // Watch the role and terms values
   const role = watch('role');
@@ -167,18 +174,17 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       // Restore form values with proper type conversion
       Object.keys(savedState.formData).forEach(key => {
         const value = savedState.formData[key];
-        console.log(`Setting form field ${key} with value:`, value, 'type:', typeof value);
         // Ensure boolean values are properly converted
         if (key === 'terms') {
-          // Convert string "true"/"false" or boolean values to proper boolean
-          const boolValue = value === true || value === 'true' || String(value).toLowerCase() === 'true';
-          console.log(`Converting terms value ${value} to boolean:`, boolValue);
+          const boolValue = value === true || String(value).toLowerCase() === 'true';
           setValue(key as keyof OnboardingFormData, boolValue);
         } else if (key === 'city') {
-          // Ensure city is properly typed
           const cityValue = value as OnboardingFormData['city'];
-          console.log(`Setting city value ${value} as typed:`, cityValue);
           setValue(key as keyof OnboardingFormData, cityValue);
+          setLocalCity(cityValue || 'Karachi');
+        } else if (key === 'area') {
+          setValue('area', value);
+          setLocalArea(value || '');
         } else {
           setValue(key as keyof OnboardingFormData, value);
         }
@@ -190,6 +196,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         name: user.name || '',
         phone: user.phone || '',
         city: (user.city || 'Karachi') as OnboardingFormData['city'],
+        area: '',
         role: user.role || 'user',
         businessName: '',
         cnic: '',
@@ -198,15 +205,15 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         terms: false
       };
       
-      console.log('Initializing with user data:', initialData);
       reset(initialData);
+      setLocalCity(initialData.city || 'Karachi');
+      setLocalArea(initialData.area || '');
     }
   }, [user, reset, setValue]);
 
   // Save state to localStorage whenever it changes
   React.useEffect(() => {
     const formData = getValues();
-    console.log('Saving form data to localStorage:', formData);
     const stateToSave = {
       currentStep,
       formData
@@ -218,7 +225,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     {
       id: 'role',
       title: 'Welcome to RentParLo.pk!',
-      subtitle: 'Let\'s set up your account',
+      subtitle: "Let's set up your account",
       description: 'Choose how you plan to use RentParLo.pk',
       content: 'role'
     },
@@ -237,6 +244,12 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       content: 'business'
     },
     {
+      id: 'verification',
+      title: 'Verification Documents',
+      subtitle: 'Upload documents to verify your seller account',
+      content: 'verification'
+    },
+    {
       id: 'review',
       title: 'Review & Confirm',
       subtitle: 'Almost done!',
@@ -250,15 +263,12 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     if (role === 'seller') {
       return steps;
     }
-    // For users, skip the business details step
-    return steps.filter(step => step.id !== 'business');
+    // For users, skip the business and verification steps
+    return steps.filter(step => step.id !== 'business' && step.id !== 'verification');
   }, [role]);
 
   const onSubmit = async (data: OnboardingFormData) => {
     try {
-      console.log('Form onSubmit called with data:', data);
-      console.log('Terms value in onSubmit:', data.terms);
-      
       // Explicitly check terms acceptance
       if (!data.terms) {
         setError('You must accept the terms and conditions to complete setup.');
@@ -266,28 +276,23 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         return;
       }
       
-      // Check if form is valid before proceeding
       const isValid = await trigger();
-      console.log('Form validity:', isValid);
-      
       if (!isValid) {
-        console.log('Form is not valid, checking errors:', errors);
         return;
       }
       
       setIsLoading(true);
       setError(null);
 
-      // Update user profile with onboarding completion and profile image
       const profileUpdateData: any = {
         name: data.name,
         phone: data.phone || null,
         city: data.city || null,
+        area: data.area || null,
         role: data.role,
         onboarding_completed: true
       };
 
-      // Add profile image URL if available
       if (profileImageUrl) {
         profileUpdateData.profile_image_url = profileImageUrl;
       }
@@ -301,13 +306,10 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       });
 
       const result = await response.json();
-      console.log('Profile update response:', result);
-
       if (!response.ok) {
         throw new Error(result.error || 'Failed to complete profile');
       }
 
-      // If user chose seller role, create seller profile
       if (data.role === 'seller') {
         const sellerData = {
           username: user.email.split('@')[0],
@@ -318,11 +320,10 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           whatsapp: data.whatsapp || null,
           address_line1: data.address || '',
           city: data.city || '',
+          area: data.area || null,
           email: user.email,
           verification_status: verificationDocuments.length > 0 ? 'under_review' : 'pending'
         };
-        
-        console.log('Creating seller profile with data:', sellerData);
         
         const sellerResponse = await fetch('/api/profile/seller', {
           method: 'POST',
@@ -333,14 +334,11 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         });
 
         const sellerResult = await sellerResponse.json();
-        console.log('Seller profile creation response:', sellerResult);
-
         if (!sellerResponse.ok) {
           throw new Error(sellerResult.error || 'Failed to create seller profile');
         }
       }
 
-      // Clear persisted state on success
       clearOnboardingState();
       
       toast.success('Welcome to RentParLo.pk! Your profile has been completed.');
@@ -349,7 +347,6 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
-      console.error('Profile completion error:', err);
       toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsLoading(false);
@@ -371,7 +368,6 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
   };
 
   const handleSkip = () => {
-    // For users, we can skip optional fields
     if (role === 'user') {
       onComplete();
     }
@@ -380,7 +376,6 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
   const handleRoleSelect = (selectedRole: 'user' | 'seller') => {
     setValue('role', selectedRole);
     
-    // If switching from seller to user and we're past the business step, go back to profile step
     if (selectedRole === 'user' && currentStep > 1) {
       setCurrentStep(1);
     }
@@ -421,7 +416,6 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
 
     const result = await response.json();
     
-    // Update the local state with the new document
     setVerificationDocuments(prev => {
       const updated = prev.filter(doc => doc.documentType !== documentType);
       updated.push({
@@ -447,20 +441,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       throw new Error(error.error || 'Failed to delete document');
     }
 
-    // Update the local state by removing the document
     setVerificationDocuments(prev => prev.filter(doc => doc.id !== documentId));
   };
 
   const renderStepContent = () => {
-    // Check if currentStep is valid
     if (currentStep < 0 || currentStep >= filteredSteps.length) {
       return null;
     }
     
     const step = filteredSteps[currentStep];
-    const formData = getValues();
     
-    // Check if step exists
     if (!step) {
       return null;
     }
@@ -480,17 +470,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
-                id="name"
-                {...register('name')}
-                placeholder="Enter your full name"
-              />
-              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
-            </div>
-
-            <div>
-              <Label>Profile Picture (Optional)</Label>
+              <Label>Profile Picture</Label>
               <ProfileImageUpload
                 value={profileImageUrl}
                 onChange={setProfileImageUrl}
@@ -503,7 +483,17 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
             </div>
 
             <div>
-              <Label htmlFor="phone">Phone Number (Optional)</Label>
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                {...register('name')}
+                placeholder="Enter your full name"
+              />
+              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
                 {...register('phone')}
@@ -515,23 +505,20 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
             </div>
 
             <div>
-              <Label htmlFor="city">City (Optional)</Label>
-              <Select 
-                value={formData.city || 'Karachi'} 
-                onValueChange={(value) => setValue('city', value as any)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a city" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pakistaniCities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="city">City & Area</Label>
+              <CityAreaCombobox
+                selectedCity={localCity}
+                selectedArea={localArea}
+                onCityChange={(city) => {
+                  setLocalCity(city);
+                  setLocalArea(''); // Reset area when city changes
+                }}
+                onAreaChange={setLocalArea}
+                cityPlaceholder="Select a city"
+                areaPlaceholder="Select an area"
+              />
               {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
+              {errors.area && <p className="text-sm text-destructive mt-1">{errors.area.message}</p>}
             </div>
           </div>
         );
@@ -572,19 +559,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
             </div>
 
             <div>
-              <Label>Verification Documents</Label>
-              <p className="text-xs text-muted-foreground mb-2">Upload required documents for verification</p>
-              <VerificationUpload
-                documents={verificationDocuments}
-                verificationStatus={verificationStatus}
-                onUpload={handleVerificationUpload}
-                onDelete={handleVerificationDelete}
-                isLoading={isLoading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="whatsapp">WhatsApp Number (Optional)</Label>
+              <Label htmlFor="whatsapp">WhatsApp Number</Label>
               <Input
                 id="whatsapp"
                 {...register('whatsapp')}
@@ -597,7 +572,19 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           </div>
         );
 
+      case 'verification':
+        return (
+          <VerificationUpload
+            documents={verificationDocuments}
+            verificationStatus={verificationStatus}
+            onUpload={handleVerificationUpload}
+            onDelete={handleVerificationDelete}
+            isLoading={isLoading}
+          />
+        );
+
       case 'review':
+        const formData = getValues();
         return (
           <div className="space-y-6">
             <div className="bg-muted rounded-lg p-4 space-y-3">
@@ -611,6 +598,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 <p><span className="text-muted-foreground">Name:</span> {formData.name}</p>
                 <p><span className="text-muted-foreground">Phone:</span> {formData.phone || 'Not provided'}</p>
                 <p><span className="text-muted-foreground">City:</span> {formData.city || 'Not provided'}</p>
+                <p><span className="text-muted-foreground">Area:</span> {formData.area || 'Not provided'}</p>
               </div>
             </div>
 
@@ -647,9 +635,6 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         return null;
     }
   };
-
-  // Get current form data for review step
-  const formData = getValues();
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -694,18 +679,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
           )}
 
           {/* Step Content */}
-          <form onSubmit={(e) => {
-            console.log('Form onSubmit triggered', e);
-            e.preventDefault();
-            console.log('Calling handleSubmit');
-            const submitFunc = handleSubmit((data) => {
-              console.log('Inside handleSubmit callback with data:', data);
-              return onSubmit(data);
-            });
-            console.log('Got submit function, calling it');
-            submitFunc(e);
-            console.log('Finished calling submit function');
-          }}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-6">
               {renderStepContent()}
             </div>
@@ -724,36 +698,10 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
 
               {currentStep === filteredSteps.length - 1 ? (
                 <Button
-                  type="button"
+                  type="submit"
                   disabled={isLoading || !terms}
                   size="sm"
                   className="min-w-[100px]"
-                  onClick={async () => {
-                    console.log('Direct button click handler called');
-                    if (!terms) {
-                      setError('Please accept the terms and conditions to complete setup.');
-                      toast.error('Please accept the terms and conditions to complete setup.');
-                      return;
-                    }
-                    
-                    // Get current form values
-                    const rawFormData = getValues();
-                    console.log('Current raw form data:', rawFormData);
-                    
-                    // Ensure city is properly typed
-                    const cityValue = rawFormData.city as OnboardingFormData['city'];
-                    
-                    // Create properly typed form data
-                    const formData: OnboardingFormData = {
-                      ...rawFormData,
-                      city: cityValue
-                    };
-                    
-                    console.log('Typed form data:', formData);
-                    
-                    // Call onSubmit directly
-                    await onSubmit(formData);
-                  }}
                 >
                   {isLoading ? (
                     <>

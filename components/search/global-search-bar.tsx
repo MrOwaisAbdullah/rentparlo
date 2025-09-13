@@ -8,19 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
+import { CityAreaCombobox } from "@/components/ui/combobox"
+import { CITY_AREAS } from "@/lib/area-utils"
 
-const cities = [
-  "Karachi",
-  "Lahore",
-  "Islamabad",
-  "Rawalpindi",
-  "Faisalabad",
-  "Multan",
-  "Peshawar",
-  "Quetta",
-  "Hyderabad",
-  "Gujranwala",
-]
+const cities = Object.keys(CITY_AREAS);
 
 interface GlobalSearchBarProps {
   variant?: "hero" | "inline"
@@ -58,18 +49,16 @@ export function GlobalSearchBar({ variant = "inline", className }: GlobalSearchB
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     Location
                   </label>
-                  <Select value={selectedCity} onValueChange={setSelectedCity}>
-                    <SelectTrigger className="h-10 border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-full">
-                      <SelectValue placeholder="City" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city} value={city.toLowerCase()}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CityAreaCombobox
+                    cities={cities}
+                    selectedCity={selectedCity}
+                    selectedArea={""}
+                    onCityChange={setSelectedCity}
+                    onAreaChange={() => {}} // No area selection needed in this form
+                    cityPlaceholder="Select a city"
+                    className="flex-nowrap"
+                    size="md"
+                  />
                 </div>
                 <div className="w-full md:w-7/12 flex-grow">
                   <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
@@ -108,21 +97,18 @@ export function GlobalSearchBar({ variant = "inline", className }: GlobalSearchB
 
   return (
     <div className={`flex items-center space-x-2 bg-muted rounded-lg p-2 ${className}`}>
-      <Select value={selectedCity} onValueChange={setSelectedCity}>
-        <SelectTrigger className="w-40 border-0 bg-transparent hover:bg-muted/50 transition-colors h-10">
-          <div className="flex items-center space-x-1">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <SelectValue placeholder="City" />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          {cities.map((city) => (
-            <SelectItem key={city} value={city.toLowerCase()}>
-              {city}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="w-40">
+        <CityAreaCombobox
+          cities={cities}
+          selectedCity={selectedCity}
+          selectedArea={""}
+          onCityChange={setSelectedCity}
+          onAreaChange={() => {}} // No area selection needed in this form
+          cityPlaceholder="Select a city"
+          className="flex-nowrap"
+          size="md"
+        />
+      </div>
       <div className="h-6 w-px bg-border" />
       <div className="flex-1 flex items-center space-x-2">
         <Search className="h-4 w-4 text-muted-foreground" />

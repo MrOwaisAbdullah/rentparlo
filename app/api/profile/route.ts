@@ -406,6 +406,7 @@ export async function PATCH(request: NextRequest) {
       'name',
       'phone',
       'city',
+      'area',
       'role',
       'onboarding_completed',
       'profile_image_url'
@@ -425,13 +426,25 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const success = await updateUserProfile(user.id, updates)
-    
-    if (!success) {
+    const { error } = await updateUserProfile(user.id, updates);
+
+    if (error) {
+      console.error('Error updating user profile:', error);
+      // Provide specific error for unique constraint violation
+      if (error.code === '23505') { // Unique violation error code in PostgreSQL
+        const field = error.message.includes('phone') ? 'phone' : 'unknown';
+        return NextResponse.json(
+          { 
+            error: `This ${field} is already registered.`,
+            field
+          },
+          { status: 409 } // 409 Conflict
+        );
+      }
       return NextResponse.json(
         { error: 'Failed to update user profile' },
         { status: 500 }
-      )
+      );
     }
 
     // Get updated user data
@@ -441,13 +454,12 @@ export async function PATCH(request: NextRequest) {
       success: true,
       data: updatedUser
     })
-
-  } catch (error) {
-    console.error('Error updating profile:', error)
+  } catch (error: any) {
+    console.error('Error in PATCH profile:', error);
     return NextResponse.json(
-      { error: 'Failed to update profile' },
+      { error: 'An unexpected error occurred.' },
       { status: 500 }
-    )
+    );
   }
 }
 

@@ -100,42 +100,37 @@ export function Header({ user }: HeaderProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" size="icon" className="rounded-full">
-                    <UserIcon className="h-5 w-5" />
+                    {userProfile?.profile_image_url ? (
+                      <Image
+                        src={userProfile.profile_image_url}
+                        alt={userProfile.name || 'User avatar'}
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <UserIcon className="h-5 w-5" />
+                    )}
                     <span className="sr-only">Toggle user menu</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {showDashboard ? (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          <span>Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link 
-                          href={
-                            userProfile?.role === 'seller' && userProfile?.seller_profiles?.username
-                              ? `/seller/${userProfile.seller_profiles.username}`
-                              : '/profile'
-                          }
-                        >
-                          <UserIcon className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
+                  {userProfile?.role === 'seller' && (
                     <DropdownMenuItem asChild>
-                      <Link href="/auth/welcome">
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>Complete Setup</span>
+                      <Link href="/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <form action={signOutAndRedirect}>
                     <DropdownMenuItem asChild>

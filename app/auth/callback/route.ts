@@ -45,6 +45,8 @@ export async function GET(request: NextRequest) {
           const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
             p_id: data.user.id,
             p_email: data.user.email!,
+            p_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name, // Pass name from Google
+            p_profile_image_url: data.user.user_metadata?.avatar_url, // Pass avatar from Google
             p_phone: null,
             p_role: 'user', // Default role, can be changed during onboarding
             p_city: null,

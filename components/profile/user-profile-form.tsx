@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -18,8 +18,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { updateUserProfile } from '@/lib/supabase-queries-client';
+import { updateUserProfile, updateSellerProfile } from '@/lib/supabase-queries-client';
 import Link from 'next/link';
+import { CityAreaCombobox } from '@/components/search/city-area-combobox';
+import { ProfileImageUpload } from '@/components/forms/profile-image-upload';
 
 const profileFormSchema = z.object({
   name: z
@@ -40,17 +42,18 @@ const profileFormSchema = z.object({
     .regex(/^(\+92|0)?[0-9]{10}$/, 'Invalid Pakistani phone number format')
     .optional()
     .or(z.literal('')),
-  city: z
-    .enum([
-      'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 
-      'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
-      'Hyderabad', 'Bahawalpur', 'Sargodha', 'Sukkur', 'Larkana'
-    ])
-    .optional(),
+  city: z.string().optional(),
+  area: z.string().optional(),
   bio: z
     .string()
     .max(160, {
       message: 'Bio must not be longer than 160 characters.',
+    })
+    .optional(),
+  address: z
+    .string()
+    .max(200, {
+        message: 'Address must not be longer than 200 characters.',
     })
     .optional(),
 });
@@ -64,6 +67,9 @@ interface UserProfileFormProps {
 
 export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [localCity, setLocalCity] = useState<string>(initialData?.city || 'Karachi');
+  const [localArea, setLocalArea] = useState<string>(initialData?.area || '');
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(initialData?.profile_image_url || null);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -72,29 +78,66 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
       email: initialData?.email || '',
       phone: initialData?.phone || '',
       city: initialData?.city || 'Karachi',
+      area: initialData?.area || '',
       bio: initialData?.bio || '',
+      address: sellerProfile?.address_line1 || '',
     },
   });
+
+  useEffect(() => {
+    form.setValue('city', localCity);
+  }, [localCity, form.setValue]);
+
+  useEffect(() => {
+    form.setValue('area', localArea);
+  }, [localArea, form.setValue]);
+
+  const handleImageUpload = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/profile/image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload image');
+    }
+
+    const result = await response.json();
+    return result.imageUrl;
+  };
 
   async function onSubmit(data: ProfileFormValues) {
     try {
       setIsLoading(true);
       
-      // Update user profile
-      const result = await updateUserProfile({
+      const userUpdatePromise = updateUserProfile({
         name: data.name,
         phone: data.phone || null,
         city: data.city || null,
+        area: data.area || null,
         bio: data.bio || null,
+        profile_image_url: profileImageUrl,
       });
+
+      const sellerUpdatePromise = sellerProfile ? updateSellerProfile({
+        address_line1: data.address || null,
+        city: data.city || null,
+        area: data.area || null,
+      }) : Promise.resolve({ success: true });
+
+      const [userResult, sellerResult] = await Promise.all([userUpdatePromise, sellerUpdatePromise]);
       
-      if (result.success) {
+      if (userResult.success && sellerResult.success) {
         toast({
           title: 'Profile updated',
           description: 'Your profile has been updated successfully.',
         });
       } else {
-        throw new Error(result.error || 'Failed to update profile');
+        throw new Error(userResult.error || sellerResult.error || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Profile update error:', error);
@@ -111,6 +154,18 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="space-y-2">
+            <FormLabel>Profile Picture</FormLabel>
+            <ProfileImageUpload
+                value={profileImageUrl || undefined}
+                onChange={setProfileImageUrl}
+                onUpload={handleImageUpload}
+            />
+            <FormDescription>
+                Upload a profile picture. Max 5MB.
+            </FormDescription>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -121,6 +176,9 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
                 <FormControl>
                   <Input placeholder="Your full name" {...field} />
                 </FormControl>
+                <FormDescription>
+                  This is the name that will be displayed on your profile.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -153,45 +211,25 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
                   <Input placeholder="03001234567" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Pakistani phone number format
+                  Pakistani phone number format (e.g., 03001234567).
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    {...field}
-                  >
-                    <option value="Karachi">Karachi</option>
-                    <option value="Lahore">Lahore</option>
-                    <option value="Islamabad">Islamabad</option>
-                    <option value="Rawalpindi">Rawalpindi</option>
-                    <option value="Faisalabad">Faisalabad</option>
-                    <option value="Multan">Multan</option>
-                    <option value="Peshawar">Peshawar</option>
-                    <option value="Quetta">Quetta</option>
-                    <option value="Sialkot">Sialkot</option>
-                    <option value="Gujranwala">Gujranwala</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Bahawalpur">Bahawalpur</option>
-                    <option value="Sargodha">Sargodha</option>
-                    <option value="Sukkur">Sukkur</option>
-                    <option value="Larkana">Larkana</option>
-                  </select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="md:col-span-1">
+            <FormLabel>Location</FormLabel>
+            <CityAreaCombobox
+              selectedCity={localCity}
+              selectedArea={localArea}
+              onCityChange={setLocalCity}
+              onAreaChange={setLocalArea}
+            />
+            <FormDescription className="mt-2">
+              The city and area where you are located.
+            </FormDescription>
+          </div>
         </div>
         
         <FormField
@@ -214,6 +252,29 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
             </FormItem>
           )}
         />
+
+        {sellerProfile && (
+            <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                    <Textarea
+                        placeholder="Your business address"
+                        className="resize-none"
+                        {...field}
+                    />
+                    </FormControl>
+                    <FormDescription>
+                        Your full business address for verification and location purposes.
+                    </FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        )}
         
         <div className="flex justify-end">
           <Button type="submit" disabled={isLoading}>

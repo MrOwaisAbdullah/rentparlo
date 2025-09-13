@@ -114,17 +114,40 @@ export async function POST(request: NextRequest) {
     const sanityDoc = await sanityClient.create(verificationDoc);
 
     // Update seller profile with document reference
-    const { data: sellerProfile, error: profileError } = await supabase
+    let { data: sellerProfile, error: profileError } = await supabase
       .from('seller_profiles')
-      .select('verification_documents')
+      .select('id, verification_documents')
       .eq('id', user.id)
       .single();
 
-    if (profileError) {
-      console.error('Failed to fetch seller profile:', profileError);
-      // Don't fail the request, document is already uploaded
+    // If profile doesn't exist, create it. This is common in the onboarding flow.
+    if (profileError && profileError.code === 'PGRST116') {
+      console.log(`Seller profile not found for user ${user.id}. Creating one.`);
+      const { data: newProfile, error: createError } = await supabase
+        .from('seller_profiles')
+        .insert({
+          id: user.id, // Link to the users table
+          email: user.email, // Pre-fill email from auth user
+          verification_status: 'under_review',
+          verification_documents: {}, // Initialize as empty object
+        })
+        .select('id, verification_documents')
+        .single();
+
+      if (createError) {
+        console.error('Failed to create seller profile:', createError);
+        // If we can't create the profile, we can't link the document.
+        // The document is already in Sanity, but we should probably let the client know.
+        // For now, we'll log the error and the response will indicate success but the link is missing.
+      } else {
+        console.log(`Successfully created seller profile for user ${user.id}.`);
+        sellerProfile = newProfile; // Use the newly created profile for the next step
+      }
+    } else if (profileError) {
+      console.error('Failed to fetch seller profile for a reason other than it not existing:', profileError);
     }
 
+    // Now, sellerProfile should exist, either fetched or newly created.
     if (sellerProfile) {
       const currentDocuments = sellerProfile.verification_documents || {};
       const updatedDocuments = {
@@ -146,8 +169,9 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id);
 
       if (updateError) {
-        console.error('Failed to update seller profile:', updateError);
-        // Don't fail the request, document is already uploaded
+        console.error('Failed to update seller profile with new document:', updateError);
+        // Don't fail the request, as the document is already uploaded to Sanity.
+        // The user can try again, or an admin can link it manually.
       }
     }
 

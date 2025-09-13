@@ -388,10 +388,32 @@ export async function trackAnalyticsEvent(eventData: Partial<AnalyticsEvent> & {
       }
     }
     
+    // For server-side tracking, we want to ensure we always have a guest_id
+    // If we have a user_id, we still want to track the guest_id for continuity
+    let guestId = eventData.guest_id;
+    
+    // If we have a user_id but no guest_id, try to get it from the user profile
+    if (eventData.user_id && !guestId) {
+      try {
+        const { data: userProfile, error: userError } = await supabase
+          .from('users')
+          .select('guest_id')
+          .eq('id', eventData.user_id)
+          .single();
+        
+        if (!userError && userProfile?.guest_id) {
+          guestId = userProfile.guest_id;
+        }
+      } catch (error) {
+        console.warn('Could not fetch user profile guest_id:', error);
+      }
+    }
+    
     const { error } = await supabase
       .from('analytics_events')
       .insert({
         ...eventData,
+        guest_id: guestId, // Ensure guest_id is always set
         session_ref: sessionId,
         created_at: new Date().toISOString()
       })

@@ -2,7 +2,7 @@
  * =====================================================
  * Analytics Tracking API Route
  * =====================================================
- * Handles tracking of user interactions with listings and platform
+ * Handles tracking of user interactions with listings, profiles, and banners
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -16,13 +16,17 @@ export async function POST(request: NextRequest) {
       listingId, 
       eventType, 
       userId, 
-      additionalData 
+      additionalData,
+      bannerId,
+      placement,
+      bannerSize,
+      targetUrl
     } = body
 
-    // Validate required fields
-    if (!listingId || !eventType) {
+    // Validate required fields based on event type
+    if (!eventType) {
       return NextResponse.json(
-        { error: 'Missing required fields: listingId and eventType' },
+        { error: 'Missing required field: eventType' },
         { status: 400 }
       )
     }
@@ -30,13 +34,16 @@ export async function POST(request: NextRequest) {
     // Validate event type
     const validEventTypes = [
       'view', 
+      'profile_view',
       'contact_click', 
       'WhatsApp_click', 
+      'map_click',
       'share', 
       'save', 
       'search',
       'listing_click',
-      'impressions'
+      'banner_impression',
+      'banner_click'
     ]
 
     if (!validEventTypes.includes(eventType)) {
@@ -52,6 +59,7 @@ export async function POST(request: NextRequest) {
     const ipAddress = forwardedFor 
       ? forwardedFor.split(',')[0] 
       : request.headers.get('x-real-ip') || undefined
+    const referrer = request.headers.get('referer') || undefined
 
     // Determine device type from user agent
     let deviceType: 'mobile' | 'tablet' | 'desktop' = 'desktop'
@@ -61,18 +69,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Track the analytics event
-    const success = await trackAnalyticsEvent({
-      listing_id: listingId,
+    // Prepare event data based on event type
+    let eventData: any = {
       event_type: eventType,
       user_id: userId || null,
+      guest_id: additionalData?.guestId,
       ip_address: ipAddress,
       user_agent: userAgent,
       device_type: deviceType,
-      city: additionalData?.city,
-      referrer: additionalData?.referrer,
+      referrer: referrer,
       ...additionalData
-    })
+    };
+
+    // Add listing-specific data
+    if (listingId) {
+      eventData.listing_id = listingId;
+    }
+
+    // Add banner-specific data
+    if (bannerId) {
+      eventData.banner_id = bannerId;
+    }
+    
+    if (placement) {
+      eventData.placement = placement;
+    }
+    
+    if (bannerSize) {
+      eventData.banner_size = bannerSize;
+    }
+    
+    if (targetUrl) {
+      eventData.target_url = targetUrl;
+    }
+
+    // Track the analytics event
+    const success = await trackAnalyticsEvent(eventData)
 
     if (!success) {
       return NextResponse.json(
@@ -107,9 +139,9 @@ export async function PUT(request: NextRequest) {
 
     // Validate each event
     for (const event of events) {
-      if (!event.listingId || !event.eventType) {
+      if (!event.eventType) {
         return NextResponse.json(
-          { error: 'Each event must have listingId and eventType' },
+          { error: 'Each event must have eventType' },
           { status: 400 }
         )
       }
@@ -121,16 +153,23 @@ export async function PUT(request: NextRequest) {
     const ipAddress = forwardedFor 
       ? forwardedFor.split(',')[0] 
       : request.headers.get('x-real-ip') || undefined
+    const referrer = request.headers.get('referer') || undefined
 
     // Track all events
     const results = await Promise.all(
       events.map(event => 
         trackAnalyticsEvent({
-          listing_id: event.listingId,
           event_type: event.eventType,
+          listing_id: event.listingId,
           user_id: event.userId || null,
+          guest_id: event.guestId,
+          banner_id: event.bannerId,
+          placement: event.placement,
+          banner_size: event.bannerSize,
+          target_url: event.targetUrl,
           ip_address: ipAddress,
           user_agent: userAgent,
+          referrer: referrer,
           ...event.additionalData
         })
       )
@@ -153,16 +192,18 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// Get analytics data for a listing (admin/seller only)
+// Get analytics data for a listing or seller (admin/seller only)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const listingId = searchParams.get('listingId')
     const sellerId = searchParams.get('sellerId')
+    const bannerId = searchParams.get('bannerId')
 
-    if (!listingId && !sellerId) {
+    // Must provide at least one ID parameter
+    if (!listingId && !sellerId && !bannerId) {
       return NextResponse.json(
-        { error: 'Either listingId or sellerId is required' },
+        { error: 'Either listingId, sellerId, or bannerId is required' },
         { status: 400 }
       )
     }
@@ -197,12 +238,17 @@ export async function GET(request: NextRequest) {
       .from('analytics_events')
       .select('*')
 
+    // Apply filters based on provided parameters
     if (listingId) {
       query = query.eq('listing_id', listingId)
     }
 
     if (sellerId) {
       query = query.eq('user_id', sellerId)
+    }
+
+    if (bannerId) {
+      query = query.eq('banner_id', bannerId)
     }
 
     // Add date range filter if provided

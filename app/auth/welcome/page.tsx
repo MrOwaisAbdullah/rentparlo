@@ -7,12 +7,15 @@ import { OnboardingDirect } from '@/components/auth/onboarding-direct';
 import { Loader2 } from 'lucide-react';
 import { getUserByIdClient } from '@/lib/supabase-queries-client';
 
+import { createClient } from '@/utils/supabase/client';
+
 export default function WelcomePage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchUserProfile = async () => {

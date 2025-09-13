@@ -75,25 +75,36 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
   } catch (error) {
     return {
       title: 'Listing | RentParLo.pk',
-      description: 'Browse rental listings on RentParlo.pk',
+      description: 'Browse rental listings on RentParLo.pk',
     };
   }
 }
 
 // Track page view with proper error handling
-async function trackPageView(listingId: string, listingSlug: string) {
+async function trackPageView(listingId: string, listingSlug: string, sellerId?: string) {
   try {
     const headersList = await headers();
     const userAgent = headersList.get('user-agent') || '';
     const referer = headersList.get('referer') || '';
     
-    // Track the view
+    // Track the listing view
     await trackAnalyticsEvent({
       listing_id: listingId,
       event_type: 'view',
       referrer: referer,
       user_agent: userAgent
     });
+    
+    // Track seller profile view if sellerId is provided
+    if (sellerId) {
+      await trackAnalyticsEvent({
+        event_type: 'profile_view',
+        user_id: sellerId,
+        referrer: referer,
+        user_agent: userAgent,
+        metadata: { source: 'listing_view' }
+      });
+    }
   } catch (error) {
     console.error('Error tracking page view:', error);
     // Don't fail the page load for analytics errors
@@ -111,7 +122,7 @@ async function ListingContent({ slug }: { slug: string }) {
     }
 
     // Track page view (fire and forget)
-    trackPageView(listing._id, slug);
+    trackPageView(listing._id, slug, listing.supabaseId);
 
     // Get similar listings and reviews in parallel
     const [similarListings, reviews] = await Promise.all([

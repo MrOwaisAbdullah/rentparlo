@@ -88,7 +88,7 @@ export function ListingReviews({ reviews = [], listingId, className }: ListingRe
   const handleHelpfulClick = async (reviewId: string) => {
     try {
       await trackAnalyticsEventClient({
-        event_type: 'impressions',
+        event_type: 'share',
         listing_id: listingId,
         metadata: { review_id: reviewId, helpful_click: true }
       });

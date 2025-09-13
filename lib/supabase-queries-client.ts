@@ -72,10 +72,32 @@ export async function trackAnalyticsEventClient(eventData: Partial<AnalyticsEven
     // since we don't have access to server-side session creation
     const sessionId = eventData.session_id;
     
+    // For client-side tracking, we want to ensure we always have a guest_id
+    // If we have a user_id, we still want to track the guest_id for continuity
+    let guestId = eventData.guest_id;
+    
+    // If we have a user_id but no guest_id, try to get it from the user profile
+    if (eventData.user_id && !guestId) {
+      try {
+        const { data: userProfile, error: userError } = await supabase
+          .from('users')
+          .select('guest_id')
+          .eq('id', eventData.user_id)
+          .single();
+        
+        if (!userError && userProfile?.guest_id) {
+          guestId = userProfile.guest_id;
+        }
+      } catch (error) {
+        console.warn('Could not fetch user profile guest_id:', error);
+      }
+    }
+    
     const { error } = await supabase
       .from('analytics_events')
       .insert({
         ...eventData,
+        guest_id: guestId, // Ensure guest_id is always set
         session_ref: sessionId,
         created_at: new Date().toISOString()
       })
@@ -153,4 +175,30 @@ export async function updateUserProfile(updates: Partial<User>): Promise<{ succe
   } 
   
   return { success: true } 
+}
+
+// Update seller profile
+export async function updateSellerProfile(updates: Partial<SellerProfile>): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  const { error } = await supabase
+    .from('seller_profiles')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', user.id)
+
+  if (error) {
+    console.error('Error updating seller profile:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
 }

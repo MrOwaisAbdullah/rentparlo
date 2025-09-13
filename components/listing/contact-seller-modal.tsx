@@ -101,7 +101,6 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
       await trackAnalyticsEventClient({
         event_type: 'contact_click',
         listing_id: listing._id,
-        user_id: seller.id,
         metadata: { 
           contact_method: contactMethod,
           seller_id: seller.id 
@@ -138,8 +137,10 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
         await trackAnalyticsEventClient({
           event_type: 'contact_click',
           listing_id: listing._id,
-          user_id: seller.id,
-          metadata: { seller_id: seller.id }
+          metadata: { 
+            contact_method: 'phone',
+            seller_id: seller.id 
+          }
         });
       } catch (error) {
         console.error('Error tracking phone call:', error);
@@ -158,8 +159,10 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
         await trackAnalyticsEventClient({
           event_type: 'contact_click',
           listing_id: listing._id,
-          user_id: seller.id,
-          metadata: { seller_id: seller.id }
+          metadata: { 
+            contact_method: 'email',
+            seller_id: seller.id 
+          }
         });
       } catch (error) {
         console.error('Error tracking email contact:', error);

@@ -24,6 +24,7 @@ CREATE TABLE public.users (
   login_count INTEGER DEFAULT 0,
   is_verified BOOLEAN DEFAULT false,
   city TEXT,
+  area TEXT,
   state TEXT,
   country TEXT DEFAULT 'Pakistan',
   last_location GEOGRAPHY(POINT, 4326),
@@ -84,6 +85,7 @@ CREATE TABLE public.seller_profiles (
   owner_cnic TEXT UNIQUE,
   address_line1 TEXT,
   city TEXT,
+  area TEXT,
   state TEXT,
   country TEXT DEFAULT 'Pakistan',
   phone TEXT,
@@ -654,6 +656,8 @@ $;
 CREATE OR REPLACE FUNCTION public.create_user_profile_after_signup(
     p_id                     UUID,
     p_email                  TEXT,
+    p_name                   TEXT DEFAULT NULL, -- Added
+    p_profile_image_url      TEXT DEFAULT NULL, -- Added
     p_phone                  TEXT DEFAULT NULL,
     p_role                   TEXT DEFAULT 'user',
     p_city                   TEXT DEFAULT NULL,
@@ -669,13 +673,18 @@ AS $func$
 BEGIN
     RAISE NOTICE 'create_user_profile_after_signup called for %', p_id;
 
+    -- Ensure guest_id is set, generate one if not provided
+    IF p_guest_id IS NULL THEN
+        p_guest_id := 'guest-' || gen_random_uuid()::text;
+    END IF;
+
     -- Insert user profile, bypassing RLS by using SECURITY DEFINER
     INSERT INTO public.users (
-        id, email, phone, role, city, country,
+        id, email, name, profile_image_url, phone, role, city, country,
         is_verified, email_verified, active,
         guest_id, notification_preferences, preferred_language
     ) VALUES (
-        p_id, p_email, p_phone, p_role, p_city, p_country,
+        p_id, p_email, p_name, p_profile_image_url, p_phone, p_role, p_city, p_country,
         p_is_verified, p_email_verified, p_active,
         p_guest_id, p_notification_preferences, p_preferred_language
     );

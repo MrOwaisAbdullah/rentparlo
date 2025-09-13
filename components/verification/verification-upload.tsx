@@ -228,6 +228,25 @@ export function VerificationUpload({
 
   return (
     <div className={cn("space-y-6", className)}>
+      {/* Instructions */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md" role="alert">
+        <p className="font-bold">Document Submission Guidelines</p>
+        <ul className="mt-2 list-disc list-inside text-sm space-y-1">
+          <li>
+            <strong>Required:</strong> Clear photos of the front and back of your CNIC are mandatory for verification.
+          </li>
+          <li>
+            <strong>Optional (Recommended):</strong> Submitting a business license can significantly speed up your verification process.
+          </li>
+          <li>Ensure all documents are clear, well-lit, and all text is readable.</li>
+          <li>Upload colored scans or photos; black & white are not accepted.</li>
+          <li>Documents must be current and not expired.</li>
+          <li>Supported formats: JPG, PNG, PDF.</li>
+          <li>Maximum file size: 10MB per document.</li>
+          <li>Verification typically takes 24-48 hours.</li>
+        </ul>
+      </div>
+
       {/* Overall Progress */}
       <Card>
         <CardHeader>
@@ -426,23 +445,6 @@ export function VerificationUpload({
           );
         })}
       </div>
-      
-      {/* Instructions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Document Guidelines</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="text-sm text-muted-foreground space-y-2">
-            <li>• Ensure documents are clear, well-lit, and all text is readable</li>
-            <li>• Upload colored scans or photos (black & white not accepted)</li>
-            <li>• Documents should be current and not expired</li>
-            <li>• File formats: JPEG, PNG, WebP, PDF</li>
-            <li>• Maximum file size: 10MB per document</li>
-            <li>• Verification typically takes 24-48 hours</li>
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -37,6 +37,8 @@ import {
   ResponsiveGrid,
 } from "@/components/layout/responsive-container";
 import { ScreenReaderAnnouncer, AriaUtils } from "@/lib/accessibility-utils";
+import { CityAreaCombobox } from "@/components/ui/combobox";
+import { CITY_AREAS } from "@/lib/area-utils";
 
 interface Category {
   _id: string;
@@ -359,182 +361,33 @@ export function SearchFilters({
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 mt-2">
-                  {/* City Filter with Searchable Combo */}
-                  <Popover
-                    open={openCityPopover}
-                    onOpenChange={setOpenCityPopover}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCityPopover}
-                        aria-haspopup="listbox"
-                        aria-label={AriaUtils.createFilterLabel(
-                          "City",
-                          localFilters.city !== "any" ? localFilters.city : "No city selected"
-                        )}
-                        className="w-full justify-between focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      >
-                        {localFilters.city && localFilters.city !== "any"
-                          ? localFilters.city
-                          : "Select city..."}
-                        <ChevronDown
-                          className="ml-2 h-4 w-4 shrink-0 opacity-50"
-                          aria-hidden="true"
-                        />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full max-w-xs sm:max-w-sm p-0 overflow-hidden">
-                      <Command>
-                        <CommandInput
-                          placeholder="Search city..."
-                          className="text-sm"
-                          aria-label="Search for a city"
-                        />
-                        <CommandList className="max-h-60 overflow-y-auto">
-                          <CommandEmpty>No city found.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              onSelect={() => handleCitySelect("any")}
-                              className="text-sm"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4 flex-shrink-0",
-                                  localFilters.city === "any"
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                                aria-hidden="true"
-                              />
-                              <span className="truncate">All Cities</span>
-                            </CommandItem>
-                            {Object.entries(citiesByProvince).map(
-                              ([province, provinceCities]) => (
-                                <React.Fragment key={province}>
-                                  <div className="px-2 py-1 text-xs font-semibold text-muted-foreground truncate">
-                                    {province}
-                                  </div>
-                                  {provinceCities.map((city) => (
-                                    <CommandItem
-                                      key={city.id}
-                                      value={city.name}
-                                      onSelect={() => handleCitySelect(city.name)}
-                                      className="text-sm"
-                                      role="option"
-                                      aria-selected={
-                                        localFilters.city === city.name
-                                      }
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4 flex-shrink-0",
-                                          localFilters.city === city.name
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                        aria-hidden="true"
-                                      />
-                                      <span className="truncate">
-                                        {city.name}
-                                      </span>
-                                    </CommandItem>
-                                  ))}
-                                </React.Fragment>
-                              )
-                            )}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Area Filter - only show if city has areas */}
-                  {localFilters.city && localFilters.city !== "any" && (
-                    <>
-                      <Label className="text-sm mt-3">Area</Label>
-                      {cityHasAreas ? (
-                        <Popover
-                          open={openAreaPopover}
-                          onOpenChange={setOpenAreaPopover}
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openAreaPopover}
-                              className="w-full justify-between"
-                            >
-                              {localFilters.area && localFilters.area !== "any"
-                                ? localFilters.area
-                                : "Select area..."}
-                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full max-w-xs sm:max-w-sm p-0 overflow-hidden">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search area..."
-                                className="text-sm"
-                              />
-                              <CommandList className="max-h-60 overflow-y-auto">
-                                <CommandEmpty>No area found.</CommandEmpty>
-                                <CommandGroup>
-                                  <CommandItem
-                                    onSelect={() => handleAreaSelect("any")}
-                                    className="text-sm"
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4 flex-shrink-0",
-                                        localFilters.area === "any"
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                    <span className="truncate">All Areas</span>
-                                  </CommandItem>
-                                  {areas.map((area, index) => (
-                                    <CommandItem
-                                      key={index}
-                                      onSelect={() => handleAreaSelect(area)}
-                                      className="text-sm"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4 flex-shrink-0",
-                                          localFilters.area === area
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      <span className="truncate">{area}</span>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      ) : (
-                        <Alert>
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>
-                            No specific areas defined for {localFilters.city}.
-                            Showing results for the entire city.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
-                      {/* Area Error Message */}
-                      {areaError && (
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>{areaError}</AlertDescription>
-                        </Alert>
-                      )}
-                    </>
+                  <CityAreaCombobox
+                    cities={Object.keys(CITY_AREAS)}
+                    selectedCity={localFilters.city === "any" ? "" : localFilters.city}
+                    selectedArea={localFilters.area === "any" ? "" : localFilters.area}
+                    onCityChange={(city) => {
+                      setLocalFilters(prev => ({
+                        ...prev,
+                        city: city || "any",
+                        area: "any" // Reset area when city changes
+                      }));
+                    }}
+                    onAreaChange={(area) => {
+                      setLocalFilters(prev => ({
+                        ...prev,
+                        area: area || "any"
+                      }));
+                    }}
+                    className="flex-nowrap"
+                    size="md"
+                  />
+                  
+                  {/* Area Error Message */}
+                  {areaError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{areaError}</AlertDescription>
+                    </Alert>
                   )}
                 </CollapsibleContent>
               </Collapsible>
