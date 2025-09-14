@@ -11,7 +11,7 @@ const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 // Export utility functions only
 
-/**
+/** 
  * Handle authentication errors and return user-friendly messages
  */
 export const handleAuthError = (error: any): string => {
@@ -50,6 +50,11 @@ export const handleAuthError = (error: any): string => {
   // Handle network errors
   if (error.message && (error.message.includes('NetworkError') || error.message.includes('FetchError'))) {
     return 'Network error. Please check your connection and try again';
+  }
+  
+  // Handle timeout errors
+  if (error.message && (error.message.includes('timeout') || error.message.includes('UND_ERR') || error.message.includes('Connect Timeout'))) {
+    return 'Connection timeout. Please check your internet connection and try again';
   }
   
   // Handle generic errors

@@ -8,6 +8,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { 
   upsertUser, 
   createSellerProfile, 
@@ -28,7 +29,7 @@ interface SimplifiedSignUpData {
   email: string;
   password: string;
   name: string;
-  phone: string;
+  phone: string | null;
   city: string;
   role: 'user' | 'seller';
 }
@@ -121,20 +122,67 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
       }
     }
 
-    // Sign up with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
-        data: {
-          name: formData.name,
-          phone: formData.phone,
-          city: formData.city,
-          role: formData.role
+    // Sign up with Supabase Auth with retry mechanism
+    let authData, authError;
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        const result = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+            data: {
+              name: formData.name,
+              phone: formData.phone,
+              city: formData.city,
+              role: formData.role
+            }
+          }
+        });
+        
+        authData = result.data;
+        authError = result.error;
+        
+        // If successful or if it's a user already exists error, break
+        if (!authError || (authError && authError.message && authError.message.includes('already exists'))) {
+          break;
         }
+        
+        // If it's a timeout error, retry
+        if (authError && authError.message && (authError.message.includes('timeout') || authError.message.includes('UND_ERR'))) {
+          retries--;
+          if (retries > 0) {
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+        }
+        
+        // For other errors, break immediately
+        break;
+      } catch (error) {
+        // Handle timeout errors
+        if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('UND_ERR'))) {
+          retries--;
+          if (retries > 0) {
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          } else {
+            authError = {
+              message: 'Connection timeout. Please check your internet connection and try again.'
+            };
+          }
+        } else {
+          authError = {
+            message: error instanceof Error ? error.message : 'An unexpected error occurred'
+          };
+        }
+        break;
       }
-    })
+    }
 
     if (authError) {
       await logAuthEvent(
@@ -162,6 +210,7 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
     const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
         p_id: authData.user.id,
         p_email: formData.email,
+        p_name: formData.name,
         p_phone: formData.phone,
         p_role: formData.role,
         p_city: formData.city,
@@ -276,20 +325,67 @@ export async function signUpSimplified(formData: SimplifiedSignUpData): Promise<
       }
     }
 
-    // Sign up with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
-        data: {
-          name: formData.name,
-          phone: formData.phone,
-          city: formData.city,
-          role: formData.role
+    // Sign up with Supabase Auth with retry mechanism
+    let authData, authError;
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        const result = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+            data: {
+              name: formData.name,
+              phone: formData.phone,
+              city: formData.city,
+              role: formData.role
+            }
+          }
+        });
+        
+        authData = result.data;
+        authError = result.error;
+        
+        // If successful or if it's a user already exists error, break
+        if (!authError || (authError && authError.message && authError.message.includes('already exists'))) {
+          break;
         }
+        
+        // If it's a timeout error, retry
+        if (authError && authError.message && (authError.message.includes('timeout') || authError.message.includes('UND_ERR'))) {
+          retries--;
+          if (retries > 0) {
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+        }
+        
+        // For other errors, break immediately
+        break;
+      } catch (error) {
+        // Handle timeout errors
+        if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('UND_ERR'))) {
+          retries--;
+          if (retries > 0) {
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          } else {
+            authError = {
+              message: 'Connection timeout. Please check your internet connection and try again.'
+            };
+          }
+        } else {
+          authError = {
+            message: error instanceof Error ? error.message : 'An unexpected error occurred'
+          };
+        }
+        break;
       }
-    })
+    }
 
     if (authError) {
       await logAuthEvent(
@@ -317,6 +413,7 @@ export async function signUpSimplified(formData: SimplifiedSignUpData): Promise<
     const { error: profileError } = await supabase.rpc('create_user_profile_after_signup', {
         p_id: authData.user.id,
         p_email: formData.email,
+        p_name: formData.name,
         p_phone: formData.phone,
         p_role: formData.role,
         p_city: formData.city,

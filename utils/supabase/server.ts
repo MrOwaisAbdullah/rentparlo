@@ -24,6 +24,20 @@ export async function createClient() {
           }
         },
       },
+      global: {
+        fetch: (url, options = {}) => {
+          // Add timeout to fetch requests (15 seconds)
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          
+          return fetch(url, {
+            ...options,
+            signal: controller.signal
+          }).finally(() => {
+            clearTimeout(timeoutId);
+          });
+        }
+      }
     }
   )
 }

@@ -62,7 +62,7 @@ export function SimplifiedRegisterForm({
         email: data.email,
         password: data.password,
         name: data.email.split('@')[0], // Generate name from email
-        phone: '', // Will be collected during onboarding
+        phone: null, // Will be collected during onboarding
         city: 'Karachi', // Default city, will be updated during onboarding
         role: 'user' // Default role, will be selected during onboarding
       });
