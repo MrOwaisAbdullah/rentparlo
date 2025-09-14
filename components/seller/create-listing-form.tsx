@@ -970,12 +970,4 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
 };
 
 export default CreateListingForm;
-          )}
-        </div>
-      </div>
-    </form>
-  );
-}
-
-export default CreateListingForm;
 
