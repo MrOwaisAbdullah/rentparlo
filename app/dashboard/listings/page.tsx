@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
-import { getListingsBySeller } from '@/lib/sanity-queries';
+import { searchListings } from '@/lib/sanity-queries';
 import { redirect } from 'next/navigation';
 import {
   Table,
@@ -14,63 +14,28 @@ import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Listing } from '@/types';
+import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteListing } from '@/lib/data-integration';
 
 export default async function ListingsPage() {
-  // const supabase = await createClient();
-  // const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // if (!user) {
-  //   redirect('/auth/login');
-  // }
+  if (!user) {
+    redirect('/auth/login');
+  }
 
-  // const listings: Listing[] = await getListingsBySeller(user.id);
-
-  const mockListings: Listing[] = [
-    {
-      _id: '1',
-      _type: 'listing',
-      _createdAt: new Date().toISOString(),
-      title: 'My Awesome Camera',
-      slug: { current: 'my-awesome-camera' },
-      description: 'A great camera for all your needs.',
-      priceType: 'daily',
-      createdAt: new Date().toISOString(),
-      price: 5000,
-      category: { _id: 'cat1', title: 'Electronics', slug: 'electronics' },
-      images: [{ asset: { url: 'https://placehold.co/400' } }],
-      location: { city: 'Karachi', area: 'Clifton' },
-      condition: 'like-new',
-      availability: { isAvailable: true },
-      specifications: [],
-      rentalRules: [],
-      status: 'active',
-      supabaseId: 'user-123',
-      created_at: new Date().toISOString(),
-    },
-    {
-      _id: '2',
-      _type: 'listing',
-      _createdAt: new Date().toISOString(),
-      title: 'Professional Drone for Rent with a Very Long Title to Test Overflow',
-      slug: { current: 'professional-drone-for-rent' },
-      description: 'High-end drone for professional videography.',
-      priceType: 'daily',
-      createdAt: new Date().toISOString(),
-      price: 10000,
-      category: { _id: 'cat1', title: 'Electronics', slug: 'electronics' },
-      images: [{ asset: { url: 'https://placehold.co/400' } }],
-      location: { city: 'Lahore', area: 'Gulberg' },
-      condition: 'good',
-      availability: { isAvailable: false },
-      specifications: [],
-      rentalRules: [],
-      status: 'pending',
-      supabaseId: 'user-123',
-      created_at: new Date().toISOString(),
-    },
-  ];
-
-  const listings: Listing[] = mockListings;
+  // Fetch listings for the current seller
+  const listings: Listing[] = await searchListings({
+    sellerId: user.id
+  });
 
   const formatPrice = (price: number, priceType: string) => {
     const formatted = new Intl.NumberFormat('en-PK', {
@@ -95,7 +60,7 @@ export default async function ListingsPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Listings</h1>
         <Button asChild>
-          <Link href="/dashboard/listings/create">Create New Listing</Link>
+          <Link href="/dashboard/create-listing">Create New Listing</Link>
         </Button>
       </div>
       
@@ -134,16 +99,64 @@ export default async function ListingsPage() {
                     </TableCell>
                     <TableCell>{formatPrice(listing.price, listing.priceType)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/listings/edit/${listing.slug.current}`}>Edit</Link>
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/listing/${listing.slug?.current}`}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>View</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/listings/edit/${listing._id}`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={async () => {
+                              if (confirm('Are you sure you want to delete this listing?')) {
+                                try {
+                                  const response = await fetch(`/api/listings?id=${listing._id}`, {
+                                    method: 'DELETE',
+                                  });
+                                  
+                                  if (response.ok) {
+                                    // Refresh the page to show updated listings
+                                    window.location.reload();
+                                  } else {
+                                    const error = await response.json();
+                                    alert(error.error || 'Failed to delete listing');
+                                  }
+                                } catch (error) {
+                                  console.error('Error deleting listing:', error);
+                                  alert('Failed to delete listing');
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24">
-                    You haven't created any listings yet.
+                    You haven't created any listings yet.{' '}
+                    <Link href="/dashboard/create-listing" className="text-blue-600 hover:underline">
+                      Create your first listing
+                    </Link>
                   </TableCell>
                 </TableRow>
               )}

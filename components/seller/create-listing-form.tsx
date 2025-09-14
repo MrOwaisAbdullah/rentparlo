@@ -31,55 +31,54 @@ import FileUpload from "@/components/kokonutui/file-upload";
 
 interface User {
   id: string;
-  name: string;
+  name?: string;
   email: string;
   role: string;
+  [key: string]: any; // Allow additional properties
 }
 
 interface Category {
   _id: string;
   title: string;
-  slug: string;
+  slug: string | { current: string };
   description?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 interface CreateListingFormProps {
   user: User;
   categories: Category[];
+  editMode?: boolean;
+  listing?: Listing;
 }
 
-// Form validation schema
+// Form validation schema - updated to match Sanity schema
 const createListingSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters').max(100, 'Title too long'),
   description: z.string().min(50, 'Description must be at least 50 characters').max(2000, 'Description too long'),
   category: z.string().min(1, 'Please select a category'),
   price: z.number().min(1, 'Price must be greater than 0'),
-  priceType: z.enum(['hourly', 'daily', 'weekly', 'monthly']),
-  condition: z.enum(['new', 'like-new', 'good', 'fair', 'poor']),
-  availability: z.enum(['available', 'rented', 'maintenance']),
+  priceType: z.enum(['hourly', 'daily', 'weekly', 'monthly', 'yearly']),
+  pricePerHour: z.number().optional(),
+  priceWeekly: z.number().optional(),
+  priceMonthly: z.number().optional(),
+  condition: z.enum(['new', 'like-new', 'good', 'fair']),
   location: z.object({
     city: z.string().min(1, 'City is required'),
     area: z.string().min(1, 'Area is required'),
-    address: z.string().optional()
   }),
+  images: z.array(z.string()).min(1, 'At least one image is required').max(10, 'Maximum 10 images allowed'),
   specifications: z.array(z.object({
     key: z.string().min(1, 'Specification name is required'),
     value: z.string().min(1, 'Specification value is required')
   })).optional(),
-  images: z.array(z.string()).min(1, 'At least one image is required').max(10, 'Maximum 10 images allowed'),
   tags: z.array(z.string()).optional(),
-  minimumRentalPeriod: z.string().optional(),
-  securityDeposit: z.number().optional(),
-  deliveryOptions: z.object({
-    pickup: z.boolean(),
-    delivery: z.boolean(),
-    deliveryFee: z.number().optional()
-  }),
-  policies: z.object({
-    cancellationPolicy: z.string().optional(),
-    damagePolicy: z.string().optional(),
-    lateReturnPolicy: z.string().optional()
-  })
+  rentalRules: z.array(z.string()).optional(),
+  badges: z.array(z.string()).optional(),
+  seo: z.object({
+    metaTitle: z.string().optional(),
+    metaDescription: z.string().optional(),
+  }).optional(),
 });
 
 type CreateListingFormData = z.infer<typeof createListingSchema>;
@@ -134,7 +133,7 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
       // Show upload progress
       setUploadProgress(30);
 
-      const response = await fetch('/api/upload/image', {
+      const response = await fetch('/api/upload/listing-image', {
         method: 'POST',
         body: formData
       });
@@ -147,7 +146,8 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
         form.setValue('images', [...currentImages, url]);
         setUploadProgress(100);
       } else {
-        throw new Error('Failed to upload image');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload image');
       }
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -156,37 +156,61 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
     }
   };
 
-  const form = useForm<CreateListingFormData>({
-    resolver: zodResolver(createListingSchema),
-    defaultValues: {
+  // Convert listing data to form default values for edit mode
+  const getDefaultValues = () => {
+    if (editMode && listing) {
+      return {
+        title: listing.title || '',
+        description: listing.description || '',
+        category: listing.category?._ref || listing.category?._id || '',
+        price: listing.price || 0,
+        priceType: listing.priceType || 'daily',
+        pricePerHour: listing.pricePerHour || undefined,
+        priceWeekly: listing.priceWeekly || undefined,
+        priceMonthly: listing.priceMonthly || undefined,
+        condition: listing.condition || 'good',
+        location: {
+          city: listing.location?.city || '',
+          area: listing.location?.area || '',
+        },
+        images: listing.images?.map(img => img.asset?.url).filter(Boolean) || [],
+        specifications: listing.specifications || [{ key: '', value: '' }],
+        tags: listing.tags || [],
+        rentalRules: listing.rentalRules || [],
+        badges: listing.badges || [],
+        seo: listing.seo || {
+          metaTitle: '',
+          metaDescription: '',
+        },
+      };
+    }
+    
+    return {
       title: '',
       description: '',
       category: '',
       price: 0,
       priceType: 'daily',
       condition: 'good',
-      availability: 'available',
       location: {
         city: '',
         area: '',
-        address: ''
       },
       specifications: [{ key: '', value: '' }],
       images: [],
       tags: [],
-      minimumRentalPeriod: '',
-      securityDeposit: 0,
-      deliveryOptions: {
-        pickup: true,
-        delivery: false,
-        deliveryFee: 0
+      rentalRules: [],
+      badges: [],
+      seo: {
+        metaTitle: '',
+        metaDescription: '',
       },
-      policies: {
-        cancellationPolicy: '',
-        damagePolicy: '',
-        lateReturnPolicy: ''
-      }
-    }
+    };
+  };
+
+  const form = useForm<CreateListingFormData>({
+    resolver: zodResolver(createListingSchema),
+    defaultValues: getDefaultValues()
   });
 
   const { fields: specFields, append: addSpec, remove: removeSpec } = useFieldArray({
@@ -205,12 +229,12 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
     {
       title: 'Pricing & Condition',
       description: 'Set your rental price and item condition',
-      fields: ['price', 'priceType', 'condition', 'securityDeposit']
+      fields: ['price', 'priceType', 'pricePerHour', 'priceWeekly', 'priceMonthly', 'condition']
     },
     {
-      title: 'Location & Delivery',
-      description: 'Where customers can pick up or receive the item',
-      fields: ['location', 'deliveryOptions']
+      title: 'Location',
+      description: 'Where customers can pick up the item',
+      fields: ['location']
     },
     {
       title: 'Images & Details',
@@ -218,9 +242,9 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
       fields: ['images', 'specifications', 'tags']
     },
     {
-      title: 'Policies & Terms',
+      title: 'Rental Rules',
       description: 'Set rental policies and terms',
-      fields: ['policies', 'minimumRentalPeriod']
+      fields: ['rentalRules', 'badges']
     }
   ];
 
@@ -228,30 +252,85 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
     setIsSubmitting(true);
 
     try {
-      // Create listing in Sanity
-      const response = await fetch('/api/listings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Map form data to Sanity schema
+      const listingData = {
+        title: data.title,
+        description: data.description,
+        category: {
+          _ref: data.category,
+          _type: 'reference'
         },
-        body: JSON.stringify({
-          ...data,
-          supabaseId: user.id,
-          status: 'pending', // Pending admin approval
-          createdAt: new Date().toISOString()
-        }),
-      });
+        price: data.price,
+        priceType: data.priceType,
+        pricePerHour: data.pricePerHour,
+        priceWeekly: data.priceWeekly,
+        priceMonthly: data.priceMonthly,
+        condition: data.condition,
+        location: {
+          city: data.location.city,
+          area: data.location.area,
+        },
+        images: data.images.map(url => ({
+          _type: 'image',
+          asset: {
+            _ref: url, // This should be the asset reference from Sanity
+            _type: 'reference'
+          }
+        })),
+        specifications: data.specifications?.filter(spec => spec.key && spec.value) || [],
+        tags: data.tags || [],
+        rentalRules: data.rentalRules || [],
+        badges: data.badges || [],
+        seo: data.seo,
+        // Add required fields for Sanity schema
+        status: 'pending',
+        published: false,
+        isFeatured: false,
+        isVerified: false,
+        availability: {
+          isAvailable: true
+        }
+      };
+
+      let response;
+      
+      if (editMode && listing) {
+        // Update existing listing
+        response = await fetch('/api/listings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            listingId: listing._id,
+            ...listingData
+          }),
+        });
+      } else {
+        // Create new listing
+        response = await fetch('/api/listings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...listingData,
+            supabaseId: user.id,
+            createdAt: new Date().toISOString()
+          }),
+        });
+      }
 
       if (response.ok) {
-        const { listingId } = await response.json();
+        const { data: listingResult } = await response.json();
         
         // Track analytics
         await fetch('/api/analytics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            event_type: 'listing_click',
-            listing_id: listingId,
+            event_type: editMode ? 'listing_updated' : 'listing_created',
+            listing_id: listingResult._id || listing?._id,
             metadata: {
               category: data.category,
               price: data.price,
@@ -261,13 +340,14 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
         });
 
         // Redirect to dashboard with success message
-        router.push('/dashboard?success=listing-created');
+        router.push('/dashboard/listings?success=' + (editMode ? 'listing-updated' : 'listing-created'));
       } else {
-        throw new Error('Failed to create listing');
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${editMode ? 'update' : 'create'} listing`);
       }
     } catch (error) {
-      console.error('Error creating listing:', error);
-      alert('Failed to create listing. Please try again.');
+      console.error(`Error ${editMode ? 'updating' : 'creating'} listing:`, error);
+      alert(`Failed to ${editMode ? 'update' : 'create'} listing. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -372,19 +452,14 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
                   {watchedValues.location.area}, {watchedValues.location.city}
                 </div>
 
-                {watchedValues.specifications && watchedValues.specifications.length > 0 && (
+                {watchedValues.rentalRules && watchedValues.rentalRules.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-2">Specifications</h4>
-                    <div className="space-y-1">
-                      {watchedValues.specifications.map((spec, idx) => (
-                        spec.key && spec.value && (
-                          <div key={idx} className="flex justify-between text-sm">
-                            <span className="text-gray-600">{spec.key}:</span>
-                            <span>{spec.value}</span>
-                          </div>
-                        )
+                    <h4 className="font-semibold mb-2">Rental Rules</h4>
+                    <ul className="space-y-1">
+                      {watchedValues.rentalRules.map((rule, idx) => (
+                        <li key={idx} className="text-sm">• {rule}</li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
               </div>
@@ -520,7 +595,7 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="price">Rental Price *</Label>
+                  <Label htmlFor="price">Daily Price (PKR) *</Label>
                   <div className="relative mt-1">
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
@@ -553,10 +628,55 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
                 </div>
               </div>
 
+              {/* Additional pricing options */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="pricePerHour">Hourly Price (PKR)</Label>
+                  <div className="relative mt-1">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      id="pricePerHour"
+                      type="number"
+                      {...form.register('pricePerHour', { valueAsNumber: true })}
+                      placeholder="0"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="priceWeekly">Weekly Price (PKR)</Label>
+                  <div className="relative mt-1">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      id="priceWeekly"
+                      type="number"
+                      {...form.register('priceWeekly', { valueAsNumber: true })}
+                      placeholder="0"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="priceMonthly">Monthly Price (PKR)</Label>
+                  <div className="relative mt-1">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      id="priceMonthly"
+                      type="number"
+                      {...form.register('priceMonthly', { valueAsNumber: true })}
+                      placeholder="0"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <Label>Item Condition *</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                  {CONDITIONS.map((condition) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-2">
+                  {CONDITIONS.filter(c => c.value !== 'poor').map((condition) => (
                     <div 
                       key={condition.value}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -572,27 +692,10 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
                   ))}
                 </div>
               </div>
-
-              <div>
-                <Label htmlFor="securityDeposit">Security Deposit (Optional)</Label>
-                <div className="relative mt-1">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    id="securityDeposit"
-                    type="number"
-                    {...form.register('securityDeposit', { valueAsNumber: true })}
-                    placeholder="0"
-                    className="pl-10"
-                  />
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Amount to be held as security (refundable)
-                </p>
-              </div>
             </div>
           )}
 
-          {/* Step 2: Location & Delivery */}
+          {/* Step 2: Location */}
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
@@ -614,66 +717,6 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
                 {form.formState.errors.location?.area && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.location.area.message}</p>
                 )}
-              </div>
-
-              <div>
-                <Label htmlFor="address">Full Address (Optional)</Label>
-                <Textarea
-                  id="address"
-                  {...form.register('location.address')}
-                  placeholder="Full address for delivery or pickup"
-                  rows={2}
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Label>Delivery Options</Label>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">Pickup Available</div>
-                      <div className="text-sm text-gray-600">Customers can pick up the item</div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant={watchedValues.deliveryOptions?.pickup ? "primary" : "outline"}
-                      onClick={() => form.setValue('deliveryOptions.pickup', !watchedValues.deliveryOptions?.pickup)}
-                    >
-                      {watchedValues.deliveryOptions?.pickup ? 'Enabled' : 'Enable'}
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">Delivery Available</div>
-                      <div className="text-sm text-gray-600">Deliver the item to customers</div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant={watchedValues.deliveryOptions?.delivery ? "primary" : "outline"}
-                      onClick={() => form.setValue('deliveryOptions.delivery', !watchedValues.deliveryOptions?.delivery)}
-                    >
-                      {watchedValues.deliveryOptions?.delivery ? 'Enabled' : 'Enable'}
-                    </Button>
-                  </div>
-
-                  {watchedValues.deliveryOptions?.delivery && (
-                    <div>
-                      <Label htmlFor="deliveryFee">Delivery Fee (PKR)</Label>
-                      <div className="relative mt-1">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          id="deliveryFee"
-                          type="number"
-                          {...form.register('deliveryOptions.deliveryFee', { valueAsNumber: true })}
-                          placeholder="0"
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           )}
@@ -815,53 +858,70 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
             </div>
           )}
 
-          {/* Step 4: Policies & Terms */}
+          {/* Step 4: Rental Rules */}
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
-                <Label htmlFor="minimumRentalPeriod">Minimum Rental Period (Optional)</Label>
-                <Input
-                  id="minimumRentalPeriod"
-                  {...form.register('minimumRentalPeriod')}
-                  placeholder="e.g., 1 day, 1 week"
+                <Label htmlFor="rentalRules">Rental Rules (Optional)</Label>
+                <Textarea
+                  id="rentalRules"
+                  placeholder="Enter rental rules, one per line (e.g., Minimum rental period: 1 day)"
+                  rows={4}
                   className="mt-1"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const rules = watchedValues.rentalRules || [];
+                      const newRule = (e.target as HTMLInputElement).value.trim();
+                      if (newRule && !rules.includes(newRule)) {
+                        form.setValue('rentalRules', [...rules, newRule]);
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }
+                  }}
                 />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {watchedValues.rentalRules?.map((rule, idx) => (
+                    <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                      {rule}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newRules = [...watchedValues.rentalRules || []];
+                          newRules.splice(idx, 1);
+                          form.setValue('rentalRules', newRules);
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <Label>Rental Policies</Label>
-                
-                <div>
-                  <Label htmlFor="cancellationPolicy" className="text-sm font-normal">Cancellation Policy</Label>
-                  <Textarea
-                    id="cancellationPolicy"
-                    {...form.register('policies.cancellationPolicy')}
-                    placeholder="When can customers cancel and get a refund?"
-                    rows={3}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="damagePolicy" className="text-sm font-normal">Damage Policy</Label>
-                  <Textarea
-                    id="damagePolicy"
-                    {...form.register('policies.damagePolicy')}
-                    placeholder="What happens if the item is damaged?"
-                    rows={3}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="lateReturnPolicy" className="text-sm font-normal">Late Return Policy</Label>
-                  <Textarea
-                    id="lateReturnPolicy"
-                    {...form.register('policies.lateReturnPolicy')}
-                    placeholder="What happens if the item is returned late?"
-                    rows={3}
-                    className="mt-1"
-                  />
+              <div>
+                <Label>Badges (Optional)</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                  {['hot', 'new', 'featured', 'verified', 'top_seller', 'discount', 'eco_friendly', 'local', 'instant_delivery'].map((badge) => (
+                    <div 
+                      key={badge}
+                      className={`p-2 border rounded cursor-pointer text-center text-sm ${
+                        watchedValues.badges?.includes(badge) 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => {
+                        const currentBadges = watchedValues.badges || [];
+                        if (currentBadges.includes(badge)) {
+                          form.setValue('badges', currentBadges.filter(b => b !== badge));
+                        } else {
+                          form.setValue('badges', [...currentBadges, badge]);
+                        }
+                      }}
+                    >
+                      {badge.replace('_', ' ')}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -897,19 +957,19 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Create Listing
-                </>
-              )}
-            </Button>
+            <>
+                <Save className="w-4 h-4 mr-2" />
+                {editMode ? 'Update Listing' : 'Create Listing'}
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CreateListingForm;
           )}
         </div>
       </div>

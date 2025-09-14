@@ -32,8 +32,23 @@ async function CreateListingPageContent() {
       redirect("/auth/become-seller");
     }
 
+    // Map user data to match our interface
+    const mappedUser = {
+      id: user.id,
+      name: user.name || '',
+      email: user.email,
+      role: user.role,
+      // Add other fields as needed
+    };
+
     // Get categories for the form
     const categories = await getCategories();
+    
+    // Ensure categories have the correct structure
+    const formattedCategories = categories.map(cat => ({
+      ...cat,
+      slug: typeof cat.slug === 'string' ? cat.slug : cat.slug?.current || cat.title.toLowerCase().replace(/\s+/g, '-')
+    }));
 
     return (
       <div className="container mx-auto px-4 py-8">
@@ -51,7 +66,7 @@ async function CreateListingPageContent() {
           </div>
 
           {/* Form */}
-          <CreateListingForm user={user} categories={categories} />
+          <CreateListingForm user={mappedUser} categories={formattedCategories} />
         </div>
       </div>
     );

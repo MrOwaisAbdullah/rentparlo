@@ -120,6 +120,50 @@ export const LISTINGS_QUERY = `
   }
 `
 
+// Get listing by ID with full details
+export const LISTING_BY_ID_QUERY = `
+  *[_type == "listing" && _id == $id][0] {
+    _id,
+    _createdAt,
+    title,
+    slug,
+    description,
+    price,
+    pricePerHour,
+    priceWeekly,
+    priceMonthly,
+    priceType,
+    category->{
+      _id,
+      title,
+      slug
+    },
+    images[]{
+      asset->{
+        url,
+        metadata {
+          lqip
+        }
+      }
+    },
+    location,
+    condition,
+    availability,
+    specifications,
+    tags,
+    rentalRules,
+    badges,
+    seo,
+    status,
+    published,
+    isFeatured,
+    isVerified,
+    supabaseId,
+    createdAt,
+    _updatedAt
+  }
+`
+
 // Get listing by slug with full details
 export const LISTING_BY_SLUG_QUERY = `
   *[_type == "listing" && slug.current == $slug && status == "active"][0] {
@@ -619,6 +663,11 @@ export async function getCategories(): Promise<Category[]> {
 // Helper function to fetch featured listings
 export async function getFeaturedListings(): Promise<Listing[]> {
   return await client.fetch(FEATURED_LISTINGS_QUERY)
+}
+
+// Helper function to fetch listing by ID
+export async function getListingById(id: string): Promise<Listing | null> {
+  return await client.fetch(LISTING_BY_ID_QUERY, { id })
 }
 
 // Helper function to fetch listing by slug
