@@ -3,11 +3,12 @@ import { Logo } from '@/components/logo';
 const Loading = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <div className="relative flex items-center justify-center">
-        <div className="absolute h-24 w-24 rounded-full border-t-4 border-b-4 border-primary animate-spin"></div>
-        <Logo />
+      <Logo />
+      <div className="flex items-center justify-center space-x-2 mt-4">
+        <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+        <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+        <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
       </div>
-      <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
     </div>
   );
 };
