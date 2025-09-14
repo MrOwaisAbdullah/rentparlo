@@ -236,7 +236,7 @@ function ResponsivePagination({
           {visiblePages[0] > 1 && (
             <>
               <Button
-                variant={1 === currentPage ? "default" : "outline"}
+                variant={1 === currentPage ? "primary" : "outline"}
                 size="sm"
                 onClick={() => onPageChange(1)}
                 className="flex-shrink-0 w-8 h-8 p-0"

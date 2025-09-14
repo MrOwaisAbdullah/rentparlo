@@ -219,7 +219,7 @@ export function ResponsiveSortControls({
         {viewMode && onViewModeChange && (
           <div className="flex border rounded overflow-hidden">
             <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
+              variant={viewMode === "grid" ? "primary" : "ghost"}
               size="sm"
               onClick={() => onViewModeChange("grid")}
               className="rounded-none"
@@ -227,7 +227,7 @@ export function ResponsiveSortControls({
               Grid
             </Button>
             <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
+              variant={viewMode === "list" ? "primary" : "ghost"}
               size="sm"
               onClick={() => onViewModeChange("list")}
               className="rounded-none"
