@@ -32,6 +32,7 @@ interface ListingDetailContentProps {
   listing: SanityListing;
   similarListings?: SanityListing[];
   reviews?: any[];
+  currentUser?: any;
 }
 
 const conditionConfig = {
@@ -82,7 +83,7 @@ interface ContactModalSeller {
   };
 }
 
-export function ListingDetailContent({ listing, similarListings = [], reviews = [] }: ListingDetailContentProps) {
+export function ListingDetailContent({ listing, similarListings = [], reviews = [], currentUser }: ListingDetailContentProps) {
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   
   const [showContactModal, setShowContactModal] = React.useState(false);
@@ -328,6 +329,29 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Owner Preview Notification */}
+        {currentUser && listing.supabaseId === currentUser.id && listing.status === 'pending' && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <Eye className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Preview Mode</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>
+                    This listing is currently in review and not visible to other users. 
+                    You can preview how it will look once approved.
+                  </p>
+                  <p className="mt-1">
+                    Status: <span className="font-medium">Pending Approval</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">

@@ -141,15 +141,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check subscription limits
+    // Check subscription limits (optional for now)
     const subscription: EnhancedUserSubscription | null = await getUserActiveSubscription(user.id)
-    if (!subscription) {
-      return NextResponse.json(
-        { error: 'Active subscription required to create listings' },
-        { status: 403 }
-      )
-    }
-
+    
     // Count current active listings
     const currentListings = await searchListings({
       query: '',
@@ -166,18 +160,33 @@ export async function POST(request: NextRequest) {
       listing => listing.supabaseId === user.id && listing.status === 'active'
     )
 
-    // Access max_listings from the subscription package data
-    const maxListings = subscription.subscription_packages?.max_listings || 0;
-    
-    if (userListings.length >= maxListings) {
-      return NextResponse.json(
-        { 
-          error: `Listing limit reached. Your current plan allows ${maxListings} listings.`,
-          currentCount: userListings.length,
-          maxAllowed: maxListings
-        },
-        { status: 403 }
-      )
+    // Check if user has subscription and if they've reached their limit
+    if (subscription) {
+      // Access max_listings from the subscription package data
+      const maxListings = subscription.subscription_packages?.max_listings || 0;
+      
+      if (userListings.length >= maxListings) {
+        return NextResponse.json(
+          { 
+            error: `Listing limit reached. Your current plan allows ${maxListings} listings.`,
+            currentCount: userListings.length,
+            maxAllowed: maxListings
+          },
+          { status: 403 }
+        )
+      }
+    } else {
+      // If no subscription, allow up to 3 listings for free
+      if (userListings.length >= 3) {
+        return NextResponse.json(
+          { 
+            error: 'Free listing limit reached. Please subscribe to create more listings.',
+            currentCount: userListings.length,
+            maxAllowed: 3
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Prepare listing data for Sanity

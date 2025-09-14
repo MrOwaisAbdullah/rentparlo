@@ -104,7 +104,7 @@ const CACHE_TTL = {
  */
 
 // Get listing with seller information and analytics
-export async function getEnhancedListingBySlug(slug: string): Promise<Listing | null> {
+export async function getEnhancedListingBySlug(slug: string, userId?: string): Promise<Listing | null> {
   try {
     // Try to get from cache first
     const cacheKey = getCacheKey.listing(slug);
@@ -114,7 +114,7 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
     }
 
     // Get listing from Sanity
-    const listing = await getListingBySlug(slug)
+    const listing = await getListingBySlug(slug, userId)
     if (!listing) return null
 
     // Initialize seller as undefined
@@ -128,151 +128,35 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
         console.log('Seller data for listing:', seller); // Debugging
         
         if (seller) {
-          // Always try to get seller profile, regardless of role
-          let sellerProfile: SellerProfile | null = null
-          
-          // Try to get seller profile first
-          sellerProfile = await getSellerProfile(seller.id)
-          console.log('Seller profile data:', sellerProfile); // Debugging
-          
-          // If no seller profile exists, but user is a seller, create a minimal one
-          if (!sellerProfile && seller.role === 'seller') {
-            console.log('Creating minimal seller profile for seller user');
-            sellerProfile = {
-              id: seller.id,
-              username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`,
-              is_verified: seller.is_verified || false,
-              tier: 'basic',
-              tier_points: 0,
-              tier_last_updated: seller.created_at || new Date().toISOString(),
-              verification_status: 'pending',
-              verification_documents: {
-                cnic_front: null,
-                cnic_back: null,
-                business_license: null
-              },
-              created_at: seller.created_at || new Date().toISOString(),
-              updated_at: seller.created_at || new Date().toISOString(),
-              listing_count: 0,
-              is_top_seller: false
-            };
-          }
-          
-          // If we still don't have a seller profile but have user data, create minimal profile
-          if (!sellerProfile) {
-            console.log('Creating minimal seller profile from user data');
-            sellerProfile = {
-              id: seller.id,
-              username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`,
-              is_verified: seller.is_verified || false,
-              tier: 'basic',
-              tier_points: 0,
-              tier_last_updated: seller.created_at || new Date().toISOString(),
-              verification_status: 'pending',
-              verification_documents: {
-                cnic_front: null,
-                cnic_back: null,
-                business_license: null
-              },
-              created_at: seller.created_at || new Date().toISOString(),
-              updated_at: seller.created_at || new Date().toISOString(),
-              listing_count: 0,
-            is_top_seller: false
-            };
-          }
-
-          // Combine data
+          // Transform seller data to match expected structure
           enhancedSeller = {
             ...seller,
-            guest_id: null,
-            profile: sellerProfile || {
-              id: seller.id,
-              username: seller.email,
-              is_verified: false,
-              tier: 'basic',
-              tier_points: 0,
-              tier_last_updated: new Date().toISOString(),
-              verification_status: 'pending',
-              verification_documents: {
-                cnic_front: null,
-                cnic_back: null,
-                business_license: null
-              },
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              listing_count: 0,
-            is_top_seller: false
-            }
-          }
-        } else {
-          console.log('No seller found for listing with supabaseId:', listing.supabaseId); // Debugging
-        }
-      } catch (sellerError) {
-        console.error('Error fetching seller data:', sellerError);
-        // Try to create minimal seller profile from listing data if possible
-        try {
-          // Create a very minimal seller profile with just the ID
-          enhancedSeller = {
-            id: listing.supabaseId,
-            email: 'unknown@example.com',
-            role: 'seller',
-            is_verified: false,
-            guest_id: null,
-            created_at: new Date().toISOString(),
-            active: true,
-            email_verified: false,
-            country: 'Pakistan',
-            notification_preferences: { email: true, sms: false, push: true },
-            preferred_language: 'en',
-            onboarding_completed: false, // Add this missing property
-            profile: {
-              id: listing.supabaseId,
-              username: `user-${listing.supabaseId.substring(0, 8)}`,
-              is_verified: false,
-              tier: 'basic',
-              tier_points: 0,
-              tier_last_updated: new Date().toISOString(),
-              verification_status: 'pending',
-              verification_documents: {
-                cnic_front: null,
-                cnic_back: null,
-                business_license: null
-              },
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              listing_count: 0,
-              is_top_seller: false
-            }
+            // Map seller profile data if it exists
+            ...(seller.seller_profiles?.[0] ? {
+              seller_profile: seller.seller_profiles[0]
+            } : {})
           };
-        } catch (minimalProfileError) {
-          console.error('Error creating minimal seller profile:', minimalProfileError);
         }
+      } catch (error) {
+        console.error('Error fetching seller data:', error);
+        // Don't fail the whole listing if seller data is missing
       }
     }
 
-    // Get listing analytics
-    const analytics = await getListingAnalytics(listing._id)
-
-    // Combine data
+    // Transform the listing data
     const enhancedListing: Listing = {
       ...listing,
-      views: analytics.views,
-      contactClicks: analytics.contactClicks,
-      seller: enhancedSeller
-    }
-
-    console.log('Enhanced listing with seller:', enhancedListing); // Debugging
+      seller: enhancedSeller,
+      // Add any other transformations needed
+    };
 
     // Cache the result
-    await cacheManager.set(cacheKey, enhancedListing, { 
-      ttl: CACHE_TTL.listing,
-      tags: [`listing:${slug}`]
-    });
+    await cacheManager.set(cacheKey, enhancedListing, 300); // Cache for 5 minutes
 
-    return enhancedListing
+    return enhancedListing;
   } catch (error) {
-    console.error('Error getting enhanced listing:', error)
-    return null
+    console.error('Error in getEnhancedListingBySlug:', error);
+    return null;
   }
 }
 

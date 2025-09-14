@@ -5,7 +5,7 @@
  * Comprehensive collection of GROQ queries for fetching data from Sanity CMS
  */
 
-import { client } from './sanity'
+import { client, sanityWriteClient } from './sanity'
 import { Listing, Category, BlogPost, Review, AdBanner } from '@/types'
 
 /**
@@ -166,7 +166,7 @@ export const LISTING_BY_ID_QUERY = `
 
 // Get listing by slug with full details
 export const LISTING_BY_SLUG_QUERY = `
-  *[_type == "listing" && slug.current == $slug && status == "active"][0] {
+  *[_type == "listing" && slug.current == $slug && (status == "active" || (status == "pending" && supabaseId == $userId))][0] {
     _id,
     _createdAt,
     title,
@@ -191,16 +191,36 @@ export const LISTING_BY_SLUG_QUERY = `
     },
     location,
     condition,
-    availability,
     specifications,
+    tags,
     rentalRules,
+    badges,
+    seo,
     status,
-    supabaseId,
+    published,
     isFeatured,
     isVerified,
-    published,
-    seo,
-    tags
+    supabaseId,
+    "seller": seller->{
+      _id,
+      name,
+      email,
+      phone,
+      image {
+        asset->{
+          url
+        }
+      },
+      seller_profiles {
+        business_name,
+        address_line1,
+        city,
+        phone,
+        is_verified,
+        verification_status,
+        is_top_seller
+      }
+    }
   }
 `
 
@@ -345,9 +365,36 @@ export const SEARCH_LISTINGS_QUERY = `
     },
     location,
     condition,
-    supabaseId,
     isFeatured,
-    isVerified
+    "seller": seller->{
+      _id,
+      name,
+      image {
+        asset->{
+          url
+        }
+      }
+    }
+  }
+`
+
+// Get listings by seller ID
+export const SELLER_LISTINGS_QUERY = `
+  *[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+    _id,
+    _createdAt,
+    title,
+    slug,
+    description,
+    price,
+    priceType,
+    status,
+    images[]{
+      asset->{
+        url
+      }
+    },
+    isFeatured
   }
 `
 
@@ -671,8 +718,8 @@ export async function getListingById(id: string): Promise<Listing | null> {
 }
 
 // Helper function to fetch listing by slug
-export async function getListingBySlug(slug: string): Promise<Listing | null> {
-  return await client.fetch(LISTING_BY_SLUG_QUERY, { slug })
+export async function getListingBySlug(slug: string, userId?: string): Promise<Listing | null> {
+  return await client.fetch(LISTING_BY_SLUG_QUERY, { slug, userId })
 }
 
 // Helper function to fetch listings by category
@@ -691,6 +738,7 @@ export async function searchListings(params: {
   maxPrice?: number
   offset?: number
   limit?: number
+  sellerId?: string
 }): Promise<Listing[]> {
   const {
     query: searchQuery = '',
@@ -701,11 +749,34 @@ export async function searchListings(params: {
     minPrice = 0,
     maxPrice = 0,
     offset = 0,
-    limit = 20
+    limit = 20,
+    sellerId = ''
   } = params
 
   // Handle condition parameter - ensure it's never null
   const condition = conditionParam ?? '';
+
+  // If sellerId is provided, use a different query
+  if (sellerId) {
+    const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+        _id,
+        _createdAt,
+        title,
+        slug,
+        description,
+        price,
+        priceType,
+        status,
+        images[]{
+          asset->{
+            url
+          }
+        },
+        isFeatured
+      }`;
+    const queryParams = { sellerId };
+    return await client.fetch(query, queryParams);
+  }
 
   // Handle condition parameter - if it's an array or comma-separated string, make multiple queries
   if (Array.isArray(condition) || (typeof condition === 'string' && condition.includes(','))) {
@@ -888,7 +959,7 @@ export async function getAdBannersByPlacement(placement: string) {
 
 // Helper function to create a new listing
 export async function createListing(listingData: any) {
-  return await client.create({
+  return await sanityWriteClient.create({
     _type: 'listing',
     ...listingData
   })
@@ -896,7 +967,7 @@ export async function createListing(listingData: any) {
 
 // Helper function to create a review
 export async function createReview(reviewData: any) {
-  return await client.create({
+  return await sanityWriteClient.create({
     _type: 'review',
     ...reviewData
   })
@@ -904,7 +975,7 @@ export async function createReview(reviewData: any) {
 
 // Helper function to update listing
 export async function updateListing(listingId: string, updates: any) {
-  return await client
+  return await sanityWriteClient
     .patch(listingId)
     .set(updates)
     .commit()
@@ -912,7 +983,7 @@ export async function updateListing(listingId: string, updates: any) {
 
 // Helper function to delete listing
 export async function deleteListing(listingId: string) {
-  return await client.delete(listingId)
+  return await sanityWriteClient.delete(listingId)
 }
 
 /**

@@ -4,7 +4,10 @@ import { redirect } from 'next/navigation';
 import { Listing } from '@/types';
 import CreateListingForm from '@/components/seller/create-listing-form';
 
-export default async function EditListingPage({ params }: { params: { id: string } }) {
+export default async function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
+  // Await params before using its properties
+  const { id } = await params;
+  
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -13,7 +16,7 @@ export default async function EditListingPage({ params }: { params: { id: string
   }
 
   // Fetch the listing by ID
-  const listing: Listing | null = await getListingById(params.id);
+  const listing: Listing | null = await getListingById(id);
 
   if (!listing) {
     return (

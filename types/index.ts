@@ -236,6 +236,11 @@ export interface Listing {
   contactClicks?: number;
   badges?: ListingBadge[];
   seller?: Seller; // Add seller information for badge calculation
+  tags?: string[]; // Add missing tags field
+  seo?: { // Add missing seo field
+    metaTitle?: string;
+    metaDescription?: string;
+  };
 }
 /**
  * =====================

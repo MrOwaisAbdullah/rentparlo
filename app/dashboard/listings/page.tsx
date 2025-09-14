@@ -22,7 +22,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteListing } from '@/lib/data-integration';
+import { ListingActions } from '@/components/dashboard/listing-actions';
 
 export default async function ListingsPage() {
   const supabase = await createClient();
@@ -53,6 +53,36 @@ export default async function ListingsPage() {
     };
 
     return `${formatted}${typeMap[priceType] || ''}`;
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'banned':
+        return 'destructive';
+      case 'expired':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'banned':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'expired':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
   return (
@@ -93,60 +123,13 @@ export default async function ListingsPage() {
                       {listing.title}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
+                      <Badge className={getStatusColor(listing.status)} variant={getStatusVariant(listing.status)}>
                         {listing.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatPrice(listing.price, listing.priceType)}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/listing/${listing.slug?.current}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              <span>View</span>
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/listings/edit/${listing._id}`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={async () => {
-                              if (confirm('Are you sure you want to delete this listing?')) {
-                                try {
-                                  const response = await fetch(`/api/listings?id=${listing._id}`, {
-                                    method: 'DELETE',
-                                  });
-                                  
-                                  if (response.ok) {
-                                    // Refresh the page to show updated listings
-                                    window.location.reload();
-                                  } else {
-                                    const error = await response.json();
-                                    alert(error.error || 'Failed to delete listing');
-                                  }
-                                } catch (error) {
-                                  console.error('Error deleting listing:', error);
-                                  alert('Failed to delete listing');
-                                }
-                              }
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <ListingActions listing={listing} />
                     </TableCell>
                   </TableRow>
                 ))

@@ -7,6 +7,7 @@ import { ListingDetailContent } from '@/components/listing/listing-detail-conten
 import { ListingDetailSkeleton } from '@/components/listing/listing-detail-skeleton';
 import { ClientRetryButton } from '@/components/listing/client-retry-button';
 import { headers } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,9 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
   try {
     // Await the params in Next.js 15 if it's a Promise
     const resolvedParams = params instanceof Promise ? await params : params;
-    const listing = await getEnhancedListingBySlug(resolvedParams.slug);
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const listing = await getEnhancedListingBySlug(resolvedParams.slug, user?.id);
     
     if (!listing) {
       return {
@@ -31,130 +34,50 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
       };
     }
 
-    // Extract text from Portable Text description
-    let descriptionText = '';
-    if (Array.isArray(listing.description)) {
-      descriptionText = listing.description
-        .filter((block: any) => block._type === 'block' && block.children)
-        .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
-        .join(' ');
-    } else if (typeof listing.description === 'string') {
-      descriptionText = listing.description;
-    }
-
-    const priceText = `PKR ${listing.price.toLocaleString()}/${listing.priceType}`;
-    const locationText = listing.location?.area 
-      ? `${listing.location.area}, ${listing.location.city}`
-      : listing.location?.city || 'Pakistan';
-
     return {
-      title: `${listing.title} - ${priceText} | RentParLo.pk`,
-      description: descriptionText 
-        ? `${descriptionText.substring(0, 150)}...`
-        : `Rent ${listing.title} in ${locationText}. Available for ${listing.priceType} rental.`,
-      keywords: [
-        listing.title,
-        listing.category?.title,
-        'rent',
-        'rental',
-        locationText,
-        listing.condition,
-        'Pakistan'
-      ].filter(Boolean).join(', '),
+      title: `${listing.title} | RentParLo.pk`,
+      description: listing.description ? (typeof listing.description === 'string' 
+        ? listing.description 
+        : Array.isArray(listing.description) 
+          ? listing.description.map(block => 
+              block.children?.map((child: any) => child.text || '').join('') || ''
+            ).join(' ')
+          : 'No description available'
+      ).substring(0, 160) : 'No description available',
       openGraph: {
-        title: listing.title,
-        description: descriptionText || `Rent ${listing.title} in ${locationText}`,
-        images: listing.images?.[0]?.asset?.url ? [{
-          url: listing.images[0].asset.url,
-          width: 800,
-          height: 600,
-          alt: listing.title
-        }] : []
-      }
+        title: `${listing.title} | RentParLo.pk`,
+        description: listing.description ? (typeof listing.description === 'string' 
+          ? listing.description 
+          : Array.isArray(listing.description) 
+            ? listing.description.map(block => 
+                block.children?.map((child: any) => child.text || '').join('') || ''
+              ).join(' ')
+            : 'No description available'
+        ).substring(0, 200) : 'No description available',
+        images: listing.images?.[0]?.asset?.url ? [listing.images[0].asset.url] : [],
+        type: 'website',
+        locale: 'en_PK',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${listing.title} | RentParLo.pk`,
+        description: listing.description ? (typeof listing.description === 'string' 
+          ? listing.description 
+          : Array.isArray(listing.description) 
+            ? listing.description.map(block => 
+                block.children?.map((child: any) => child.text || '').join('') || ''
+              ).join(' ')
+            : 'No description available'
+        ).substring(0, 200) : 'No description available',
+        images: listing.images?.[0]?.asset?.url ? [listing.images[0].asset.url] : [],
+      },
     };
   } catch (error) {
+    console.error('Error generating metadata:', error);
     return {
       title: 'Listing | RentParLo.pk',
-      description: 'Browse rental listings on RentParLo.pk',
+      description: 'Find the best rental items in Pakistan',
     };
-  }
-}
-
-// Track page view with proper error handling
-async function trackPageView(listingId: string, listingSlug: string, sellerId?: string) {
-  try {
-    const headersList = await headers();
-    const userAgent = headersList.get('user-agent') || '';
-    const referer = headersList.get('referer') || '';
-    
-    // Track the listing view
-    await trackAnalyticsEvent({
-      listing_id: listingId,
-      event_type: 'view',
-      referrer: referer,
-      user_agent: userAgent
-    });
-    
-    // Track seller profile view if sellerId is provided
-    if (sellerId) {
-      await trackAnalyticsEvent({
-        event_type: 'profile_view',
-        metadata: { 
-          seller_id: sellerId,
-          source: 'listing_view',
-          ...(listingId && { listing_id: listingId }) // Only include listing_id if it exists
-        },
-        referrer: referer,
-        user_agent: userAgent
-      });
-    }
-  } catch (error) {
-    console.error('Error tracking page view:', error);
-    // Don't fail the page load for analytics errors
-  }
-}
-
-async function ListingContent({ slug }: { slug: string }) {
-  try {
-    // Get enhanced listing data
-    const listing = await getEnhancedListingBySlug(slug);
-    console.log('Listing data:', listing); // Debugging
-    
-    if (!listing) {
-      notFound();
-    }
-
-    // Track page view (fire and forget)
-    trackPageView(listing._id, slug, listing.supabaseId);
-
-    // Get similar listings and reviews in parallel
-    const [similarListings, reviews] = await Promise.all([
-      getSimilarListings(listing._id, listing.category?.title || '', 4),
-      getListingReviews(listing._id)
-    ]);
-
-    return (
-      <ListingDetailContent 
-        listing={listing}
-        similarListings={similarListings}
-        reviews={reviews}
-      />
-    );
-  } catch (error) {
-    console.error('Error loading listing:', error);
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            Something went wrong
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            We're having trouble loading this listing. Please try again later.
-          </p>
-          <ClientRetryButton />
-        </div>
-      </div>
-    );
   }
 }
 
@@ -162,9 +85,91 @@ export default async function ListingPage({ params }: ListingPageProps) {
   // Await the params in Next.js 15 if it's a Promise
   const resolvedParams = params instanceof Promise ? await params : params;
   
-  return (
-    <Suspense fallback={<ListingDetailSkeleton />}>
-      <ListingContent slug={resolvedParams.slug} />
-    </Suspense>
-  );
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Get the listing with user context for owner preview
+    const listing = await getEnhancedListingBySlug(resolvedParams.slug, user?.id);
+
+    if (!listing) {
+      return notFound();
+    }
+
+    // Track page view analytics with user context
+    const headersList = await headers();
+    const userAgent = headersList.get('user-agent') || '';
+    const referrer = headersList.get('referer') || '';
+    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || '';
+    
+    // Track analytics event with actual listing ID
+    await trackAnalyticsEvent({
+      event_type: 'page_view',
+      listing_id: listing._id,
+      user_id: user?.id || undefined,
+      guest_id: !user ? `guest_${Date.now()}` : undefined,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      referrer: referrer,
+      city: '', // Would be determined from IP in real implementation
+      device_type: userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+      os: userAgent.includes('Windows') ? 'Windows' : 
+          userAgent.includes('Mac') ? 'MacOS' : 
+          userAgent.includes('Linux') ? 'Linux' : 'Other',
+      browser: userAgent.includes('Chrome') ? 'Chrome' : 
+               userAgent.includes('Firefox') ? 'Firefox' : 
+               userAgent.includes('Safari') ? 'Safari' : 'Other',
+      session_id: `session_${Date.now()}`,
+    });
+
+    // Get similar listings
+    const similarListings = await getSimilarListings(listing._id, listing.category?.title || '', 4);
+    
+    // Get reviews
+    const reviews = await getListingReviews(listing._id);
+    
+    // Format price for display
+    const formatPrice = (price: number, priceType: string) => {
+      const formatted = new Intl.NumberFormat('en-PK', {
+        style: 'currency',
+        currency: 'PKR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(price);
+
+      const typeMap: { [key: string]: string } = {
+        hourly: '/hr',
+        daily: '/day',
+        weekly: '/week',
+        monthly: '/month',
+      };
+
+      return `${formatted}${typeMap[priceType] || ''}`;
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Suspense fallback={<ListingDetailSkeleton />}>
+          <ListingDetailContent 
+            listing={listing} 
+            similarListings={similarListings} 
+            reviews={reviews}
+            currentUser={user}
+          />
+        </Suspense>
+        <ClientRetryButton />
+      </div>
+    );
+  } catch (error) {
+    console.error('Error loading listing page:', error);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Listing</h1>
+          <p className="text-gray-600 mb-6">There was a problem loading this listing. Please try again.</p>
+          <ClientRetryButton />
+        </div>
+      </div>
+    );
+  }
 }

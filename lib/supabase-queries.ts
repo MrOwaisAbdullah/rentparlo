@@ -652,7 +652,7 @@ export async function getUserActiveSubscription(userId: string): Promise<Enhance
     .eq('user_id', userId)
     .eq('status', 'active')
     .gt('end_date', new Date().toISOString())
-    .single()
+    .maybeSingle()
 
   if (error) {
     console.error('Error fetching user subscription:', error)
