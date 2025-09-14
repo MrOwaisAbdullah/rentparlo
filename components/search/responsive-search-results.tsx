@@ -253,7 +253,7 @@ function ResponsivePagination({
           {visiblePages.map((page) => (
             <Button
               key={page}
-              variant={page === currentPage ? "default" : "outline"}
+              variant={page === currentPage ? "primary" : "outline"}
               size="sm"
               onClick={() => onPageChange(page)}
               className="flex-shrink-0 w-8 h-8 p-0"
@@ -269,7 +269,7 @@ function ResponsivePagination({
                 <span className="text-muted-foreground px-1">...</span>
               )}
               <Button
-                variant={totalPages === currentPage ? "default" : "outline"}
+                variant={totalPages === currentPage ? "primary" : "outline"}
                 size="sm"
                 onClick={() => onPageChange(totalPages)}
                 className="flex-shrink-0 w-8 h-8 p-0"

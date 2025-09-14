@@ -169,7 +169,7 @@ function ProductGrid({ listings }: ProductGridProps) {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
                 key={page}
-                variant={currentPage === page ? "default" : "outline"}
+                variant={currentPage === page ? "primary" : "outline"}
                 size="sm"
                 onClick={() => handlePageChange(page)}
                 className="w-10"

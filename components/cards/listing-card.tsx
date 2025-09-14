@@ -839,26 +839,44 @@ export function ListingCard({
 
               {/* Contact Buttons */}
               <div className="flex space-x-1 mt-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-8 px-2 bg-transparent flex-1 min-h-[36px]"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Handle call action
-                  }}
-                >
-                  <Phone className="h-3 w-3 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline text-xs">Call</span>
-                </Button>
                 {listing?.seller?.phone && (
+                  <>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-8 px-2 bg-transparent flex-1 min-h-[36px]"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (listing?.seller?.phone) {
+                          window.location.href = `tel:${listing.seller.phone}`;
+                          trackAnalyticsEventClient({
+                            event_type: 'contact_click',
+                            listing_id: listing._id,
+                            metadata: { contact_method: 'phone' }
+                          });
+                        } else {
+                          toast.error("Phone number is not available.");
+                        }
+                      }}
+                    >
+                      <Phone className="h-3 w-3 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline text-xs">Call</span>
+                    </Button>
                     <WhatsAppButton
                       phoneNumber={listing.seller.phone}
                       sellerName={listing.seller.profile?.business_name || listing.seller.profile?.username || 'Seller'}
                       size="auto"
                       className="!h-8 px-2 w-full flex-1 min-h-[36px]"
+                      onClick={() => {
+                        trackAnalyticsEventClient({
+                          event_type: 'contact_click',
+                          listing_id: listing._id,
+                          metadata: { contact_method: 'whatsapp' }
+                        });
+                      }}
                     />
+                  </>
                 )}
                 {onRemove && listing?._id && (
                   <Button

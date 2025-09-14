@@ -24,7 +24,7 @@ const buttonVariants = cva(
         inverse: '',
       },
       appearance: {
-        default: '',
+        primary: '',
         ghost: '',
       },
       underline: {
@@ -46,7 +46,7 @@ const buttonVariants = cva(
         false: '',
       },
       shape: {
-        default: '',
+        primary: '',
         circle: 'rounded-full',
       },
       mode: {

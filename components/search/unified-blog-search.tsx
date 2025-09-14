@@ -572,7 +572,7 @@ export function UnifiedBlogSearch({
             <BlogCard
               key={post._id}
               post={post}
-              variant={viewMode === "grid" ? "default" : "horizontal"}
+              variant={viewMode === "grid" ? "primary" : "horizontal"}
               showExcerpt={true}
               showDate={true}
               showCategories={true}

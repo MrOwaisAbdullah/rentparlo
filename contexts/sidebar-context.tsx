@@ -365,18 +365,20 @@ const defaultContentLoader = async (
         position: "top",
       });
       
-      // Add search filters
-      content.push({
-        id: "search-filters",
-        type: "filters",
-        title: "Search Filters",
-        data: {
-          filters: pageContext.filters || {},
-          categories: pageContext.categories || [],
-        },
-        priority: 90,
-        position: "top",
-      });
+      // Add search filters only if not explicitly hidden
+      if (!pageContext.hideFilters) {
+        content.push({
+          id: "search-filters",
+          type: "filters",
+          title: "Search Filters",
+          data: {
+            filters: pageContext.filters || {},
+            categories: pageContext.categories || [],
+          },
+          priority: 90,
+          position: "top",
+        });
+      }
 
       // Add popular listings (fetch real data)
       try {

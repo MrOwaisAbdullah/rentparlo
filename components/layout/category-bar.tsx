@@ -46,7 +46,7 @@ export function CategoryBar() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
-  const [categories] = useState(STATIC_CATEGORIES.slice(0, 8))
+  const [categories] = useState(STATIC_CATEGORIES.slice(0, 9))
 
   const checkScrollability = useCallback(() => {
     if (scrollRef.current) {

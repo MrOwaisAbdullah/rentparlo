@@ -637,7 +637,7 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
                     </div>
                     <Button
                       type="button"
-                      variant={watchedValues.deliveryOptions?.pickup ? "default" : "outline"}
+                      variant={watchedValues.deliveryOptions?.pickup ? "primary" : "outline"}
                       onClick={() => form.setValue('deliveryOptions.pickup', !watchedValues.deliveryOptions?.pickup)}
                     >
                       {watchedValues.deliveryOptions?.pickup ? 'Enabled' : 'Enable'}
@@ -651,7 +651,7 @@ export function CreateListingForm({ user, categories }: CreateListingFormProps) 
                     </div>
                     <Button
                       type="button"
-                      variant={watchedValues.deliveryOptions?.delivery ? "default" : "outline"}
+                      variant={watchedValues.deliveryOptions?.delivery ? "primary" : "outline"}
                       onClick={() => form.setValue('deliveryOptions.delivery', !watchedValues.deliveryOptions?.delivery)}
                     >
                       {watchedValues.deliveryOptions?.delivery ? 'Enabled' : 'Enable'}

@@ -264,18 +264,18 @@ export function ContactSellerModal({ listing, seller, onClose }: ContactSellerMo
           <div className="flex gap-2 p-1 bg-muted rounded-lg">
             {seller.profile?.phone && (
               <Button
-                variant={contactMethod === 'phone' ? 'default' : 'ghost'}
+                variant={contactMethod === 'phone' ? "primary" : 'ghost'}
                 size="sm"
                 className="flex-1"
                 onClick={() => setContactMethod('phone')}
               >
                 <Phone className="w-4 h-4 mr-1" />
-                Call
+                Phone
               </Button>
             )}
             {seller.profile?.email && (
               <Button
-                variant={contactMethod === 'email' ? 'default' : 'ghost'}
+                variant={contactMethod === 'email' ? 'primary' : 'ghost'}
                 size="sm"
                 className="flex-1"
                 onClick={() => setContactMethod('email')}
