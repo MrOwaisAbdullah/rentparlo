@@ -345,6 +345,11 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
 
       clearOnboardingState();
       
+      // Dispatch event to notify other components of profile update
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profileImageUpdated'));
+      }
+      
       toast.success('Welcome to RentParLo.pk! Your profile has been completed.');
       onComplete();
 

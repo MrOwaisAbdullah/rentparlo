@@ -35,25 +35,40 @@ export function Header({ user }: HeaderProps) {
   // Determine if we should show the dashboard link
   const showDashboard = user && user.onboarding_completed;
   
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) {
-        setLoadingProfile(false);
-        return;
-      }
-      
-      try {
-        const profile = await getUserByIdClient(user.id);
-        setUserProfile(profile);
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
+  const fetchUserProfile = async () => {
+    if (!user) {
+      setLoadingProfile(false);
+      return;
+    }
     
+    try {
+      const profile = await getUserByIdClient(user.id);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchUserProfile();
   }, [user]);
+
+  // Listen for profile image updates
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      fetchUserProfile();
+    };
+
+    // Add event listener for profile updates
+    window.addEventListener('profileImageUpdated', handleProfileUpdate);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('profileImageUpdated', handleProfileUpdate);
+    };
+  }, []);
 
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 relative">
@@ -63,7 +78,7 @@ export function Header({ user }: HeaderProps) {
           <Link href="/" className="flex items-center">
             <Image
               src="/rentparlopk.png"
-              alt="RentParlo Logo"
+              alt="RentParLo Logo"
               width={150}
               height={40}
               priority

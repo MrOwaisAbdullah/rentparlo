@@ -136,6 +136,11 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
           title: 'Profile updated',
           description: 'Your profile has been updated successfully.',
         });
+        
+        // Dispatch event to notify other components of profile update
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('profileImageUpdated'));
+        }
       } else {
         throw new Error(userResult.error || sellerResult.error || 'Failed to update profile');
       }
