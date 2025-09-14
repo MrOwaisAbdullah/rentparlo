@@ -36,6 +36,7 @@ interface HeroSectionProps {
 
 export function HeroSection({ banners = [] }: HeroSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -71,6 +72,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
   }, [activeBanners.length]);
 
   const goToSlide = (index: number) => {
+    setDirection(index > currentIndex ? 1 : -1);
     setCurrentIndex(index);
     // Reset the auto-rotation timer
     if (intervalRef.current) {
@@ -82,6 +84,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
   };
 
   const goToPrevSlide = () => {
+    setDirection(-1);
     setCurrentIndex(
       (prev) => (prev - 1 + activeBanners.length) % activeBanners.length
     );
@@ -95,6 +98,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
   };
 
   const goToNextSlide = () => {
+    setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
     // Reset the auto-rotation timer
     if (intervalRef.current) {
@@ -161,18 +165,42 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
   };
 
   return (
-    <section className="relative bg-muted/20">
+    <section className="relative bg-muted/20 overflow-hidden">
       {/* Hero Banner with Responsive Height - Optimized for search bar visibility */}
-      <div className="relative h-[350px] md:h-[450px] lg:h-[calc(100vh-250px)] min-h-[350px] max-h-[700px] bg-cover bg-center bg-no-repeat overflow-visible">
+      <div className="relative h-[350px] md:h-[450px] lg:h-[calc(100vh-250px)] min-h-[350px] max-h-[700px] bg-cover bg-center bg-no-repeat">
         {/* Banner Slider with Smooth Animations */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} custom={direction}>
           {currentBanner ? (
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              variants={{
+                enter: (direction: number) => {
+                  return {
+                    x: direction > 0 ? "100%" : "-100%",
+                    opacity: 0
+                  };
+                },
+                center: {
+                  zIndex: 1,
+                  x: 0,
+                  opacity: 1
+                },
+                exit: (direction: number) => {
+                  return {
+                    zIndex: 0,
+                    x: direction < 0 ? "100%" : "-100%",
+                    opacity: 0
+                  };
+                }
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              custom={direction}
+              transition={{
+                x: { type: "spring", stiffness: 100, damping: 20 },
+                opacity: { duration: 0.5 }
+              }}
               className="absolute inset-0"
             >
               <Image
@@ -237,7 +265,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
           <>
             <button
               onClick={goToPrevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer z-20 hidden md:block bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-all duration-300"
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 cursor-pointer z-20 bg-black/30 hover:bg-black/50 text-white p-1 md:p-2 rounded-full transition-all duration-300"
               aria-label="Previous slide"
             >
               <svg
@@ -257,7 +285,7 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
             </button>
             <button
               onClick={goToNextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer z-20 hidden md:block bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-all duration-300"
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 cursor-pointer z-20 bg-black/30 hover:bg-black/50 text-white p-1 md:p-2 rounded-full transition-all duration-300"
               aria-label="Next slide"
             >
               <svg
@@ -293,21 +321,21 @@ export function HeroSection({ banners = [] }: HeroSectionProps) {
             ))}
           </div>
         )}
-
-        {/* Hero Search Bar - Fully visible and overlapping with proper spacing */}
-        <div className="container mx-auto px-4 absolute -bottom-24 lg:bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/3 z-30 w-full max-w-6xl">
-          <UniversalSearchBar
-            variant="hero"
-            placeholder="e.g., Camera, Car, Wedding Hall..."
-            showLocationFilter={true}
-            size="lg"
-            className="max-w-4xl mx-auto shadow-xl"
-          />
-        </div>
+      </div>
+      {/* Hero Search Bar - Fully visible and overlapping with proper spacing */}
+      <div className="container mx-auto px-4 relative z-10 w-full max-w-6xl -mt-16">
+        <UniversalSearchBar
+          variant="hero"
+          placeholder="e.g., Camera, Car, Wedding Hall..."
+          showLocationFilter={true}
+          size="lg"
+          className="max-w-4xl mx-auto shadow-xl"
+        />
       </div>
 
+
       {/* Bottom Banner - Leaderboard with proper spacing */}
-      <div className="w-full bg-background pt-56 lg:pt-32">
+      <div className="w-full bg-background pt-24">
         <div className="container mx-auto px-4 pt-8 pb-6">
           <AdBanner 
             placement="homepage-bottom" 
