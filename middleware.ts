@@ -77,8 +77,7 @@ export async function middleware(request: NextRequest) {
     '/create-listing',
     '/my-listings',
     '/analytics',
-    '/support',
-    '/saved'
+    '/support'
   ]
 
   // Check if the current path requires onboarding completion

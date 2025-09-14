@@ -47,12 +47,14 @@ const pakistaniCities = [
   'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
 ];
 
-const conditionOptions = [
-  { value: 'new', label: 'New' },
-  { value: 'like-new', label: 'Like New' },
-  { value: 'good', label: 'Good' },
-  { value: 'fair', label: 'Fair' }
-];
+const conditionConfig = {
+  new: { label: 'New', color: 'bg-green-100 text-green-700' },
+  'like-new': { label: 'Like New', color: 'bg-blue-100 text-blue-700' },
+  good: { label: 'Good', color: 'bg-yellow-100 text-yellow-700' },
+  fair: { label: 'Fair', color: 'bg-red-100 text-red-700' }
+};
+
+const conditionOptions = Object.entries(conditionConfig).map(([value, { label }]) => ({ value, label }));
 
 const priceTypeOptions = [
   { value: 'hourly', label: 'Per Hour' },
@@ -230,7 +232,11 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [], onNa
             {conditionOptions.map((condition) => (
               <div key={condition.value} className="flex items-center space-x-2">
                 <Checkbox id={`condition-${condition.value}`} checked={localFilters.condition.includes(condition.value)} onCheckedChange={() => handleConditionChange(condition.value)} />
-                <Label htmlFor={`condition-${condition.value}`} className="flex items-center gap-2 cursor-pointer text-sm">{condition.label}</Label>
+                <Label htmlFor={`condition-${condition.value}`} className="flex items-center gap-2 cursor-pointer text-sm">
+                  <Badge className={`text-xs ${conditionConfig[condition.value as keyof typeof conditionConfig].color}`}>
+                    {condition.label}
+                  </Badge>
+                </Label>
               </div>
             ))}
           </div>

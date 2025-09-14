@@ -9,6 +9,7 @@ import { useBanner } from "@/contexts/banner-context"
 import { getBannerSizeClasses as getBannerSizeClassesUtil, getBannerImageDimensions, getBannerSize } from "@/lib/banner-utils"
 import { trackBannerImpression, trackBannerClick, initializeBannerTrackingData } from "@/lib/banner-analytics"
 import { v4 as uuidv4 } from 'uuid'
+import { ExternalLink } from "lucide-react"
 
 interface EnhancedAdBannerProps {
   placement: BannerPlacement
@@ -659,7 +660,9 @@ export function EnhancedAdBanner({
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
-          <div className="absolute inset-0 bg-black opacity-0 hover:opacity-10 transition-opacity rounded-lg" />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <ExternalLink className="w-6 h-6 text-white" />
+          </div>
         </>
       ) : (
         <div className="w-full h-full bg-muted flex items-center justify-center">

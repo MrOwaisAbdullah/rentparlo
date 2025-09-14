@@ -22,6 +22,7 @@ const buttonVariants = cva(
         dim: 'text-muted-foreground hover:text-foreground data-[state=open]:text-foreground',
         foreground: '',
         inverse: '',
+        default: '', // Add back the default variant
       },
       appearance: {
         primary: '',

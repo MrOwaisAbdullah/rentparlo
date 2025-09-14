@@ -1,5 +1,6 @@
 "use client"
 
+import { ExternalLink } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { AdBannerProps as AdBannerComponentProps } from "@/types/props"
@@ -71,8 +72,10 @@ export function AdBanner({
         </div>
       )}
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+      {/* Overlay on hover */}
+      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+        <ExternalLink className="w-6 h-6 text-white" />
+      </div>
 
       {/* Ad Label */}
       <div className="absolute top-1 right-1 bg-muted/80 text-muted-foreground text-xs px-1 rounded">Ad</div>
