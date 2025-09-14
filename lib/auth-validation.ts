@@ -57,6 +57,11 @@ export const handleAuthError = (error: any): string => {
     return 'Connection timeout. Please check your internet connection and try again';
   }
   
+  // Handle duplicate email errors specifically
+  if (error.message && error.message.includes('duplicate key value violates unique constraint "idx_users_email_unique"')) {
+    return 'This email address is already registered. Please try logging in instead.';
+  }
+  
   // Handle generic errors
   if (error.message) {
     return error.message;

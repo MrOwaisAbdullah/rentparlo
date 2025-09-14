@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { signUpSimplified } from '@/lib/auth-actions';
 import { simplifiedRegistrationSchema, type SimplifiedRegistrationFormData } from '@/lib/validations/auth';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import Image from 'next/image';
 import { signInWithGoogle as signInWithGoogleAction } from '@/app/auth/login/actions';
 
@@ -68,9 +69,28 @@ export function SimplifiedRegisterForm({
       });
 
       if (!result.success) {
-        setError(result.error || 'Registration failed');
+        // Handle duplicate email error with toast
+        if (result.error && result.error.includes('duplicate key value violates unique constraint "idx_users_email_unique"')) {
+          toast.error('Email already registered', {
+            description: 'This email address is already registered. Please try logging in instead.',
+            duration: 5000,
+          });
+          setError('This email address is already registered. Please try logging in instead.');
+        } else {
+          toast.error('Registration failed', {
+            description: result.error || 'An unexpected error occurred. Please try again.',
+            duration: 5000,
+          });
+          setError(result.error || 'Registration failed');
+        }
       } else {
         setSuccess(true);
+        
+        // Show success toast
+        toast.success('Account created!', {
+          description: 'We\'ve sent a verification email to your inbox.',
+          duration: 5000,
+        });
         
         // Trigger success callback or redirect
         setTimeout(() => {
@@ -81,6 +101,10 @@ export function SimplifiedRegisterForm({
         }, 1500);
       }
     } catch (err) {
+      toast.error('Registration failed', {
+        description: 'An unexpected error occurred. Please try again.',
+        duration: 5000,
+      });
       setError('An unexpected error occurred. Please try again.');
       console.error('Registration error:', err);
     } finally {
@@ -96,6 +120,10 @@ export function SimplifiedRegisterForm({
       const result: any = await signInWithGoogleAction();
       
       if (!result.success) {
+        toast.error('Google sign-up failed', {
+          description: result.error || 'Failed to initiate Google sign-up. Please try again.',
+          duration: 5000,
+        });
         setError(result.error || 'Google sign-up failed');
         return;
       }
@@ -107,9 +135,17 @@ export function SimplifiedRegisterForm({
       }
       
       // If no redirect URL, there might be an issue
+      toast.error('Google sign-up failed', {
+        description: 'Failed to initiate Google sign-up. Please try again.',
+        duration: 5000,
+      });
       setError('Failed to initiate Google sign-up. Please try again.');
       
     } catch (error) {
+      toast.error('Google sign-up failed', {
+        description: 'Failed to sign up with Google. Please try again.',
+        duration: 5000,
+      });
       setError('Failed to sign up with Google. Please try again.');
       console.error('Google sign-up error:', error);
     } finally {

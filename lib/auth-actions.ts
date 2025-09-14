@@ -229,10 +229,29 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
 
     if (profileError) {
       console.error('Profile creation error:', profileError.message);
+      
+      // Handle specific database errors
+      if (profileError.message && profileError.message.includes('duplicate key value violates unique constraint "idx_users_email_unique"')) {
+        // Clean up the auth user since we couldn't create the profile
+        if (authData && authData.user && authData.user.id) {
+          try {
+            const supabaseCleanup = await createClient();
+            await supabaseCleanup.auth.admin.deleteUser(authData.user.id);
+          } catch (cleanupError) {
+            console.error('Error cleaning up auth user:', cleanupError);
+          }
+        }
+        
+        return {
+          success: false,
+          error: 'duplicate key value violates unique constraint "idx_users_email_unique"'
+        };
+      }
+      
       return {
         success: false,
         error: 'Failed to create user profile'
-      }
+      };
     }
 
     // Create seller profile if role is seller
@@ -241,12 +260,8 @@ export async function signUp(formData: SignUpData): Promise<AuthResult> {
         id: authData.user.id,
         username: formData.sellerData.username || `seller_${Date.now()}`,
         business_name: formData.sellerData.businessName,
-        owner_name: formData.name,
         owner_cnic: formData.sellerData.cnic,
         address_line1: formData.sellerData.address,
-        city: formData.city,
-        phone: formData.phone,
-        email: formData.email,
         tier: 'basic',
         tier_points: 0,
         verification_status: 'pending',
@@ -432,10 +447,29 @@ export async function signUpSimplified(formData: SimplifiedSignUpData): Promise<
 
     if (profileError) {
       console.error('Profile creation error:', profileError.message);
+      
+      // Handle specific database errors
+      if (profileError.message && profileError.message.includes('duplicate key value violates unique constraint "idx_users_email_unique"')) {
+        // Clean up the auth user since we couldn't create the profile
+        if (authData && authData.user && authData.user.id) {
+          try {
+            const supabaseCleanup = await createClient();
+            await supabaseCleanup.auth.admin.deleteUser(authData.user.id);
+          } catch (cleanupError) {
+            console.error('Error cleaning up auth user:', cleanupError);
+          }
+        }
+        
+        return {
+          success: false,
+          error: 'duplicate key value violates unique constraint "idx_users_email_unique"'
+        };
+      }
+      
       return {
         success: false,
         error: 'Failed to create user profile'
-      }
+      };
     }
 
     // Log successful registration
@@ -718,8 +752,7 @@ export async function updatePassword(newPassword: string): Promise<AuthResult> {
     // Update last password change
     if (data.user) {
       await upsertUser({
-        id: data.user.id,
-        last_password_change: new Date().toISOString()
+        id: data.user.id
       })
     }
 
