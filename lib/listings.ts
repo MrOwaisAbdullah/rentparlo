@@ -11,12 +11,11 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "canon-eos-r5-professional-camera"
     },
-    description: [{children: [{text: "Professional grade camera perfect for photography and videography projects. High resolution sensor with excellent low light performance."}], _type: "block"}],
+    description: "Professional grade camera perfect for photography and videography projects. High resolution sensor with excellent low light performance.",
     price: 8000,
     pricePerHour: 500,
     priceWeekly: 50000, // 7 days at 8000 = 56000, so 10% discount
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (1).jpg"}}],
@@ -41,12 +40,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 150,
     contactClicks: 25,
     badges: ["hot", "featured", "verified"],
-    created_at: new Date().toISOString(),
+    _createdAt: new Date().toISOString(),
     seller: {
       id: "user1",
       email: "ahmed@photography.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest1",
       country: "PK",
@@ -69,7 +68,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -86,11 +85,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "sony-a7iv-camera-telephoto"
     },
-    description: [{children: [{text: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization."}], _type: "block"}],
+    description: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization.",
     price: 6500,
     pricePerHour: 400,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (2).jpg"}}],
@@ -115,12 +113,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 85,
     contactClicks: 15,
     badges: ["hot"],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user2",
       email: "pro@camera.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest2",
       country: "PK",
@@ -142,7 +140,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -159,11 +157,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "nikon-z7-ii-mirrorless-camera"
     },
-    description: [{children: [{text: "High-resolution mirrorless camera with exceptional image quality and advanced autofocus system."}], _type: "block"}],
+    description: "High-resolution mirrorless camera with exceptional image quality and advanced autofocus system.",
     price: 7000,
     pricePerHour: 450,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (1).png"}}],
@@ -188,12 +185,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 95,
     contactClicks: 20,
     badges: ["verified"],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user14",
       email: "nikon@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest14",
       country: "PK",
@@ -215,7 +212,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -232,11 +229,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "fujifilm-xt4-mirrorless-camera"
     },
-    description: [{children: [{text: "Compact mirrorless camera with in-body stabilization and excellent color reproduction."}], _type: "block"}],
+    description: "Compact mirrorless camera with in-body stabilization and excellent color reproduction.",
     price: 5500,
     pricePerHour: 350,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (1).webp"}}],
@@ -261,12 +257,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 75,
     contactClicks: 12,
     badges: ["new"],
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user15",
       email: "fujifilm@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest15",
       country: "PK",
@@ -288,7 +284,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -305,11 +301,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "panasonic-gh5-ii-mirrorless-camera"
     },
-    description: [{children: [{text: "Professional video camera with excellent low-light performance and advanced video features."}], _type: "block"}],
+    description: "Professional video camera with excellent low-light performance and advanced video features.",
     price: 6000,
     pricePerHour: 375,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (2).jpg"}}],
@@ -334,12 +329,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 88,
     contactClicks: 18,
     badges: ["featured"],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user16",
       email: "panasonic@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest16",
       country: "PK",
@@ -361,7 +356,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -380,12 +375,11 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "bmw-3-series-luxury-sedan"
     },
-    description: [{children: [{text: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features."}], _type: "block"}],
+    description: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features.",
     price: 15000,
     priceWeekly: 90000, // 7 days at 15000 = 105000, so 14% discount
     priceMonthly: 350000, // 30 days at 15000 = 450000, so 22% discount
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (1).jpg"}}],
@@ -411,12 +405,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 200,
     contactClicks: 40,
     badges: ["hot", "featured", "top_seller"],
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user3",
       email: "elite@cars.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest3",
       country: "PK",
@@ -438,7 +432,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -455,10 +449,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "honda-civic-daily-rental"
     },
-    description: [{children: [{text: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features."}], _type: "block"}],
+    description: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features.",
     price: 8000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (2).jpg"}}],
@@ -484,12 +477,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 120,
     contactClicks: 18,
     badges: ["local"],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user4",
       email: "city@cars.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest4",
       country: "PK",
@@ -511,7 +504,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -528,10 +521,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "toyota-corolla-fuel-efficient"
     },
-    description: [{children: [{text: "Economical and reliable sedan perfect for daily commuting and family trips."}], _type: "block"}],
+    description: "Economical and reliable sedan perfect for daily commuting and family trips.",
     price: 7500,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (3).jpg"}}],
@@ -557,12 +549,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 95,
     contactClicks: 15,
     badges: ["eco_friendly"],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user17",
       email: "toyota@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest17",
       country: "PK",
@@ -584,7 +576,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -601,10 +593,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "suzuki-swift-compact-city-car"
     },
-    description: [{children: [{text: "Compact and maneuverable car perfect for city driving and parking in tight spaces."}], _type: "block"}],
+    description: "Compact and maneuverable car perfect for city driving and parking in tight spaces.",
     price: 6000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (4).jpg"}}],
@@ -630,12 +621,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 80,
     contactClicks: 12,
     badges: ["new", "eco_friendly"],
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user18",
       email: "suzuki@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest18",
       country: "PK",
@@ -657,7 +648,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -674,10 +665,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "hyundai-tucson-compact-suv"
     },
-    description: [{children: [{text: "Spacious SUV with modern features, perfect for family trips and weekend adventures."}], _type: "block"}],
+    description: "Spacious SUV with modern features, perfect for family trips and weekend adventures.",
     price: 12000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (5).jpg"}}],
@@ -703,12 +693,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 110,
     contactClicks: 22,
     badges: ["hot"],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user19",
       email: "hyundai@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest19",
       country: "PK",
@@ -730,7 +720,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -747,10 +737,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "kia-sportage-midsize-suv"
     },
-    description: [{children: [{text: "Comfortable midsize SUV with advanced safety features and spacious interior."}], _type: "block"}],
+    description: "Comfortable midsize SUV with advanced safety features and spacious interior.",
     price: 13000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (6).jpg"}}],
@@ -776,12 +765,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 95,
     contactClicks: 18,
     badges: ["verified"],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user20",
       email: "kia@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest20",
       country: "PK",
@@ -803,7 +792,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -822,11 +811,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "omron-blood-pressure-monitor"
     },
-    description: [{children: [{text: "Accurate and easy-to-use blood pressure monitor with automatic cuff inflation. Perfect for home health monitoring."}], _type: "block"}],
+    description: "Accurate and easy-to-use blood pressure monitor with automatic cuff inflation. Perfect for home health monitoring.",
     price: 500,
     pricePerHour: 50,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (1).jpg"}}],
@@ -852,12 +840,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 95,
     contactClicks: 22,
     badges: ["verified"],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user5",
       email: "health@first.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest5",
       country: "PK",
@@ -879,7 +867,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -896,11 +884,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "digital-thermometer-fast-reading"
     },
-    description: [{children: [{text: "Fast and accurate digital thermometer with dual mode readings (oral/underarm). Essential for home health care."}], _type: "block"}],
+    description: "Fast and accurate digital thermometer with dual mode readings (oral/underarm). Essential for home health care.",
     price: 200,
     pricePerHour: 20,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (2).jpg"}}],
@@ -926,12 +913,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 65,
     contactClicks: 12,
     badges: ["new"],
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user6",
       email: "medi@care.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest6",
       country: "PK",
@@ -953,7 +940,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -970,11 +957,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "pulse-oximeter-blood-oxygen-monitor"
     },
-    description: [{children: [{text: "Accurate pulse oximeter for measuring blood oxygen saturation and pulse rate. Essential for respiratory monitoring."}], _type: "block"}],
+    description: "Accurate pulse oximeter for measuring blood oxygen saturation and pulse rate. Essential for respiratory monitoring.",
     price: 800,
     pricePerHour: 80,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (3).jpg"}}],
@@ -1000,12 +986,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 75,
     contactClicks: 15,
     badges: ["featured"],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user21",
       email: "oxygen@health.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest21",
       country: "PK",
@@ -1027,7 +1013,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1044,11 +1030,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "digital-weight-scale-precision"
     },
-    description: [{children: [{text: "High-precision digital weight scale with BMI calculation and wireless connectivity."}], _type: "block"}],
+    description: "High-precision digital weight scale with BMI calculation and wireless connectivity.",
     price: 600,
     pricePerHour: 60,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (4).jpg"}}],
@@ -1073,12 +1058,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 68,
     contactClicks: 13,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user22",
       email: "weight@scale.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest22",
       country: "PK",
@@ -1100,7 +1085,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1117,11 +1102,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "infrared-thermometer-non-contact"
     },
-    description: [{children: [{text: "Fast and hygienic non-contact infrared thermometer for forehead temperature measurement."}], _type: "block"}],
+    description: "Fast and hygienic non-contact infrared thermometer for forehead temperature measurement.",
     price: 1200,
     pricePerHour: 120,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (5).jpg"}}],
@@ -1146,12 +1130,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 110,
     contactClicks: 25,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user23",
       email: "infrared@thermo.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest23",
       country: "PK",
@@ -1173,7 +1157,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1190,11 +1174,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "nebulizer-machine-respiratory"
     },
-    description: [{children: [{text: "Compact and efficient nebulizer machine for respiratory medication delivery. Perfect for asthma and COPD patients."}], _type: "block"}],
+    description: "Compact and efficient nebulizer machine for respiratory medication delivery. Perfect for asthma and COPD patients.",
     price: 1500,
     pricePerHour: 150,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (6).jpg"}}],
@@ -1220,12 +1203,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 85,
     contactClicks: 18,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user24",
       email: "nebulizer@health.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest24",
       country: "PK",
@@ -1247,7 +1230,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1266,12 +1249,11 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "honda-eu20i-inverter-generator"
     },
-    description: [{children: [{text: "Quiet and reliable inverter generator perfect for camping, events, and home backup. Clean power for sensitive electronics."}], _type: "block"}],
+    description: "Quiet and reliable inverter generator perfect for camping, events, and home backup. Clean power for sensitive electronics.",
     price: 3000,
     pricePerHour: 200,
     priceWeekly: 18000, // 7 days at 3000 = 21000, so ~14% discount
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (1).jpg"}}],
@@ -1296,12 +1278,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 180,
     contactClicks: 35,
-    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
+    _createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
     seller: {
       id: "user7",
       email: "power@solutions.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest7",
       country: "PK",
@@ -1323,7 +1305,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1340,11 +1322,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "yamaha-ef2000isv2-generator"
     },
-    description: [{children: [{text: "Ultra-quiet portable generator with excellent fuel efficiency. Perfect for outdoor events and camping trips."}], _type: "block"}],
+    description: "Ultra-quiet portable generator with excellent fuel efficiency. Perfect for outdoor events and camping trips.",
     price: 2800,
     pricePerHour: 180,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (2).jpg"}}],
@@ -1370,12 +1351,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 140,
     contactClicks: 28,
     badges: ["hot", "verified"],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user8",
       email: "generator@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest8",
       country: "PK",
@@ -1396,7 +1377,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1413,11 +1394,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "generac-gp3000i-portable-generator"
     },
-    description: [{children: [{text: "Powerful and reliable portable inverter generator with clean power output for sensitive electronics."}], _type: "block"}],
+    description: "Powerful and reliable portable inverter generator with clean power output for sensitive electronics.",
     price: 3200,
     pricePerHour: 220,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (3).jpg"}}],
@@ -1442,12 +1422,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 165,
     contactClicks: 32,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user25",
       email: "generac@power.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest25",
       country: "PK",
@@ -1469,7 +1449,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1486,11 +1466,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "champion-3400-watt-dual-fuel"
     },
-    description: [{children: [{text: "Versatile dual fuel generator that runs on gasoline or propane. Perfect for home backup and job sites."}], _type: "block"}],
+    description: "Versatile dual fuel generator that runs on gasoline or propane. Perfect for home backup and job sites.",
     price: 3500,
     pricePerHour: 250,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (4).jpg"}}],
@@ -1515,12 +1494,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 155,
     contactClicks: 28,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user26",
       email: "champion@generator.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest26",
       country: "PK",
@@ -1542,7 +1521,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1559,11 +1538,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "westinghouse-wgen3600v-portable"
     },
-    description: [{children: [{text: "Reliable portable generator with electric start and 120V/240V outlets. Perfect for home backup power."}], _type: "block"}],
+    description: "Reliable portable generator with electric start and 120V/240V outlets. Perfect for home backup power.",
     price: 3800,
     pricePerHour: 270,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (5).jpg"}}],
@@ -1588,12 +1566,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 135,
     contactClicks: 25,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user27",
       email: "westinghouse@power.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest27",
       country: "PK",
@@ -1615,7 +1593,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1632,11 +1610,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "sony-a7iv-camera-telephoto"
     },
-    description: [{children: [{text: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization."}], _type: "block"}],
+    description: "Professional camera with telephoto lens for events and portraits. Excellent image stabilization.",
     price: 6500,
     pricePerHour: 400,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (2).jpg"}}],
@@ -1661,12 +1638,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 85,
     contactClicks: 15,
     badges: ["hot"],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user2",
       email: "pro@camera.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest2",
       country: "PK",
@@ -1687,7 +1664,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1706,12 +1683,11 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "bmw-3-series-luxury-sedan"
     },
-    description: [{children: [{text: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features."}], _type: "block"}],
+    description: "Luxury sedan perfect for special events and occasions. Comfortable interior with premium features.",
     price: 15000,
     priceWeekly: 90000, // 7 days at 15000 = 105000, so 14% discount
     priceMonthly: 350000, // 30 days at 15000 = 450000, so 22% discount
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (1).jpg"}}],
@@ -1736,12 +1712,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 200,
     contactClicks: 40,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user3",
       email: "elite@cars.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest3",
       country: "PK",
@@ -1763,7 +1739,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1780,10 +1756,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "honda-civic-daily-rental"
     },
-    description: [{children: [{text: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features."}], _type: "block"}],
+    description: "Reliable and fuel-efficient car for daily rentals. Perfect for city driving with modern features.",
     price: 8000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (2).jpg"}}],
@@ -1809,12 +1784,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 120,
     contactClicks: 18,
     badges: [ "local"],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user4",
       email: "city@cars.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest4",
       country: "PK",
@@ -1835,7 +1810,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1854,11 +1829,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "omron-blood-pressure-monitor"
     },
-    description: [{children: [{text: "Accurate and easy-to-use blood pressure monitor with automatic cuff inflation. Perfect for home health monitoring."}], _type: "block"}],
+    description: "Accurate and easy-to-use blood pressure monitor with automatic cuff inflation. Perfect for home health monitoring.",
     price: 500,
     pricePerHour: 50,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (1).jpg"}}],
@@ -1884,12 +1858,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 95,
     contactClicks: 22,
     badges: ["verified"],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user5",
       email: "health@first.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest5",
       country: "PK",
@@ -1910,7 +1884,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -1927,11 +1901,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "digital-thermometer-fast-reading"
     },
-    description: [{children: [{text: "Fast and accurate digital thermometer with dual mode readings (oral/underarm). Essential for home health care."}], _type: "block"}],
+    description: "Fast and accurate digital thermometer with dual mode readings (oral/underarm). Essential for home health care.",
     price: 200,
     pricePerHour: 20,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (2).jpg"}}],
@@ -1957,12 +1930,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 65,
     contactClicks: 12,
     badges: ["new"],
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user6",
       email: "medi@care.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest6",
       country: "PK",
@@ -1983,7 +1956,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2002,12 +1975,11 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "honda-eu20i-inverter-generator"
     },
-    description: [{children: [{text: "Quiet and reliable inverter generator perfect for camping, events, and home backup. Clean power for sensitive electronics."}], _type: "block"}],
+    description: "Quiet and reliable inverter generator perfect for camping, events, and home backup. Clean power for sensitive electronics.",
     price: 3000,
     pricePerHour: 200,
     priceWeekly: 18000, // 7 days at 3000 = 21000, so ~14% discount
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (1).jpg"}}],
@@ -2032,12 +2004,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 180,
     contactClicks: 35,
-    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
+    _createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
     seller: {
       id: "user7",
       email: "power@solutions.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest7",
       country: "PK",
@@ -2059,7 +2031,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2076,11 +2048,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "yamaha-ef2000isv2-generator"
     },
-    description: [{children: [{text: "Ultra-quiet portable generator with excellent fuel efficiency. Perfect for outdoor events and camping trips."}], _type: "block"}],
+    description: "Ultra-quiet portable generator with excellent fuel efficiency. Perfect for outdoor events and camping trips.",
     price: 2800,
     pricePerHour: 180,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (2).jpg"}}],
@@ -2106,12 +2077,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 140,
     contactClicks: 28,
     badges: ["hot", "verified"],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user8",
       email: "generator@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest8",
       country: "PK",
@@ -2132,7 +2103,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2151,10 +2122,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "bridal-lehenga-traditional-red-gold"
     },
-    description: [{children: [{text: "Beautiful traditional bridal lehenga with intricate embroidery. Perfect for Pakistani weddings and special occasions."}], _type: "block"}],
+    description: "Beautiful traditional bridal lehenga with intricate embroidery. Perfect for Pakistani weddings and special occasions.",
     price: 5000,
     category: {
-      _ref: "wedding-couture",
       title: "Wedding Couture"
     },
     images: [{asset: {url: "/placeholder.svg"}}],
@@ -2180,12 +2150,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 90,
     contactClicks: 18,
     badges: ["featured", "verified"],
-    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago
+    _createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago
     seller: {
       id: "user9",
       email: "bridal@couture.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest9",
       country: "PK",
@@ -2206,7 +2176,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2223,10 +2193,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "sound-system-professional-pa-setup"
     },
-    description: [{children: [{text: "Complete professional sound system for events, weddings, and concerts. High quality speakers with mixer."}], _type: "block"}],
+    description: "Complete professional sound system for events, weddings, and concerts. High quality speakers with mixer.",
     price: 10000,
     category: {
-      _ref: "events",
       title: "Events"
     },
     images: [{asset: {url: "/placeholder.svg"}}],
@@ -2252,12 +2221,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 160,
     contactClicks: 32,
     badges: ["hot", "featured", "verified"],
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+    _createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
     seller: {
       id: "user10",
       email: "sound@events.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest10",
       country: "PK",
@@ -2278,7 +2247,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2295,10 +2264,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "concrete-mixer-heavy-duty-5hp"
     },
-    description: [{children: [{text: "Heavy duty concrete mixer perfect for construction projects. Reliable and efficient with large capacity drum."}], _type: "block"}],
+    description: "Heavy duty concrete mixer perfect for construction projects. Reliable and efficient with large capacity drum.",
     price: 4000,
     category: {
-      _ref: "construction-equipment",
       title: "Construction Equipment"
     },
     images: [{asset: {url: "/placeholder.svg"}}],
@@ -2324,12 +2292,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 75,
     contactClicks: 15,
     badges: ["verified"],
-    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+    _createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
     seller: {
       id: "user11",
       email: "construction@tools.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest11",
       country: "PK",
@@ -2350,7 +2318,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2367,10 +2335,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "studio-lighting-kit-professional-setup"
     },
-    description: [{children: [{text: "Complete professional studio lighting kit with softboxes, strobes, and stands. Perfect for photography and videography."}], _type: "block"}],
+    description: "Complete professional studio lighting kit with softboxes, strobes, and stands. Perfect for photography and videography.",
     price: 3500,
     category: {
-      _ref: "studio",
       title: "Studio"
     },
     images: [{asset: {url: "/placeholder.svg"}}],
@@ -2396,12 +2363,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 110,
     contactClicks: 22,
     badges: ["hot", "verified"],
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user12",
       email: "studio@gear.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest12",
       country: "PK",
@@ -2422,7 +2389,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2439,10 +2406,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "led-display-banner-10ft-x-5ft"
     },
-    description: [{children: [{text: "Large LED display banner perfect for advertising and events. Eye-catching with high brightness and resolution."}], _type: "block"}],
+    description: "Large LED display banner perfect for advertising and events. Eye-catching with high brightness and resolution.",
     price: 8000,
     category: {
-      _ref: "advertisements",
       title: "Advertisements"
     },
     images: [{asset: {url: "/placeholder.svg"}}],
@@ -2468,12 +2434,12 @@ const MOCK_LISTINGS: Listing[] = [
     views: 130,
     contactClicks: 25,
     badges: ["hot"],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user13",
       email: "advertise@pro.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest13",
       country: "PK",
@@ -2494,7 +2460,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: true,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2513,11 +2479,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "nikon-z7-ii-mirrorless-camera"
     },
-    description: [{children: [{text: "High-resolution mirrorless camera with exceptional image quality and advanced autofocus system."}], _type: "block"}],
+    description: "High-resolution mirrorless camera with exceptional image quality and advanced autofocus system.",
     price: 7000,
     pricePerHour: 450,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (1).png"}}],
@@ -2541,12 +2506,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 95,
     contactClicks: 20,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user29",
       email: "nikon@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest29",
       country: "PK",
@@ -2568,7 +2533,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2585,11 +2550,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "fujifilm-xt4-mirrorless-camera"
     },
-    description: [{children: [{text: "Compact mirrorless camera with in-body stabilization and excellent color reproduction."}], _type: "block"}],
+    description: "Compact mirrorless camera with in-body stabilization and excellent color reproduction.",
     price: 5500,
     pricePerHour: 350,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (1).webp"}}],
@@ -2613,12 +2577,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 75,
     contactClicks: 12,
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user15-new",
       email: "fujifilm@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest15-new",
       country: "PK",
@@ -2640,7 +2604,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2657,11 +2621,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "panasonic-gh5-ii-mirrorless-camera"
     },
-    description: [{children: [{text: "Professional video camera with excellent low-light performance and advanced video features."}], _type: "block"}],
+    description: "Professional video camera with excellent low-light performance and advanced video features.",
     price: 6000,
     pricePerHour: 375,
     category: {
-      _ref: "camera",
       title: "Camera"
     },
     images: [{asset: {url: "/samples/camera (2).jpg"}}],
@@ -2685,12 +2648,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 88,
     contactClicks: 18,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user16-new",
       email: "panasonic@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest16-new",
       country: "PK",
@@ -2712,7 +2675,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2731,10 +2694,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "toyota-corolla-fuel-efficient"
     },
-    description: [{children: [{text: "Economical and reliable sedan perfect for daily commuting and family trips."}], _type: "block"}],
+    description: "Economical and reliable sedan perfect for daily commuting and family trips.",
     price: 7500,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (3).jpg"}}],
@@ -2759,12 +2721,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 95,
     contactClicks: 15,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user17-new",
       email: "toyota@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest17-new",
       country: "PK",
@@ -2786,7 +2748,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2803,10 +2765,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "suzuki-swift-compact-city-car"
     },
-    description: [{children: [{text: "Compact and maneuverable car perfect for city driving and parking in tight spaces."}], _type: "block"}],
+    description: "Compact and maneuverable car perfect for city driving and parking in tight spaces.",
     price: 6000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (4).jpg"}}],
@@ -2831,12 +2792,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 80,
     contactClicks: 12,
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user18-new",
       email: "suzuki@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest18-new",
       country: "PK",
@@ -2858,7 +2819,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2875,10 +2836,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "hyundai-tucson-compact-suv"
     },
-    description: [{children: [{text: "Spacious SUV with modern features, perfect for family trips and weekend adventures."}], _type: "block"}],
+    description: "Spacious SUV with modern features, perfect for family trips and weekend adventures.",
     price: 12000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (5).jpg"}}],
@@ -2903,12 +2863,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 110,
     contactClicks: 22,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user19-new",
       email: "hyundai@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest19-new",
       country: "PK",
@@ -2930,7 +2890,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -2947,10 +2907,9 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "kia-sportage-midsize-suv"
     },
-    description: [{children: [{text: "Comfortable midsize SUV with advanced safety features and spacious interior."}], _type: "block"}],
+    description: "Comfortable midsize SUV with advanced safety features and spacious interior.",
     price: 13000,
     category: {
-      _ref: "automobiles",
       title: "Automobiles"
     },
     images: [{asset: {url: "/samples/car (6).jpg"}}],
@@ -2975,12 +2934,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 95,
     contactClicks: 18,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user20-new",
       email: "kia@rentals.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest20-new",
       country: "PK",
@@ -3002,7 +2961,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3021,11 +2980,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "pulse-oximeter-blood-oxygen-monitor"
     },
-    description: [{children: [{text: "Accurate pulse oximeter for measuring blood oxygen saturation and pulse rate. Essential for respiratory monitoring."}], _type: "block"}],
+    description: "Accurate pulse oximeter for measuring blood oxygen saturation and pulse rate. Essential for respiratory monitoring.",
     price: 800,
     pricePerHour: 80,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (3).jpg"}}],
@@ -3050,12 +3008,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 75,
     contactClicks: 15,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user21-new",
       email: "oxygen@health.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest21-new",
       country: "PK",
@@ -3077,7 +3035,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3094,11 +3052,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "digital-weight-scale-precision"
     },
-    description: [{children: [{text: "High-precision digital weight scale with BMI calculation and wireless connectivity."}], _type: "block"}],
+    description: "High-precision digital weight scale with BMI calculation and wireless connectivity.",
     price: 600,
     pricePerHour: 60,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (4).jpg"}}],
@@ -3123,12 +3080,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 68,
     contactClicks: 13,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user22-new",
       email: "weight@scale.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest22-new",
       country: "PK",
@@ -3150,7 +3107,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3167,11 +3124,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "infrared-thermometer-non-contact"
     },
-    description: [{children: [{text: "Fast and hygienic non-contact infrared thermometer for forehead temperature measurement."}], _type: "block"}],
+    description: "Fast and hygienic non-contact infrared thermometer for forehead temperature measurement.",
     price: 1200,
     pricePerHour: 120,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (5).jpg"}}],
@@ -3196,12 +3152,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 110,
     contactClicks: 25,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user23-new",
       email: "infrared@thermo.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest23-new",
       country: "PK",
@@ -3223,7 +3179,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3240,11 +3196,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "nebulizer-machine-respiratory"
     },
-    description: [{children: [{text: "Compact and efficient nebulizer machine for respiratory medication delivery. Perfect for asthma and COPD patients."}], _type: "block"}],
+    description: "Compact and efficient nebulizer machine for respiratory medication delivery. Perfect for asthma and COPD patients.",
     price: 1500,
     pricePerHour: 150,
     category: {
-      _ref: "medical-equipment",
       title: "Medical Equipment"
     },
     images: [{asset: {url: "/samples/medical (6).jpg"}}],
@@ -3270,12 +3225,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 85,
     contactClicks: 18,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    _createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     seller: {
       id: "user24-new",
       email: "nebulizer@health.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest24-new",
       country: "PK",
@@ -3297,7 +3252,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3316,11 +3271,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "generac-gp3000i-portable-generator"
     },
-    description: [{children: [{text: "Powerful and reliable portable inverter generator with clean power output for sensitive electronics."}], _type: "block"}],
+    description: "Powerful and reliable portable inverter generator with clean power output for sensitive electronics.",
     price: 3200,
     pricePerHour: 220,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (3).jpg"}}],
@@ -3345,12 +3299,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 165,
     contactClicks: 32,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    _createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     seller: {
       id: "user25-new",
       email: "generac@power.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest25-new",
       country: "PK",
@@ -3372,7 +3326,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3389,11 +3343,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "champion-3400-watt-dual-fuel"
     },
-    description: [{children: [{text: "Versatile dual fuel generator that runs on gasoline or propane. Perfect for home backup and job sites."}], _type: "block"}],
+    description: "Versatile dual fuel generator that runs on gasoline or propane. Perfect for home backup and job sites.",
     price: 3500,
     pricePerHour: 250,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (4).jpg"}}],
@@ -3418,12 +3371,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 155,
     contactClicks: 28,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    _createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     seller: {
       id: "user26-new",
       email: "champion@generator.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest26-new",
       country: "PK",
@@ -3445,7 +3398,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3462,11 +3415,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "westinghouse-wgen3600v-portable"
     },
-    description: [{children: [{text: "Reliable portable generator with electric start and 120V/240V outlets. Perfect for home backup power."}], _type: "block"}],
+    description: "Reliable portable generator with electric start and 120V/240V outlets. Perfect for home backup power.",
     price: 3800,
     pricePerHour: 270,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (5).jpg"}}],
@@ -3491,12 +3443,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 135,
     contactClicks: 25,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    _createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     seller: {
       id: "user27-new",
       email: "westinghouse@power.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest27-new",
       country: "PK",
@@ -3518,7 +3470,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,
@@ -3535,11 +3487,10 @@ const MOCK_LISTINGS: Listing[] = [
     slug: {
       current: "duromax-xp4400eh-standby"
     },
-    description: [{children: [{text: "Powerful standby generator with electric start and dual fuel capability. Perfect for whole home backup power."}], _type: "block"}],
+    description: "Powerful standby generator with electric start and dual fuel capability. Perfect for whole home backup power.",
     price: 4200,
     pricePerHour: 300,
     category: {
-      _ref: "generators",
       title: "Generators"
     },
     images: [{asset: {url: "/samples/generator (1).png"}}],
@@ -3564,12 +3515,12 @@ const MOCK_LISTINGS: Listing[] = [
     isFeatured: true,
     views: 125,
     contactClicks: 22,
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    _createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     seller: {
       id: "user28",
       email: "duromax@power.com",
       role: "seller",
-      created_at: new Date().toISOString(),
+      _createdAt: new Date().toISOString(),
       is_verified: true,
       guest_id: "guest28",
       country: "PK",
@@ -3591,7 +3542,7 @@ const MOCK_LISTINGS: Listing[] = [
         tier_last_updated: new Date().toISOString(),
         verification_status: "approved",
         is_top_seller: false,
-        created_at: new Date().toISOString(),
+        _createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         verification_documents: {
           cnic_front: null,

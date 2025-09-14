@@ -88,21 +88,21 @@ export function BannerTestSuite() {
       {/* User Type Selector */}
       <div className="flex flex-wrap justify-center gap-2">
         <Button
-          variant={userType === "all" ? "default" : "outline"}
+          variant={userType === "all" ? "primary" : "outline"}
           size="sm"
           onClick={() => setUserType("all")}
         >
           All Users
         </Button>
         <Button
-          variant={userType === "sellers" ? "default" : "outline"}
+          variant={userType === "sellers" ? "primary" : "outline"}
           size="sm"
           onClick={() => setUserType("sellers")}
         >
           Sellers Only
         </Button>
         <Button
-          variant={userType === "new-users" ? "default" : "outline"}
+          variant={userType === "new-users" ? "primary" : "outline"}
           size="sm"
           onClick={() => setUserType("new-users")}
         >
