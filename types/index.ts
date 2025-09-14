@@ -254,7 +254,11 @@ export type AnalyticsEventType =
   | "WhatsApp_click"
   | "share"
   | "save"
-  | "search";
+  | "search"
+  | "profile_view"
+  | "map_click"
+  | "banner_impression"
+  | "banner_click";
 
 /**
  * Device types for analytics

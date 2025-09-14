@@ -22,19 +22,19 @@ export default function BannerTestPage() {
       {/* User Type Selector */}
       <div className="flex flex-wrap justify-center gap-4 mb-8">
         <Button
-          variant={userType === "all" ? "default" : "outline"}
+          variant={userType === "all" ? "primary" : "outline"}
           onClick={() => setUserType("all")}
         >
           All Users
         </Button>
         <Button
-          variant={userType === "sellers" ? "default" : "outline"}
+          variant={userType === "sellers" ? "primary" : "outline"}
           onClick={() => setUserType("sellers")}
         >
           Sellers Only
         </Button>
         <Button
-          variant={userType === "new-users" ? "default" : "outline"}
+          variant={userType === "new-users" ? "primary" : "outline"}
           onClick={() => setUserType("new-users")}
         >
           New Users Only

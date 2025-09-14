@@ -1,18 +1,16 @@
 import { NextRequest } from "next/server"
 import { createClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {
   try {
     // Get Supabase client
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createClient()
     
     // Test 1: Check if banner tables exist by querying their structure
     const tableChecks = [
-      { name: 'banner_impressions', query: supabase.from('banner_impressions').select('count').limit(1) },
-      { name: 'banner_clicks', query: supabase.from('banner_clicks').select('count').limit(1) },
-      { name: 'banner_performance_daily', query: supabase.from('banner_performance_daily').select('count').limit(1) }
+      { name: 'banner_impressions', query: () => supabase.from('banner_impressions').select('count').limit(1) },
+      { name: 'banner_clicks', query: () => supabase.from('banner_clicks').select('count').limit(1) },
+      { name: 'banner_performance_daily', query: () => supabase.from('banner_performance_daily').select('count').limit(1) }
     ]
     
     const tableResults = []

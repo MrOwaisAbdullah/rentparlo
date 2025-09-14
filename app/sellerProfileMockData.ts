@@ -22,6 +22,7 @@ export const mockSeller: Seller = {
     push: true
   },
   preferred_language: 'en' as const,
+  onboarding_completed: true, // Add this missing property
   profile: {
     id: 'seller-123',
     username: 'premium_electronics',

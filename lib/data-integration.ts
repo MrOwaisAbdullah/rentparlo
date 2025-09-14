@@ -224,6 +224,7 @@ export async function getEnhancedListingBySlug(slug: string): Promise<Listing | 
             country: 'Pakistan',
             notification_preferences: { email: true, sms: false, push: true },
             preferred_language: 'en',
+            onboarding_completed: false, // Add this missing property
             profile: {
               id: listing.supabaseId,
               username: `user-${listing.supabaseId.substring(0, 8)}`,

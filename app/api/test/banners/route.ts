@@ -1,12 +1,10 @@
 import { NextRequest } from "next/server"
 import { createClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {
   try {
     // Get Supabase client
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createClient()
     
     // Test banner system by checking if tables exist and are accessible
     const tests = [
