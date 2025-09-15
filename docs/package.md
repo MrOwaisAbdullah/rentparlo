@@ -76,8 +76,6 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Personal account manager
 - Performance optimization consultation (monthly)
 - Up to 5 promotional campaigns per month
-- Custom analytics reports
-<!-- TODO: Implement custom analytics reports -->
 
 ### 4. Business Package
 **Price:** PKR 2,799/month  
@@ -94,7 +92,6 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Weekly performance reports
 - Custom business hours settings
 
-
 #### Additional Benefits:
 - Guaranteed top placement in all category listings
 <!-- TODO: Implement guaranteed top placement -->
@@ -102,8 +99,6 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Dedicated account manager
 - Performance optimization consultation (weekly)
 - Unlimited promotional campaigns
-- Custom analytics reports
-<!-- TODO: Implement custom analytics reports -->
 
 ## Affiliate Referral Program
 
@@ -203,6 +198,36 @@ RentParlo.pk uses a tiered system to reward high-performing sellers:
 - 20 points per review (90-day window)
 - 10 points per average rating point
 - Premium subscription: 100 bonus points per month
+
+### How Tier Points Increase:
+Tier points are calculated based on your activity and performance on the platform:
+
+1. **Contact Clicks**: 
+   - Earn 10 points for each contact click on your listings (phone calls, WhatsApp messages)
+   - Measured over a 90-day rolling window
+   - Contact clicks indicate genuine interest from potential customers
+
+2. **Views**: 
+   - Earn 5 points for each view of your listings
+   - Measured over a 90-day rolling window
+   - Views represent the visibility and reach of your listings
+
+3. **Reviews**: 
+   - Earn 20 points for each review received on your listings
+   - Measured over a 90-day rolling window
+   - Reviews demonstrate customer satisfaction and trust in your service
+
+4. **Average Rating**: 
+   - Earn 10 points for each average rating point (e.g., 4.5 stars = 45 points)
+   - Calculated from all reviews received
+   - Higher ratings indicate better quality service and products
+
+5. **Subscription Bonus**: 
+   - Earn 100 bonus points per month for having an active premium subscription
+   - Encourages sellers to upgrade for better visibility
+   - Premium subscribers demonstrate commitment to growing their business
+
+The tier point system uses a rolling 90-day window to ensure that your tier reflects your recent performance. Points are calculated daily, and your tier status is updated accordingly. This means that if your activity decreases, your tier may decrease, but if you increase your activity, you can quickly climb to higher tiers. The system is designed to be fair and rewarding for active sellers while providing clear pathways for growth.
 
 ## Package Comparison
 

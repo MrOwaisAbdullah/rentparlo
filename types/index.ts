@@ -792,6 +792,40 @@ export interface PackageFeatures {
   advanced_analytics: boolean;
   featured_listing: boolean;
   listing_priority: number;
+  // New features to implement
+  category_priority_placement?: boolean;
+  search_top_placement?: boolean;
+  guaranteed_top_placement?: boolean;
+  custom_analytics_reports?: boolean;
+}
+
+/**
+ * Seller tier features
+ */
+export interface SellerTierFeatures {
+  bronze: {
+    search_priority: boolean;
+  };
+  silver: {
+    enhanced_search_visibility: boolean;
+    priority_support: boolean;
+    free_featured_listings: number;
+  };
+  gold: {
+    category_top_placement: boolean;
+    priority_support: boolean;
+    free_featured_listings: number;
+  };
+  platinum: {
+    guaranteed_top_placement: boolean;
+    account_manager: boolean;
+    free_featured_listings: number;
+  };
+  diamond: {
+    guaranteed_top_placement: boolean;
+    account_manager: boolean;
+    unlimited_featured_listings: boolean;
+  };
 }
 
 /**

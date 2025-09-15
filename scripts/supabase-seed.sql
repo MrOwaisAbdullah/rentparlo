@@ -21,7 +21,11 @@ INSERT INTO public.subscription_packages (id, name, price, currency, max_listing
   "priority_support": false,
   "advanced_analytics": false,
   "featured_listing": false,
-  "listing_priority": 1
+  "listing_priority": 1,
+  "category_priority_placement": false,
+  "search_top_placement": false,
+  "guaranteed_top_placement": false,
+  "custom_analytics_reports": false
 }'::jsonb, 'monthly', true, 1),
 
 (gen_random_uuid(), 'Pro', 799, 'PKR', 10, 2, 90, '{
@@ -29,7 +33,11 @@ INSERT INTO public.subscription_packages (id, name, price, currency, max_listing
   "priority_support": false,
   "advanced_analytics": true,
   "featured_listing": true,
-  "listing_priority": 2
+  "listing_priority": 2,
+  "category_priority_placement": true,
+  "search_top_placement": false,
+  "guaranteed_top_placement": false,
+  "custom_analytics_reports": false
 }'::jsonb, 'monthly', true, 2),
 
 (gen_random_uuid(), 'Premium', 1799, 'PKR', 20, 5, 180, '{
@@ -37,7 +45,11 @@ INSERT INTO public.subscription_packages (id, name, price, currency, max_listing
   "priority_support": true,
   "advanced_analytics": true,
   "featured_listing": true,
-  "listing_priority": 3
+  "listing_priority": 3,
+  "category_priority_placement": true,
+  "search_top_placement": true,
+  "guaranteed_top_placement": true,
+  "custom_analytics_reports": true
 }'::jsonb, 'monthly', true, 3),
 
 (gen_random_uuid(), 'Business', 2799, 'PKR', 60, 10, 365, '{
@@ -45,7 +57,11 @@ INSERT INTO public.subscription_packages (id, name, price, currency, max_listing
   "priority_support": true,
   "advanced_analytics": true,
   "featured_listing": true,
-  "listing_priority": 4
+  "listing_priority": 4,
+  "category_priority_placement": true,
+  "search_top_placement": true,
+  "guaranteed_top_placement": true,
+  "custom_analytics_reports": true
 }'::jsonb, 'monthly', true, 4)
 ON CONFLICT DO NOTHING;
 

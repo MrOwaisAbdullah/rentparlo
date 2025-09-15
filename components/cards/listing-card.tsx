@@ -32,7 +32,13 @@ interface ListingCardProps {
   variant?: "default" | "category" | "list" | "featured" | "swiper" // Added 'swiper' variant
   className?: string
   onRemove?: (id: string) => void;
-  listing: Listing; // Make listing required
+  listing: Listing & { 
+    hasPriorityPlacement?: boolean; 
+    hasSearchTopPlacement?: boolean; 
+    hasGuaranteedTopPlacement?: boolean;
+    hasEnhancedSearchVisibility?: boolean; // Add enhanced search visibility flag
+    hasCategoryTopPlacement?: boolean; // Add category top placement flag for Gold tier
+  }; // Extend listing type
   
   // Additional props from SearchResults
   showSellerInfo?: boolean
@@ -602,7 +608,7 @@ export function ListingCard({
                               .filter((block: any) => block._type === 'block' && block.children)
                               .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
                               .join(' ')
-                          : typeof listing?.description === 'string' 
+                          : typeof listing.description === 'string' 
                             ? listing.description 
                             : '',
                         url

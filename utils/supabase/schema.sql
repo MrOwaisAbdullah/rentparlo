@@ -128,7 +128,7 @@ CREATE TABLE public.subscription_packages (
   max_listings INTEGER NOT NULL,
   max_featured_listings INTEGER DEFAULT 0,
   analytics_days INTEGER DEFAULT 90,
-  features JSONB DEFAULT '{"priority_support": false, "advanced_analytics": false}'::jsonb,
+  features JSONB DEFAULT '{"priority_support": false, "advanced_analytics": false, "location_boost": false, "featured_listing": false, "listing_priority": 1, "category_priority_placement": false, "search_top_placement": false, "guaranteed_top_placement": false, "custom_analytics_reports": false}'::jsonb,
   billing_cycle TEXT DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'yearly')),
   is_active BOOLEAN DEFAULT true,
   display_order INTEGER DEFAULT 0,

@@ -12,6 +12,7 @@ import { NotificationsPanel } from "./notifications-panel";
 import { PerformanceInsights } from "./performance-insights";
 import { MobileResponsiveWrapper } from "./mobile-responsive-wrapper";
 import { QuickListingCreator } from "./quick-listing-creator";
+import { CustomAnalyticsReports } from "./custom-analytics-reports";
 import { DashboardOverviewProps, QuickAction } from "@/types/dashboard";
 import { formatDate, calculatePerformanceScore } from "@/lib/dashboard-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -269,152 +270,154 @@ export const DashboardOverview = memo(function DashboardOverview({
   const displayMetrics = enhancedMetrics || analytics;
 
   return (
-    <MobileResponsiveWrapper
-      className="space-y-6"
-      mobileClassName="space-y-4 px-2"
-      desktopClassName="space-y-6"
-    >
-      {/* Welcome Section */}
-      <div
-        className={`flex ${isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
-      >
-        <div>
-          <h1
-            className={`font-bold tracking-tight ${isMobile ? "text-2xl" : "text-3xl"}`}
-          >
-            Welcome back, {sellerData.name}!
-          </h1>
-          <p
-            className={`text-muted-foreground mt-1 ${isMobile ? "text-sm" : ""}`}
-          >
-            Here's what's happening with your business today.
-          </p>
-        </div>
-        <div
-          className={`flex items-center gap-2 ${isMobile ? "flex-wrap" : ""}`}
-        >
-          <Badge variant="outline" className={isMobile ? "text-xs" : "text-sm"}>
-            {sellerData.tier.name} Tier
-          </Badge>
-          {sellerData.verificationStatus.isVerified && (
-            <Badge
-              variant="default"
-              className={isMobile ? "text-xs" : "text-sm"}
-            >
-              Verified Seller
-            </Badge>
-          )}
+    <div className="space-y-6">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Welcome back, {sellerData.name}!</h1>
+            <p className="opacity-90">
+              Here's what's happening with your listings today.
+            </p>
+          </div>
+          <Button asChild variant="secondary">
+            <Link href="/dashboard/create-listing">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Listing
+            </Link>
+          </Button>
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* Metrics Overview */}
       <div
-        className={`grid gap-4 ${isMobile ? "grid-cols-1 sm:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-5"}`}
+        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-4"}`}
       >
         <MemoizedMetricsCard
           title="Total Views"
           value={displayMetrics.totalViews}
           change={metricsChanges.views}
-          changeType="increase"
           icon={Eye}
-          trend={[45, 52, 48, 61, 55, 67, 72]}
-          description="Number of times your listings were viewed by potential renters"
+          description="Total listing views"
         />
         <MemoizedMetricsCard
           title="Contact Clicks"
           value={displayMetrics.totalContacts}
           change={metricsChanges.contacts}
-          changeType="increase"
           icon={MessageCircle}
-          trend={[12, 15, 13, 18, 16, 21, 24]}
-          description="Number of times people clicked your contact buttons (WhatsApp/Phone)"
-        />
-        <MemoizedMetricsCard
-          title="Contact Rate"
-          value={`${contactRate.toFixed(1)}%`}
-          change={0.3}
-          changeType="increase"
-          icon={TrendingUp}
-          description="Percentage of views that resulted in contact clicks - shows listing effectiveness"
+          description="Contact button clicks"
         />
         <MemoizedMetricsCard
           title="Active Listings"
           value={displayMetrics.activeListings}
           change={metricsChanges.listings}
-          changeType="neutral"
           icon={Package}
-          description="Number of your currently active rental listings"
+          description="Currently active listings"
         />
         <MemoizedMetricsCard
-          title="Engagement Score"
+          title="Performance Score"
           value={performanceScore}
           change={metricsChanges.tier}
-          changeType="increase"
           icon={Star}
-          description="Overall performance score based on views, clicks, and listing quality"
+          description="Based on activity and engagement"
+          isPercentage={true}
         />
       </div>
 
+      {/* Custom Analytics Reports */}
+      <CustomAnalyticsReports 
+        hasCustomAnalyticsReports={subscription.subscription_packages?.features?.custom_analytics_reports === true}
+        subscriptionName={subscription.subscription_packages?.name || "Unknown"}
+      />
+
+      {/* Package Benefits and Recent Activity */}
       <div
         className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
       >
-        {/* Quick Actions */}
-        <div className={isMobile ? "" : "lg:col-span-2"}>
-          <MemoizedQuickActions actions={quickActions} />
-        </div>
-
-        {/* Seller Tier Progress */}
+        {/* Package Benefits */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Seller Tier Progress
+              <Package className="h-5 w-5" />
+              Package Benefits
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
-                  {sellerData.tier.name} Tier
-                </span>
-                <Badge variant="outline" className="text-xs">
-                  Level {sellerData.tier.level}
-                </Badge>
-              </div>
-              <MemoizedUsageProgress
-                label="Tier Points"
-                used={sellerData.tierPoints}
-                limit={sellerData.tier.maxPoints}
-                unit="points"
-                showPercentage={false}
-              />
-              <p className="text-xs text-muted-foreground">
-                {sellerData.tier.maxPoints - sellerData.tierPoints} points to
-                next tier
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Your {subscription.subscription_packages?.name || "Pro"} package includes:
               </p>
-            </div>
-
-            <div className="pt-2 border-t">
-              <p className="text-sm font-medium mb-2">Current Benefits:</p>
-              <ul className="space-y-1">
-                {sellerData.tier.benefits.slice(0, 3).map((benefit, index) => (
-                  <li
-                    key={index}
-                    className="text-xs text-muted-foreground flex items-center gap-1"
-                  >
+              <ul className="space-y-2">
+                {subscription.subscription_packages?.features?.location_boost && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
                     <div className="w-1 h-1 bg-green-500 rounded-full" />
-                    {benefit}
+                    Location Boost
                   </li>
-                ))}
+                )}
+                {subscription.subscription_packages?.features?.priority_support && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Priority Support
+                  </li>
+                )}
+                {subscription.subscription_packages?.features?.advanced_analytics && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Advanced Analytics
+                  </li>
+                )}
+                {subscription.subscription_packages?.features?.featured_listing && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Featured Listings
+                  </li>
+                )}
+                {subscription.subscription_packages?.features?.category_priority_placement && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Category Priority Placement
+                  </li>
+                )}
+                {subscription.subscription_packages?.features?.search_top_placement && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Search Top Placement
+                  </li>
+                )}
+                {subscription.subscription_packages?.features?.guaranteed_top_placement && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Guaranteed Top Placement
+                  </li>
+                )}
+                {subscription.subscription_packages?.features?.custom_analytics_reports && (
+                  <li className="text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="w-1 h-1 bg-green-500 rounded-full" />
+                    Custom Analytics Reports
+                  </li>
+                )}
+                {Array(5)
+                  .fill(0)
+                  .map((_, index) => (
+                    <li
+                      key={index}
+                      className="text-xs text-muted-foreground flex items-center gap-1"
+                    >
+                      <div className="w-1 h-1 bg-green-500 rounded-full" />
+                      {subscription.subscription_packages?.name === "Basic"
+                        ? ["Basic support", "Standard analytics", "Up to 10 listings"][index]
+                        : subscription.subscription_packages?.name === "Pro"
+                        ? ["Priority support", "Enhanced analytics", "Up to 50 listings"][index]
+                        : subscription.subscription_packages?.name === "Premium"
+                        ? ["24/7 support", "Advanced analytics", "Unlimited listings"][index]
+                        : "Premium benefits"}
+                    </li>
+                  ))}
               </ul>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      <div
-        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
-      >
         {/* Recent Activity */}
         <Card className={isMobile ? "" : "lg:col-span-2"}>
           <CardHeader>
@@ -455,7 +458,7 @@ export const DashboardOverview = memo(function DashboardOverview({
                     subscription.status === "active" ? "default" : "secondary"
                   }
                 >
-                  Pro Package
+                  {subscription.subscription_packages?.name || "Unknown"} Package
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
@@ -503,19 +506,19 @@ export const DashboardOverview = memo(function DashboardOverview({
             <MemoizedUsageProgress
               label="Listings"
               used={displayMetrics.totalListings}
-              limit={50}
+              limit={subscription.subscription_packages?.max_listings || 50}
               unit="listings"
             />
             <MemoizedUsageProgress
               label="Featured Listings"
               used={5}
-              limit={10}
+              limit={subscription.subscription_packages?.max_featured_listings || 10}
               unit="featured"
             />
             <MemoizedUsageProgress
               label="Analytics Access"
               used={25}
-              limit={30}
+              limit={subscription.subscription_packages?.analytics_days || 30}
               unit="days"
             />
           </div>
@@ -599,11 +602,11 @@ export const DashboardOverview = memo(function DashboardOverview({
       {isLoading && (
         <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-2 shadow-lg">
           <div className="flex items-center gap-2 text-sm">
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            Loading enhanced metrics...
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <span>Enhancing metrics...</span>
           </div>
         </div>
       )}
-    </MobileResponsiveWrapper>
+    </div>
   );
 });

@@ -95,25 +95,29 @@ export function PackageDashboard({
     );
   }
 
-  const daysRemaining = calculateDaysRemaining(currentSubscription.endDate);
+  const daysRemaining = calculateDaysRemaining(currentSubscription.end_date);
   const isExpiringSoon = daysRemaining <= 7;
   const isExpired = daysRemaining <= 0;
 
-  const packageFeatures = currentSubscription.package.features || [];
-  const packageLimits = currentSubscription.package.limits;
+  // Fix the data structure access - use subscription_packages instead of package
+  const packageFeatures = currentSubscription.subscription_packages?.features || {};
+  const packageName = currentSubscription.subscription_packages?.name || "Unknown";
+  const packageCurrency = currentSubscription.subscription_packages?.currency || "PKR";
+  const packagePrice = currentSubscription.subscription_packages?.price || 0;
+  const packageDuration = currentSubscription.subscription_packages?.duration || 30;
 
   // Calculate usage percentages
   const listingsUsage =
-    packageLimits.maxListings > 0
-      ? (usage.listingsUsed / packageLimits.maxListings) * 100
+    usage.listingsLimit > 0
+      ? (usage.listingsUsed / usage.listingsLimit) * 100
       : 0;
   const featuredUsage =
-    packageLimits.maxFeaturedListings > 0
-      ? (usage.featuredListingsUsed / packageLimits.maxFeaturedListings) * 100
+    usage.featuredListingsLimit > 0
+      ? (usage.featuredListingsUsed / usage.featuredListingsLimit) * 100
       : 0;
   const storageUsage =
-    packageLimits.storageLimit > 0
-      ? (usage.storageUsed / packageLimits.storageLimit) * 100
+    usage.storageLimit > 0
+      ? (usage.storageUsed / usage.storageLimit) * 100
       : 0;
 
   const getStatusBadge = () => {
@@ -283,7 +287,7 @@ export function PackageDashboard({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Current Package: {currentSubscription.package.name}
+              Current Package: {packageName}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -293,10 +297,9 @@ export function PackageDashboard({
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Price</span>
                   <span className="font-medium">
-                    {currentSubscription.package.currency}{" "}
-                    {currentSubscription.package.price}
+                    {packageCurrency} {packagePrice}
                     <span className="text-sm text-muted-foreground ml-1">
-                      /{currentSubscription.package.duration} days
+                      /{packageDuration} days
                     </span>
                   </span>
                 </div>
@@ -307,7 +310,7 @@ export function PackageDashboard({
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Started</span>
                   <span className="font-medium">
-                    {formatDate(currentSubscription.startDate)}
+                    {formatDate(currentSubscription.start_date)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -319,7 +322,7 @@ export function PackageDashboard({
                       isExpired && "text-red-600"
                     )}
                   >
-                    {formatDate(currentSubscription.endDate)}
+                    {formatDate(currentSubscription.end_date)}
                   </span>
                 </div>
               </div>
@@ -331,10 +334,10 @@ export function PackageDashboard({
                   </span>
                   <Badge
                     variant={
-                      currentSubscription.autoRenew ? "default" : "outline"
+                      currentSubscription.auto_renew ? "default" : "outline"
                     }
                   >
-                    {currentSubscription.autoRenew ? "Enabled" : "Disabled"}
+                    {currentSubscription.auto_renew ? "Enabled" : "Disabled"}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
@@ -342,8 +345,8 @@ export function PackageDashboard({
                     Next Billing
                   </span>
                   <span className="font-medium">
-                    {currentSubscription.autoRenew
-                      ? formatDate(currentSubscription.nextBillingDate)
+                    {currentSubscription.auto_renew
+                      ? formatDate(currentSubscription.next_billing_date)
                       : "N/A"}
                   </span>
                 </div>
@@ -371,20 +374,17 @@ export function PackageDashboard({
                 Package Features
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {packageFeatures.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    {getFeatureIcon(feature.name)}
+                {Object.entries(packageFeatures).map(([featureName, featureValue]) => (
+                  <div key={featureName} className="flex items-center gap-2 text-sm">
+                    {getFeatureIcon(featureName)}
                     <span
                       className={cn(
-                        feature.included
-                          ? "text-foreground"
-                          : "text-muted-foreground line-through"
+                        featureValue ? "text-foreground" : "text-muted-foreground line-through"
                       )}
                     >
-                      {feature.name}
-                      {feature.limit && ` (${feature.limit})`}
+                      {featureName.replace(/_/g, ' ')}
                     </span>
-                    {feature.included && (
+                    {featureValue && (
                       <CheckCircle className="h-3 w-3 text-green-600 ml-auto" />
                     )}
                   </div>
@@ -404,7 +404,7 @@ export function PackageDashboard({
           />
           <MetricsCard
             title="Total Spent"
-            value={`${currentSubscription.package.currency} ${billingHistory
+            value={`${packageCurrency} ${billingHistory
               .filter((record) => record.status === "paid")
               .reduce((sum, record) => sum + record.amount, 0)}`}
             icon={CreditCard}

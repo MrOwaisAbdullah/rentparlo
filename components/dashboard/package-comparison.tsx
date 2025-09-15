@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { SubscriptionPackage, EnhancedUserSubscription } from "@/types";
+import { SubscriptionPackage, EnhancedUserSubscription, PackageFeatures } from "@/types";
 import { formatDate, calculateDaysRemaining } from "@/lib/dashboard-utils";
 import {
   Check,
@@ -270,6 +270,34 @@ export function PackageComparison({
                       <span className="text-sm">Featured Listings</span>
                       {renderFeatureComparison(
                         pkg.features.featured_listing,
+                        pkg.name
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Category Priority Placement</span>
+                      {renderFeatureComparison(
+                        pkg.features.category_priority_placement,
+                        pkg.name
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Search Top Placement</span>
+                      {renderFeatureComparison(
+                        pkg.features.search_top_placement,
+                        pkg.name
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Guaranteed Top Placement</span>
+                      {renderFeatureComparison(
+                        pkg.features.guaranteed_top_placement,
+                        pkg.name
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Custom Analytics Reports</span>
+                      {renderFeatureComparison(
+                        pkg.features.custom_analytics_reports,
                         pkg.name
                       )}
                     </div>

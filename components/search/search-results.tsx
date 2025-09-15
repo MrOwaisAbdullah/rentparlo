@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Grid, List, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Grid, List, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ListingCard } from "@/components/cards/listing-card";
@@ -123,8 +122,9 @@ const transformToListingType = (listing: Listing): FullListing => {
     priceWeekly: listing.price,
     priceMonthly: listing.price,
     category: {
-      _ref: listing.category.slug,
+      _id: listing.category.slug,
       title: listing.category.title,
+      slug: listing.category.slug,
     },
     images: transformedImages,
     location: listing.location,

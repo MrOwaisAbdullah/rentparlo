@@ -10,6 +10,9 @@ import {
   ChevronRight,
   SortAsc,
   Loader2,
+  Star,
+  Award,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +27,13 @@ import { ListingCard } from "@/components/cards/listing-card"; // Import the Lis
 import { Listing } from "@/types"; // Import the proper Listing type
 
 interface CategoryListingsProps {
-  listings: Listing[];
+  listings: (Listing & { 
+    hasPriorityPlacement?: boolean; 
+    hasGuaranteedTopPlacement?: boolean;
+    hasEnhancedSearchVisibility?: boolean; // Add enhanced search visibility flag
+    hasSearchPriority?: boolean; // Add search priority flag for Bronze tier
+    hasCategoryTopPlacement?: boolean; // Add category top placement flag for Gold tier
+  })[];
   totalCount: number;
   categorySlug: string;
   currentFilters: any;
@@ -96,6 +105,35 @@ export function CategoryListings({
       </div>
     );
   }
+
+  // Separate listings by priority level
+  const guaranteedTopListings = listings.filter(listing => listing.hasGuaranteedTopPlacement);
+  const priorityListings = listings.filter(listing => !listing.hasGuaranteedTopPlacement && listing.hasPriorityPlacement);
+  const categoryTopPlacementListings = listings.filter(listing => 
+    !listing.hasGuaranteedTopPlacement && 
+    !listing.hasPriorityPlacement && 
+    listing.hasCategoryTopPlacement
+  );
+  const enhancedVisibilityListings = listings.filter(listing => 
+    !listing.hasGuaranteedTopPlacement && 
+    !listing.hasPriorityPlacement && 
+    !listing.hasCategoryTopPlacement && 
+    listing.hasEnhancedSearchVisibility
+  );
+  const searchPriorityListings = listings.filter(listing => 
+    !listing.hasGuaranteedTopPlacement && 
+    !listing.hasPriorityPlacement && 
+    !listing.hasCategoryTopPlacement && 
+    !listing.hasEnhancedSearchVisibility && 
+    listing.hasSearchPriority
+  );
+  const regularListings = listings.filter(listing => 
+    !listing.hasGuaranteedTopPlacement && 
+    !listing.hasPriorityPlacement && 
+    !listing.hasCategoryTopPlacement && 
+    !listing.hasEnhancedSearchVisibility && 
+    !listing.hasSearchPriority
+  );
 
   return (
     <div className="space-y-6">
@@ -185,26 +223,193 @@ export function CategoryListings({
         </div>
       )}
 
-      {/* Listings Grid */}
-      <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
-        {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <ListingCard
-                key={listing._id}
-                listing={listing}
-                variant="category"
-              />
-            ))}
+      {/* Guaranteed Top Placement Section */}
+      {guaranteedTopListings.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-purple-500" />
+            <h3 className="text-lg font-semibold">Guaranteed Top Listings</h3>
+            <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+              Premium/Business/Platinum/Diamond
+            </Badge>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {listings.map((listing) => (
-              <ListingCard key={listing._id} listing={listing} variant="list" />
-            ))}
+          <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {guaranteedTopListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                    variant="category"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {guaranteedTopListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} variant="list" />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Priority Placement Section */}
+      {priorityListings.length > 0 && (
+        <div className={guaranteedTopListings.length > 0 ? "space-y-4 pt-6" : "space-y-4"}>
+          <div className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-500" />
+            <h3 className="text-lg font-semibold">Priority Listings</h3>
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+              Pro Package
+            </Badge>
+          </div>
+          <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {priorityListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                    variant="category"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {priorityListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} variant="list" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Category Top Placement Section */}
+      {categoryTopPlacementListings.length > 0 && (
+        <div className={(guaranteedTopListings.length > 0 || priorityListings.length > 0) ? "space-y-4 pt-6" : "space-y-4"}>
+          <div className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-500" />
+            <h3 className="text-lg font-semibold">Top Placement Listings</h3>
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+              Gold/Platinum/Diamond Tier
+            </Badge>
+          </div>
+          <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categoryTopPlacementListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                    variant="category"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {categoryTopPlacementListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} variant="list" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Search Visibility Section */}
+      {enhancedVisibilityListings.length > 0 && (
+        <div className={(guaranteedTopListings.length > 0 || priorityListings.length > 0 || categoryTopPlacementListings.length > 0) ? "space-y-4 pt-6" : "space-y-4"}>
+          <div className="flex items-center gap-2">
+            <Eye className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">Enhanced Visibility Listings</h3>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              Silver/Gold/Platinum/Diamond
+            </Badge>
+          </div>
+          <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {enhancedVisibilityListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                    variant="category"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {enhancedVisibilityListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} variant="list" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Search Priority Section */}
+      {searchPriorityListings.length > 0 && (
+        <div className={(guaranteedTopListings.length > 0 || priorityListings.length > 0 || categoryTopPlacementListings.length > 0 || enhancedVisibilityListings.length > 0) ? "space-y-4 pt-6" : "space-y-4"}>
+          <div className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-orange-500" />
+            <h3 className="text-lg font-semibold">Priority Listings</h3>
+            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+              Bronze/Silver/Gold/Platinum/Diamond
+            </Badge>
+          </div>
+          <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {searchPriorityListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                    variant="category"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {searchPriorityListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} variant="list" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Regular Listings */}
+      {regularListings.length > 0 && (
+        <div className={(guaranteedTopListings.length > 0 || priorityListings.length > 0 || categoryTopPlacementListings.length > 0 || enhancedVisibilityListings.length > 0 || searchPriorityListings.length > 0) ? "pt-6" : ""}>
+          {(guaranteedTopListings.length > 0 || priorityListings.length > 0 || categoryTopPlacementListings.length > 0 || enhancedVisibilityListings.length > 0 || searchPriorityListings.length > 0) && (
+            <h3 className="text-lg font-semibold mb-4">Other Listings</h3>
+          )}
+          <div className={viewMode === "grid" ? "gap-6" : "space-y-4"}>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {regularListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                    variant="category"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {regularListings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} variant="list" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Load More Button */}
       {hasNextPage && onLoadMore && (

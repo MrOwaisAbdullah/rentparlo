@@ -239,7 +239,12 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
 
     // Enhance listings with seller information (limit concurrent requests)
     const batchSize = 5;
-    const enhancedListings: Listing[] = [];
+    const enhancedListings: (Listing & { 
+      hasSearchTopPlacement?: boolean; 
+      hasGuaranteedTopPlacement?: boolean;
+      hasEnhancedSearchVisibility?: boolean; // Add enhanced search visibility flag
+      hasSearchPriority?: boolean; // Add search priority flag for Bronze tier
+    })[] = [];
 
     for (let i = 0; i < paginatedListings.length; i += batchSize) {
       const batch = paginatedListings.slice(i, i + batchSize);
@@ -247,11 +252,51 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
         batch.map(async (listing) => {
           try {
             const seller = await getUserById(listing.supabaseId);
-            if (!seller) return listing;
+            if (!seller) return { 
+              ...listing, 
+              hasSearchTopPlacement: false, 
+              hasGuaranteedTopPlacement: false,
+              hasEnhancedSearchVisibility: false,
+              hasSearchPriority: false // Add default search priority flag
+            };
 
             let sellerProfile: SellerProfile | null = null;
             if (seller.role === 'seller') {
               sellerProfile = await getSellerProfile(seller.id);
+            }
+
+            // Get seller's subscription to check for search top placement feature
+            const subscription = await getUserActiveSubscription(seller.id);
+            const hasSearchTopPlacement = subscription?.subscription_packages?.features?.search_top_placement === true;
+            
+            // Check for guaranteed top placement (from package features or seller tier features)
+            let hasGuaranteedTopPlacement = false;
+            if (subscription?.subscription_packages?.features?.guaranteed_top_placement === true) {
+              hasGuaranteedTopPlacement = true;
+            } else if (sellerProfile) {
+              // Check seller tier features
+              const tier = sellerProfile.tier;
+              if (['platinum', 'diamond'].includes(tier)) {
+                hasGuaranteedTopPlacement = true;
+              }
+            }
+            
+            // Check for enhanced search visibility (Silver tier feature)
+            let hasEnhancedSearchVisibility = false;
+            if (sellerProfile) {
+              const tier = sellerProfile.tier;
+              if (['silver', 'gold', 'platinum', 'diamond'].includes(tier)) {
+                hasEnhancedSearchVisibility = true;
+              }
+            }
+            
+            // Check for search priority (Bronze tier feature)
+            let hasSearchPriority = false;
+            if (sellerProfile) {
+              const tier = sellerProfile.tier;
+              if (['bronze', 'silver', 'gold', 'platinum', 'diamond'].includes(tier)) {
+                hasSearchPriority = true;
+              }
             }
 
             return {
@@ -260,16 +305,53 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
                 ...seller,
                 guest_id: seller.guest_id || null,
                 profile: sellerProfile
-              } : undefined
+              } : undefined,
+              hasSearchTopPlacement, // Add search top placement flag
+              hasGuaranteedTopPlacement, // Add guaranteed top placement flag
+              hasEnhancedSearchVisibility, // Add enhanced search visibility flag
+              hasSearchPriority // Add search priority flag
             };
           } catch (error) {
             console.error(`Error enhancing listing ${listing._id}:`, error);
-            return listing;
+            return { 
+              ...listing, 
+              hasSearchTopPlacement: false, 
+              hasGuaranteedTopPlacement: false,
+              hasEnhancedSearchVisibility: false,
+              hasSearchPriority: false // Add default search priority flag
+            };
           }
         })
       );
       enhancedListings.push(...enhancedBatch);
     }
+
+    // Sort listings to prioritize listings with guaranteed top placement, then search top placement, 
+    // then enhanced search visibility, then search priority, then featured
+    enhancedListings.sort((a, b) => {
+      // First, prioritize listings with guaranteed top placement
+      if (a.hasGuaranteedTopPlacement && !b.hasGuaranteedTopPlacement) return -1;
+      if (!a.hasGuaranteedTopPlacement && b.hasGuaranteedTopPlacement) return 1;
+      
+      // Then, prioritize listings with search top placement
+      if (a.hasSearchTopPlacement && !b.hasSearchTopPlacement) return -1;
+      if (!a.hasSearchTopPlacement && b.hasSearchTopPlacement) return 1;
+      
+      // Then, prioritize listings with enhanced search visibility
+      if (a.hasEnhancedSearchVisibility && !b.hasEnhancedSearchVisibility) return -1;
+      if (!a.hasEnhancedSearchVisibility && b.hasEnhancedSearchVisibility) return 1;
+      
+      // Then, prioritize listings with search priority (Bronze tier feature)
+      if (a.hasSearchPriority && !b.hasSearchPriority) return -1;
+      if (!a.hasSearchPriority && b.hasSearchPriority) return 1;
+      
+      // Then, prioritize featured listings
+      if (a.isFeatured && !b.isFeatured) return -1;
+      if (!a.isFeatured && b.isFeatured) return 1;
+      
+      // Finally, sort by creation date (newest first)
+      return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
+    });
 
     const result: SearchResults = {
       results: enhancedListings,
@@ -378,11 +460,16 @@ export async function getSellerDashboardData(sellerId: string) {
 
     // Get analytics for each listing
     const listingsWithAnalytics = await Promise.all(
-      sellerListings.map(async (listing) => {
-        const analytics = await getListingAnalytics(listing._id)
-        return {
-          ...listing,
-          ...analytics
+      sellerListings.map(async (listing: any) => {
+        try {
+          const analytics = await getListingAnalytics(listing._id);
+          return {
+            ...listing,
+            ...analytics
+          };
+        } catch (error) {
+          console.error(`Error getting analytics for listing ${listing._id}:`, error);
+          return listing;
         }
       })
     )
@@ -392,12 +479,16 @@ export async function getSellerDashboardData(sellerId: string) {
 
     // Get subscription information
     const subscription: EnhancedUserSubscription | null = await getUserActiveSubscription(sellerId)
+    
+    // Check if seller has custom analytics reports feature
+    const hasCustomAnalyticsReports = subscription?.subscription_packages?.features?.custom_analytics_reports === true;
 
     return {
       profile: sellerProfile,
       listings: listingsWithAnalytics,
       analytics: sellerAnalytics,
-      subscription
+      subscription,
+      hasCustomAnalyticsReports // Add custom analytics reports flag
     }
   } catch (error) {
     console.error('Error getting seller dashboard data:', error)
@@ -902,6 +993,40 @@ export async function getCategoryWithListings(slug: string, filters: any) {
             sellerProfile = await getSellerProfile(seller.id)
           }
 
+          // Get seller's subscription to check for priority placement feature
+          const subscription = await getUserActiveSubscription(seller.id);
+          const hasPriorityPlacement = subscription?.subscription_packages?.features?.category_priority_placement === true;
+          
+          // Check for guaranteed top placement (from package features or seller tier features)
+          let hasGuaranteedTopPlacement = false;
+          if (subscription?.subscription_packages?.features?.guaranteed_top_placement === true) {
+            hasGuaranteedTopPlacement = true;
+          } else if (sellerProfile) {
+            // Check seller tier features
+            const tier = sellerProfile.tier;
+            if (['platinum', 'diamond'].includes(tier)) {
+              hasGuaranteedTopPlacement = true;
+            }
+          }
+          
+          // Check for search priority (Bronze tier feature)
+          let hasSearchPriority = false;
+          if (sellerProfile) {
+            const tier = sellerProfile.tier;
+            if (['bronze', 'silver', 'gold', 'platinum', 'diamond'].includes(tier)) {
+              hasSearchPriority = true;
+            }
+          }
+          
+          // Check for category top placement (Gold tier feature)
+          let hasCategoryTopPlacement = false;
+          if (sellerProfile) {
+            const tier = sellerProfile.tier;
+            if (['gold', 'platinum', 'diamond'].includes(tier)) {
+              hasCategoryTopPlacement = true;
+            }
+          }
+
           return {
             ...listing,
             seller: {
@@ -909,9 +1034,12 @@ export async function getCategoryWithListings(slug: string, filters: any) {
               username: sellerProfile?.username || seller.email,
               tier: sellerProfile?.tier || 'basic',
               isVerified: seller.is_verified || false,
-              rating: undefined, // SellerProfile doesn't have a rating field
               is_top_seller: sellerProfile?.is_top_seller || false
-            }
+            },
+            hasPriorityPlacement, // Add priority placement flag
+            hasGuaranteedTopPlacement, // Add guaranteed top placement flag
+            hasSearchPriority, // Add search priority flag
+            hasCategoryTopPlacement // Add category top placement flag for Gold tier
           }
         } catch (error) {
           console.error(`Error enhancing listing ${listing._id}:`, error)
@@ -919,6 +1047,33 @@ export async function getCategoryWithListings(slug: string, filters: any) {
         }
       })
     )
+
+    // Sort listings to prioritize listings with guaranteed top placement, then priority placement, 
+    // then category top placement, then search priority, then featured
+    enhancedListings.sort((a, b) => {
+      // First, prioritize listings with guaranteed top placement
+      if (a.hasGuaranteedTopPlacement && !b.hasGuaranteedTopPlacement) return -1;
+      if (!a.hasGuaranteedTopPlacement && b.hasGuaranteedTopPlacement) return 1;
+      
+      // Then, prioritize listings with category priority placement
+      if (a.hasPriorityPlacement && !b.hasPriorityPlacement) return -1;
+      if (!a.hasPriorityPlacement && b.hasPriorityPlacement) return 1;
+      
+      // Then, prioritize listings with category top placement (Gold tier feature)
+      if (a.hasCategoryTopPlacement && !b.hasCategoryTopPlacement) return -1;
+      if (!a.hasCategoryTopPlacement && b.hasCategoryTopPlacement) return 1;
+      
+      // Then, prioritize listings with search priority (Bronze tier feature)
+      if (a.hasSearchPriority && !b.hasSearchPriority) return -1;
+      if (!a.hasSearchPriority && b.hasSearchPriority) return 1;
+      
+      // Then, prioritize featured listings
+      if (a.isFeatured && !b.isFeatured) return -1;
+      if (!a.isFeatured && b.isFeatured) return 1;
+      
+      // Finally, sort by creation date (newest first)
+      return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
+    });
 
     const result = {
       category,
