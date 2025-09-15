@@ -237,7 +237,8 @@ export interface Listing {
   badges?: ListingBadge[];
   seller?: Seller; // Add seller information for badge calculation
   tags?: string[]; // Add missing tags field
-  seo?: { // Add missing seo field
+  seo?: {
+    // Add missing seo field
     metaTitle?: string;
     metaDescription?: string;
   };
@@ -321,6 +322,179 @@ export interface SellerAnalytics {
     date: string;
     views: number;
   }[];
+}
+
+/**
+ * =====================
+ * ENHANCED DASHBOARD ANALYTICS TYPES
+ * =====================
+ */
+
+/**
+ * Enhanced seller analytics for dashboard
+ */
+export interface EnhancedSellerAnalytics {
+  totalViews: number;
+  totalContacts: number;
+  totalWhatsAppClicks: number;
+  totalShares: number;
+  totalSaves: number;
+  uniqueVisitors: number;
+  conversionRate: number;
+  avgSessionDuration: number;
+  bounceRate: number;
+  topCities: Array<{ city: string; count: number }>;
+  topDevices: Array<{ device_type: string; count: number }>;
+  timeSeriesData: Array<{
+    date: string;
+    views: number;
+    contacts: number;
+    conversions: number;
+  }>;
+  listingPerformance: Array<{
+    listingId: string;
+    title: string;
+    views: number;
+    contacts: number;
+    whatsappClicks: number;
+    shares: number;
+    saves: number;
+    conversionRate: number;
+    avgTimeOnPage: number;
+    createdAt: string;
+    lastActivity: string;
+  }>;
+}
+
+/**
+ * Seller performance metrics for dashboard overview
+ */
+export interface SellerPerformanceMetrics {
+  performanceScore: number;
+  responseRate: number;
+  customerSatisfaction: number;
+  verificationScore: number;
+  tierProgress: {
+    currentTier: string;
+    currentPoints: number;
+    nextTier: string;
+    pointsToNext: number;
+    progressPercentage: number;
+  };
+  benchmarks: {
+    avgViewsPerListing: number;
+    avgConversionRate: number;
+    platformAvgConversion: number;
+    performanceRank: string;
+  };
+}
+
+/**
+ * Analytics comparison data
+ */
+export interface AnalyticsComparison {
+  current: EnhancedSellerAnalytics;
+  previous: EnhancedSellerAnalytics;
+  changes: {
+    views: { value: number; percentage: number };
+    contacts: { value: number; percentage: number };
+    conversions: { value: number; percentage: number };
+    uniqueVisitors: { value: number; percentage: number };
+  };
+}
+
+/**
+ * Enhanced listing analytics
+ */
+export interface EnhancedListingAnalytics {
+  views: number;
+  contacts: number;
+  whatsappClicks: number;
+  shares: number;
+  saves: number;
+  uniqueVisitors: number;
+  conversionRate: number;
+  avgTimeOnPage: number;
+  bounceRate: number;
+  topCities: Array<{ city: string; count: number }>;
+  topDevices: Array<{ device_type: string; count: number }>;
+  hourlyDistribution: Array<{ hour: number; views: number }>;
+  dailyTrend: Array<{ date: string; views: number; contacts: number }>;
+}
+
+/**
+ * Top performing listing data
+ */
+export interface TopPerformingListing {
+  listingId: string;
+  title: string;
+  views: number;
+  contacts: number;
+  whatsappClicks: number;
+  conversionRate: number;
+  revenue: number;
+  performanceScore: number;
+}
+
+/**
+ * Analytics insights and recommendations
+ */
+export interface AnalyticsInsight {
+  type: "improvement" | "optimization" | "feature";
+  priority: "high" | "medium" | "low";
+  title: string;
+  description: string;
+  impact: string;
+  actionUrl?: string;
+  estimatedImprovement?: number;
+}
+
+/**
+ * Analytics trends
+ */
+export interface AnalyticsTrends {
+  viewsTrend: "up" | "down" | "stable";
+  conversionTrend: "up" | "down" | "stable";
+  engagementTrend: "up" | "down" | "stable";
+}
+
+/**
+ * Analytics recommendation
+ */
+export interface AnalyticsRecommendation {
+  category: string;
+  suggestion: string;
+  expectedImpact: string;
+}
+
+/**
+ * Complete analytics insights response
+ */
+export interface AnalyticsInsightsResponse {
+  insights: AnalyticsInsight[];
+  trends: AnalyticsTrends;
+  recommendations: AnalyticsRecommendation[];
+}
+
+/**
+ * Time range for analytics queries
+ */
+export interface AnalyticsTimeRange {
+  start: string;
+  end: string;
+}
+
+/**
+ * Package usage tracking
+ */
+export interface PackageUsage {
+  listingsUsed: number;
+  listingsLimit: number;
+  featuredListingsUsed: number;
+  featuredListingsLimit: number;
+  analyticsAccessDays: number;
+  storageUsed: number;
+  storageLimit: number;
 }
 
 /**
@@ -778,20 +952,20 @@ export type BannerPlacement =
   | "popup-banner"
   | "seller-profile";
 
-  /**
-   * Banner sizes
-   */
-  export type BannerSize =
-    | "large-banner"
-    | "leaderboard"
-    | "medium-rectangle"
-    | "large-rectangle"
-    | "half-page"
-    | "mobile-banner"
-    | "popup"
-    | "square"
-    | "vertical-rectangle"
-    | "skyscraper";
+/**
+ * Banner sizes
+ */
+export type BannerSize =
+  | "large-banner"
+  | "leaderboard"
+  | "medium-rectangle"
+  | "large-rectangle"
+  | "half-page"
+  | "mobile-banner"
+  | "popup"
+  | "square"
+  | "vertical-rectangle"
+  | "skyscraper";
 
 /**
  * Advertisement banner (stored in Sanity)
