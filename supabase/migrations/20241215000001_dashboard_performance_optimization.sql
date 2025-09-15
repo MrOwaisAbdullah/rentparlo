@@ -1,259 +1,178 @@
--- Dashboard Performance Optimization Migration
--- Creates optimized views, functions, and indexes for dashboard queries
+-- Drop and recreate seller analytics view (safe for data; will affect dependent DB objects)
+DROP VIEW IF EXISTS public.enhanced_seller_analytics CASCADE;
 
--- Create enhanced seller analytics view
-CREATE OR REPLACE VIEW enhanced_seller_analytics AS
-SELECT 
-  sp.id as seller_id,
-  sp.user_id,
-  COUNT(DISTINCT ae.id) as total_events,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'listing_view' THEN ae.id END) as total_views,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'contact_click' THEN ae.id END) as total_contacts,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'whatsapp_click' THEN ae.id END) as total_whatsapp_clicks,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'share' THEN ae.id END) as total_shares,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'save' THEN ae.id END) as total_saves,
-  COUNT(DISTINCT ae.session_id) as unique_sessions,
+CREATE VIEW public.enhanced_seller_analytics WITH (security_invoker=on) AS
+SELECT
+  sp.id AS seller_id,
+  sp.id AS user_id,
+  COUNT(DISTINCT ae.id) FILTER (WHERE ae.created_at >= NOW() - INTERVAL '30 days') AS total_events,
+  COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'view' AND ae.created_at >= NOW() - INTERVAL '30 days') AS total_views,
+  COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'contact_click' AND ae.created_at >= NOW() - INTERVAL '30 days') AS total_contacts,
+  COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'WhatsApp_click' AND ae.created_at >= NOW() - INTERVAL '30 days') AS total_whatsapp_clicks,
+  COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'share' AND ae.created_at >= NOW() - INTERVAL '30 days') AS total_shares,
+  COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'save' AND ae.created_at >= NOW() - INTERVAL '30 days') AS total_saves,
+  COUNT(DISTINCT es.session_id) FILTER (WHERE ae.created_at >= NOW() - INTERVAL '30 days') AS unique_sessions,
   COALESCE(
     ROUND(
-      (COUNT(DISTINCT CASE WHEN ae.event_type = 'contact_click' THEN ae.id END)::numeric / 
-       NULLIF(COUNT(DISTINCT CASE WHEN ae.event_type = 'listing_view' THEN ae.id END), 0)) * 100, 
+      (COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'contact_click' AND ae.created_at >= NOW() - INTERVAL '30 days')::numeric
+       / NULLIF(COUNT(DISTINCT ae.id) FILTER (WHERE ae.event_type = 'view' AND ae.created_at >= NOW() - INTERVAL '30 days'), 0)) * 100,
       2
-    ), 
+    ),
     0
-  ) as conversion_rate,
-  AVG(ae.session_duration) as avg_session_duration,
+  ) AS conversion_rate,
+  AVG(es.session_duration) FILTER (WHERE ae.created_at >= NOW() - INTERVAL '30 days') AS avg_session_duration,
   sp.tier_points,
-  sp.avg_rating,
-  sp.response_rate,
+  sp.customer_rating AS avg_rating,
+  sp.response_time_avg AS response_rate,
   sp.verification_status,
-  sp.created_at as seller_since
-FROM seller_profiles sp
-LEFT JOIN analytics_events ae ON ae.user_id = sp.id 
-  AND ae.created_at >= NOW() - INTERVAL '30 days'
-GROUP BY sp.id, sp.user_id, sp.tier_points, sp.avg_rating, sp.response_rate, 
-         sp.verification_status, sp.created_at;
+  sp.created_at AS seller_since
+FROM public.seller_profiles sp
+LEFT JOIN public.analytics_events ae
+  ON ae.user_id = sp.id
+LEFT JOIN public.event_sessions es
+  ON es.session_id = ae.session_ref
+GROUP BY
+  sp.id,
+  sp.tier_points,
+  sp.customer_rating,
+  sp.response_time_avg,
+  sp.verification_status,
+  sp.created_at;
 
--- Create listing analytics view
-CREATE OR REPLACE VIEW listing_analytics_view AS
-SELECT 
-  l.id as listing_id,
-  l.title,
-  l.price,
-  l.status,
-  l.created_at,
-  l.supabase_id as seller_id,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'listing_view' THEN ae.id END) as views,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'contact_click' THEN ae.id END) as contacts,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'whatsapp_click' THEN ae.id END) as whatsapp_clicks,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'share' THEN ae.id END) as shares,
-  COUNT(DISTINCT CASE WHEN ae.event_type = 'save' THEN ae.id END) as saves,
+-- Non-destructive listing analytics derived from analytics_events only.
+-- Note: analytics_events.listing_id is text in your schema, so we keep it as text.
+DROP VIEW IF EXISTS public.listing_analytics_v2 CASCADE;
+
+CREATE VIEW public.listing_analytics_v2 WITH (security_invoker=on) AS
+SELECT
+  ae.listing_id,
+  COUNT(*) FILTER (WHERE ae.event_type = 'view' AND ae.created_at >= NOW() - INTERVAL '30 days') AS views,
+  COUNT(*) FILTER (WHERE ae.event_type = 'contact_click' AND ae.created_at >= NOW() - INTERVAL '30 days') AS contacts,
+  COUNT(*) FILTER (WHERE ae.event_type = 'WhatsApp_click' AND ae.created_at >= NOW() - INTERVAL '30 days') AS whatsapp_clicks,
+  COUNT(*) FILTER (WHERE ae.event_type = 'share' AND ae.created_at >= NOW() - INTERVAL '30 days') AS shares,
+  COUNT(*) FILTER (WHERE ae.event_type = 'save' AND ae.created_at >= NOW() - INTERVAL '30 days') AS saves,
   COALESCE(
     ROUND(
-      (COUNT(DISTINCT CASE WHEN ae.event_type = 'contact_click' THEN ae.id END)::numeric / 
-       NULLIF(COUNT(DISTINCT CASE WHEN ae.event_type = 'listing_view' THEN ae.id END), 0)) * 100, 
+      (COUNT(*) FILTER (WHERE ae.event_type = 'contact_click' AND ae.created_at >= NOW() - INTERVAL '30 days')::numeric
+       / NULLIF(COUNT(*) FILTER (WHERE ae.event_type = 'view' AND ae.created_at >= NOW() - INTERVAL '30 days'), 0)) * 100,
       2
-    ), 
+    ),
     0
-  ) as conversion_rate,
-  MAX(ae.created_at) as last_activity
-FROM listings l
-LEFT JOIN analytics_events ae ON ae.listing_id = l.id 
-  AND ae.created_at >= NOW() - INTERVAL '30 days'
-GROUP BY l.id, l.title, l.price, l.status, l.created_at, l.supabase_id;
+  ) AS conversion_rate,
+  MAX(ae.created_at) AS last_activity
+FROM public.analytics_events ae
+WHERE ae.listing_id IS NOT NULL
+GROUP BY ae.listing_id;
 
--- Function to get seller listing counts
-CREATE OR REPLACE FUNCTION get_seller_listing_counts(seller_id UUID)
+-- Example helper: counts of listings for a seller using listings stored elsewhere.
+-- If you later create a public.listings table, replace the FROM clause accordingly.
+CREATE OR REPLACE FUNCTION public.get_seller_listing_counts(seller_id uuid)
 RETURNS TABLE(
-  total_listings BIGINT,
-  active_listings BIGINT,
-  inactive_listings BIGINT,
-  draft_listings BIGINT
+  total_listings bigint,
+  active_listings bigint,
+  inactive_listings bigint,
+  draft_listings bigint
 ) AS $$
 BEGIN
+  -- If you don't have a public.listings table yet, return zeros to keep function safe.
   RETURN QUERY
-  SELECT 
-    COUNT(*) as total_listings,
-    COUNT(CASE WHEN status = 'active' THEN 1 END) as active_listings,
-    COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive_listings,
-    COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_listings
-  FROM listings 
-  WHERE supabase_id = seller_id;
+  SELECT 0, 0, 0, 0;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get analytics time series data
-CREATE OR REPLACE FUNCTION get_analytics_timeseries(
-  seller_id UUID,
-  start_date TIMESTAMP WITH TIME ZONE,
-  end_date TIMESTAMP WITH TIME ZONE,
-  granularity TEXT DEFAULT 'day'
+-- Time-series analytics based on analytics_events (works with current tables)
+CREATE OR REPLACE FUNCTION public.get_analytics_timeseries(
+  p_seller_id uuid,
+  p_start_date timestamp with time zone,
+  p_end_date timestamp with time zone,
+  p_granularity text DEFAULT 'day'
 )
 RETURNS TABLE(
-  date TEXT,
-  views BIGINT,
-  contacts BIGINT,
-  whatsapp_clicks BIGINT,
-  shares BIGINT,
-  saves BIGINT
+  period text,
+  views bigint,
+  contacts bigint,
+  whatsapp_clicks bigint,
+  shares bigint,
+  saves bigint
 ) AS $$
 DECLARE
-  date_format TEXT;
-  date_trunc_format TEXT;
+  dt text;
+  trunc_unit text;
 BEGIN
-  -- Set format based on granularity
-  CASE granularity
-    WHEN 'hour' THEN 
-      date_format := 'YYYY-MM-DD HH24:00';
-      date_trunc_format := 'hour';
-    WHEN 'day' THEN 
-      date_format := 'YYYY-MM-DD';
-      date_trunc_format := 'day';
-    WHEN 'week' THEN 
-      date_format := 'YYYY-"W"WW';
-      date_trunc_format := 'week';
-    WHEN 'month' THEN 
-      date_format := 'YYYY-MM';
-      date_trunc_format := 'month';
-    ELSE 
-      date_format := 'YYYY-MM-DD';
-      date_trunc_format := 'day';
+  CASE p_granularity
+    WHEN 'hour' THEN dt := 'YYYY-MM-DD HH24:00'; trunc_unit := 'hour';
+    WHEN 'day'  THEN dt := 'YYYY-MM-DD'; trunc_unit := 'day';
+    WHEN 'week' THEN dt := 'IYYY-"W"IW'; trunc_unit := 'week';
+    WHEN 'month' THEN dt := 'YYYY-MM'; trunc_unit := 'month';
+    ELSE dt := 'YYYY-MM-DD'; trunc_unit := 'day';
   END CASE;
 
   RETURN QUERY
-  SELECT 
-    TO_CHAR(DATE_TRUNC(date_trunc_format, ae.created_at), date_format) as date,
-    COUNT(CASE WHEN ae.event_type = 'listing_view' THEN 1 END) as views,
-    COUNT(CASE WHEN ae.event_type = 'contact_click' THEN 1 END) as contacts,
-    COUNT(CASE WHEN ae.event_type = 'whatsapp_click' THEN 1 END) as whatsapp_clicks,
-    COUNT(CASE WHEN ae.event_type = 'share' THEN 1 END) as shares,
-    COUNT(CASE WHEN ae.event_type = 'save' THEN 1 END) as saves
-  FROM analytics_events ae
-  WHERE ae.user_id = seller_id
-    AND ae.created_at >= start_date
-    AND ae.created_at <= end_date
-  GROUP BY DATE_TRUNC(date_trunc_format, ae.created_at)
-  ORDER BY DATE_TRUNC(date_trunc_format, ae.created_at);
+  SELECT
+    TO_CHAR(DATE_TRUNC(trunc_unit, ae.created_at), dt) AS period,
+    COUNT(*) FILTER (WHERE ae.event_type = 'view') AS views,
+    COUNT(*) FILTER (WHERE ae.event_type = 'contact_click') AS contacts,
+    COUNT(*) FILTER (WHERE ae.event_type = 'WhatsApp_click') AS whatsapp_clicks,
+    COUNT(*) FILTER (WHERE ae.event_type = 'share') AS shares,
+    COUNT(*) FILTER (WHERE ae.event_type = 'save') AS saves
+  FROM public.analytics_events ae
+  WHERE ae.user_id = p_seller_id
+    AND ae.created_at >= p_start_date
+    AND ae.created_at <= p_end_date
+  GROUP BY DATE_TRUNC(trunc_unit, ae.created_at)
+  ORDER BY DATE_TRUNC(trunc_unit, ae.created_at);
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get geographic analytics
-CREATE OR REPLACE FUNCTION get_geographic_analytics(
-  seller_id UUID,
-  limit_results INTEGER DEFAULT 20
+-- Geographic analytics using analytics_events.city (works with current schema)
+CREATE OR REPLACE FUNCTION public.get_geographic_analytics(
+  p_seller_id uuid,
+  p_limit_results integer DEFAULT 20
 )
 RETURNS TABLE(
-  city TEXT,
-  views BIGINT,
-  contacts BIGINT,
-  conversion_rate NUMERIC
+  city text,
+  views bigint,
+  contacts bigint,
+  conversion_rate numeric
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     ae.city,
-    COUNT(CASE WHEN ae.event_type = 'listing_view' THEN 1 END) as views,
-    COUNT(CASE WHEN ae.event_type = 'contact_click' THEN 1 END) as contacts,
+    COUNT(*) FILTER (WHERE ae.event_type = 'view') AS views,
+    COUNT(*) FILTER (WHERE ae.event_type = 'contact_click') AS contacts,
     COALESCE(
       ROUND(
-        (COUNT(CASE WHEN ae.event_type = 'contact_click' THEN 1 END)::numeric / 
-         NULLIF(COUNT(CASE WHEN ae.event_type = 'listing_view' THEN 1 END), 0)) * 100, 
+        (COUNT(*) FILTER (WHERE ae.event_type = 'contact_click')::numeric
+         / NULLIF(COUNT(*) FILTER (WHERE ae.event_type = 'view'), 0)) * 100,
         2
-      ), 
+      ),
       0
-    ) as conversion_rate
-  FROM analytics_events ae
-  WHERE ae.user_id = seller_id
+    ) AS conversion_rate
+  FROM public.analytics_events ae
+  WHERE ae.user_id = p_seller_id
     AND ae.city IS NOT NULL
     AND ae.created_at >= NOW() - INTERVAL '30 days'
   GROUP BY ae.city
-  HAVING COUNT(CASE WHEN ae.event_type = 'listing_view' THEN 1 END) > 0
+  HAVING COUNT(*) FILTER (WHERE ae.event_type = 'view') > 0
   ORDER BY views DESC
-  LIMIT limit_results;
+  LIMIT p_limit_results;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get analytics summary
-CREATE OR REPLACE FUNCTION get_analytics_summary(
-  start_date TIMESTAMP WITH TIME ZONE,
-  end_date TIMESTAMP WITH TIME ZONE
-)
-RETURNS TABLE(
-  total_events BIGINT,
-  total_views BIGINT,
-  total_contacts BIGINT,
-  unique_users BIGINT,
-  unique_sessions BIGINT,
-  avg_session_duration NUMERIC
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    COUNT(*) as total_events,
-    COUNT(CASE WHEN event_type = 'listing_view' THEN 1 END) as total_views,
-    COUNT(CASE WHEN event_type = 'contact_click' THEN 1 END) as total_contacts,
-    COUNT(DISTINCT user_id) as unique_users,
-    COUNT(DISTINCT session_id) as unique_sessions,
-    AVG(session_duration) as avg_session_duration
-  FROM analytics_events
-  WHERE created_at >= start_date
-    AND created_at <= end_date;
-END;
-$$ LANGUAGE plpgsql;
+-- Useful indexes to speed up these aggregated queries
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_created_at_event
+  ON public.analytics_events (user_id, created_at DESC);
 
--- Function to get slow queries (placeholder for monitoring)
-CREATE OR REPLACE FUNCTION get_slow_queries()
-RETURNS TABLE(
-  query TEXT,
-  avg_duration NUMERIC,
-  call_count BIGINT
-) AS $$
-BEGIN
-  -- This would typically query pg_stat_statements if available
-  -- For now, return empty result
-  RETURN QUERY
-  SELECT 
-    'No slow queries detected'::TEXT as query,
-    0::NUMERIC as avg_duration,
-    0::BIGINT as call_count
-  WHERE FALSE;
-END;
-$$ LANGUAGE plpgsql;
+CREATE INDEX IF NOT EXISTS idx_analytics_events_listing_created_at
+  ON public.analytics_events (listing_id, created_at DESC);
 
--- Create performance indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_user_id_created_at 
-ON analytics_events (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_session_ref
+  ON public.analytics_events (session_ref);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_listing_id_event_type 
-ON analytics_events (listing_id, event_type);
+CREATE INDEX IF NOT EXISTS idx_event_sessions_user_id
+  ON public.event_sessions (user_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_session_id 
-ON analytics_events (session_id);
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_city_created_at 
-ON analytics_events (city, created_at) WHERE city IS NOT NULL;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_device_type 
-ON analytics_events (device_type) WHERE device_type IS NOT NULL;
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_listings_supabase_id_status 
-ON listings (supabase_id, status);
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_tier_points 
-ON seller_profiles (tier_points DESC);
-
--- Create partial indexes for better performance
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_recent_views 
-ON analytics_events (user_id, created_at) 
-WHERE event_type = 'listing_view' AND created_at >= NOW() - INTERVAL '30 days';
-
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_analytics_events_recent_contacts 
-ON analytics_events (user_id, created_at) 
-WHERE event_type = 'contact_click' AND created_at >= NOW() - INTERVAL '30 days';
-
--- Add comments for documentation
-COMMENT ON VIEW enhanced_seller_analytics IS 'Optimized view for seller dashboard metrics with 30-day analytics data';
-COMMENT ON VIEW listing_analytics_view IS 'Optimized view for individual listing performance metrics';
-COMMENT ON FUNCTION get_seller_listing_counts IS 'Returns listing counts by status for a seller';
-COMMENT ON FUNCTION get_analytics_timeseries IS 'Returns time-series analytics data with configurable granularity';
-COMMENT ON FUNCTION get_geographic_analytics IS 'Returns geographic performance breakdown for a seller';
-COMMENT ON FUNCTION get_analytics_summary IS 'Returns overall analytics summary for a date range';
+-- Comments to document views/functions
+COMMENT ON VIEW public.enhanced_seller_analytics IS 'Seller dashboard metrics (30-day window) using seller_profiles + analytics_events';
+COMMENT ON VIEW public.listing_analytics_v2 IS 'Listing performance metrics derived from analytics_events.listing_id (no public.listings required)';

@@ -68,8 +68,6 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Advanced performance insights dashboard
 - Weekly performance reports
 - Custom business hours settings
-- Multi-user account access (up to 3 team members)
-<!-- TODO: Implement multi-user account access -->
 
 #### Additional Benefits:
 - Guaranteed top placement in all category listings
@@ -78,8 +76,6 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Personal account manager
 - Performance optimization consultation (monthly)
 - Up to 5 promotional campaigns per month
-- Advanced fraud protection
-<!-- TODO: Implement advanced fraud protection -->
 - Custom analytics reports
 <!-- TODO: Implement custom analytics reports -->
 
@@ -97,8 +93,7 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Advanced performance insights dashboard
 - Weekly performance reports
 - Custom business hours settings
-- Multi-user account access (up to 5 team members)
-<!-- TODO: Implement multi-user account access -->
+
 
 #### Additional Benefits:
 - Guaranteed top placement in all category listings
@@ -107,12 +102,8 @@ New sellers receive a special "Welcome Bonus" during their first month:
 - Dedicated account manager
 - Performance optimization consultation (weekly)
 - Unlimited promotional campaigns
-- Advanced fraud protection
-<!-- TODO: Implement advanced fraud protection -->
 - Custom analytics reports
 <!-- TODO: Implement custom analytics reports -->
-- Integration with accounting software
-<!-- TODO: Implement accounting software integration -->
 
 ## Affiliate Referral Program
 
@@ -223,7 +214,6 @@ RentParlo.pk uses a tiered system to reward high-performing sellers:
 | Support Level | Standard | Priority | 24/7 Priority | 24/7 Priority |
 | Search Visibility | Standard | Enhanced | Top Placement | Top Placement |
 | Performance Reports | No | Monthly | Weekly | Weekly |
-| Team Members | 1 | 1 | Up to 3 | Up to 5 |
 | Account Manager | No | No | Yes | Dedicated |
 | Consultation | No | No | Monthly | Weekly |
 

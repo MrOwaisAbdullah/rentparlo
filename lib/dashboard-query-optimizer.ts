@@ -69,30 +69,33 @@ export class DashboardQueryOptimizer {
     const startTime = performance.now();
 
     try {
-      // Use optimized view for seller analytics
+      console.log("Fetching enhanced_seller_analytics...");
       const { data: analytics, error: analyticsError } = await this.supabase
         .from("enhanced_seller_analytics")
         .select("*")
         .eq("seller_id", sellerId)
         .single();
-
+      console.log("enhanced_seller_analytics data:", analytics);
+      console.log("enhanced_seller_analytics error:", analyticsError);
       if (analyticsError) throw analyticsError;
 
-      // Get listing counts efficiently
+      console.log("Fetching get_seller_listing_counts...");
       const { data: listingCounts, error: listingError } =
         await this.supabase.rpc("get_seller_listing_counts", {
           seller_id: sellerId,
         });
-
+      console.log("get_seller_listing_counts data:", listingCounts);
+      console.log("get_seller_listing_counts error:", listingError);
       if (listingError) throw listingError;
 
-      // Get seller profile data
+      console.log("Fetching seller_profiles...");
       const { data: profile, error: profileError } = await this.supabase
         .from("seller_profiles")
         .select("tier_points, avg_rating, response_rate")
         .eq("id", sellerId)
         .single();
-
+      console.log("seller_profiles data:", profile);
+      console.log("seller_profiles error:", profileError);
       if (profileError) throw profileError;
 
       const metrics: DashboardMetrics = {
@@ -117,7 +120,7 @@ export class DashboardQueryOptimizer {
 
       return metrics;
     } catch (error) {
-      console.error("Error fetching seller metrics:", error);
+      console.error("Error in getSellerMetrics:", JSON.stringify(error, null, 2));
       throw error;
     }
   }
