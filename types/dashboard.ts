@@ -289,6 +289,7 @@ export interface MetricsCardProps {
   icon: React.ComponentType<{ className?: string }>;
   trend?: number[];
   loading?: boolean;
+  description?: string;
 }
 
 export interface QuickActionsProps {

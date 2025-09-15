@@ -1,5 +1,6 @@
 "use client";
 
+import React, { memo, useMemo, useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,17 @@ import { QuickActions } from "./quick-actions";
 import { UsageProgress } from "./usage-progress";
 import { NotificationsPanel } from "./notifications-panel";
 import { PerformanceInsights } from "./performance-insights";
-import { ListingManagementIntegration } from "./listing-management-integration";
-import { QuickListingCreator } from "./quick-listing-creator";
 import { MobileResponsiveWrapper } from "./mobile-responsive-wrapper";
+import { QuickListingCreator } from "./quick-listing-creator";
 import { DashboardOverviewProps, QuickAction } from "@/types/dashboard";
 import { formatDate, calculatePerformanceScore } from "@/lib/dashboard-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { dashboardQueryOptimizer } from "@/lib/dashboard-query-optimizer";
+import {
+  useMemoizedCalculations,
+  useOptimizedDataFetching,
+} from "@/lib/dashboard-performance-optimizer";
+import { performanceTracker } from "@/lib/performance-metrics";
 import {
   Eye,
   MessageCircle,
@@ -29,7 +35,82 @@ import {
   Edit,
 } from "lucide-react";
 
-export function DashboardOverview({
+// Memoized sub-components for better performance
+const MemoizedMetricsCard = memo(MetricsCard);
+const MemoizedQuickActions = memo(QuickActions);
+const MemoizedUsageProgress = memo(UsageProgress);
+const MemoizedNotificationsPanel = memo(NotificationsPanel);
+const MemoizedPerformanceInsights = memo(PerformanceInsights);
+
+// Optimized activity item component
+const ActivityItem = memo(
+  ({ activity, formatActivityDate, getActivityIcon }: any) => (
+    <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50">
+      <div className="mt-1">{getActivityIcon(activity.type)}</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{activity.listingTitle}</p>
+        <p className="text-xs text-muted-foreground">
+          {activity.type === "view" && "New view"}
+          {activity.type === "contact" && "New contact"}
+          {activity.type === "whatsapp" && "WhatsApp click"}
+          {activity.userLocation && ` from ${activity.userLocation}`}
+        </p>
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {formatActivityDate(activity.timestamp)}
+      </div>
+    </div>
+  )
+);
+
+// Optimized listing item component
+const ListingItem = memo(({ listing, isMobile }: any) => (
+  <div className="border rounded-lg p-4 space-y-2">
+    <div className="flex items-start justify-between">
+      <h4 className="font-medium text-sm truncate">{listing.title}</h4>
+      <Badge
+        variant={listing.status === "active" ? "default" : "secondary"}
+        className="text-xs"
+      >
+        {listing.status}
+      </Badge>
+    </div>
+    <p className="text-xs text-muted-foreground">
+      {new Intl.NumberFormat("en-PK", {
+        style: "currency",
+        currency: "PKR",
+        minimumFractionDigits: 0,
+      }).format(listing.price)}
+      /{listing.priceType}
+    </p>
+    <div className={`flex gap-1 ${isMobile ? "flex-col" : ""}`}>
+      <Button
+        asChild
+        size={isMobile ? "sm" : "sm"}
+        variant="outline"
+        className="flex-1"
+      >
+        <Link href={`/listing/${listing.slug?.current}`}>
+          <Eye className="h-3 w-3 mr-1" />
+          View
+        </Link>
+      </Button>
+      <Button
+        asChild
+        size={isMobile ? "sm" : "sm"}
+        variant="outline"
+        className="flex-1"
+      >
+        <Link href={`/dashboard/listings/edit/${listing._id}`}>
+          <Edit className="h-3 w-3 mr-1" />
+          Edit
+        </Link>
+      </Button>
+    </div>
+  </div>
+));
+
+export const DashboardOverview = memo(function DashboardOverview({
   sellerData,
   analytics,
   subscription,
@@ -38,59 +119,80 @@ export function DashboardOverview({
   categories = [],
 }: DashboardOverviewProps) {
   const isMobile = useIsMobile();
+  const { calculateMetrics } = useMemoizedCalculations();
+  const { fetchWithCache } = useOptimizedDataFetching();
+  const [isLoading, setIsLoading] = useState(false);
+  const [enhancedMetrics, setEnhancedMetrics] = useState(null);
 
-  // Calculate metrics changes (placeholder - in real app, compare with previous period)
-  const metricsChanges = {
-    views: 12.5,
-    contacts: 8.3,
-    listings: 0,
-    tier: 5.2,
-  };
+  // Memoized calculations
+  const metricsChanges = useMemo(
+    () => ({
+      views: 12.5,
+      contacts: 8.3,
+      listings: 0,
+      tier: 5.2,
+    }),
+    []
+  );
 
-  // Calculate additional metrics
-  const performanceScore = calculatePerformanceScore(analytics);
-  const actualConversionRate =
-    analytics.totalViews > 0
-      ? (analytics.totalContacts / analytics.totalViews) * 100
-      : 0;
+  const performanceScore = useMemo(
+    () => calculatePerformanceScore(analytics),
+    [analytics, calculateMetrics]
+  );
 
-  const quickActions: QuickAction[] = [
-    {
-      label: "Create Listing",
-      href: "/dashboard/create-listing",
-      icon: Plus,
-      description: "Add a new rental listing",
-    },
-    {
-      label: "Manage Listings",
-      href: "/dashboard/listings",
-      icon: Package,
-      description: "View and edit your listings",
-    },
-    {
-      label: "View Analytics",
-      href: "/dashboard/analytics",
-      icon: BarChart3,
-      description: "Detailed performance insights",
-    },
-    {
-      label: "Manage Profile",
-      href: "/dashboard/profile",
-      icon: Settings,
-      description: "Update your seller profile",
-    },
-  ];
+  // Calculate contact rate (not conversion rate since we can't track actual conversions)
+  // Contact Rate = (Contact Button Clicks / Total Views) × 100
+  // This shows the percentage of viewers who showed interest by clicking contact buttons
+  // We cannot track actual rentals since conversations happen on WhatsApp/phone calls
+  const contactRate = useMemo(
+    () =>
+      analytics.totalViews > 0
+        ? (analytics.totalContacts / analytics.totalViews) * 100
+        : 0,
+    [analytics.totalViews, analytics.totalContacts]
+  );
 
-  const formatActivityDate = (dateString: string) => {
+  const quickActions: QuickAction[] = useMemo(
+    () => [
+      {
+        label: "Create Listing",
+        href: "/dashboard/create-listing",
+        icon: Plus,
+        description: "Add a new rental listing",
+      },
+      {
+        label: "Manage Listings",
+        href: "/dashboard/listings",
+        icon: Package,
+        description: "View and edit your listings",
+      },
+      {
+        label: "View Analytics",
+        href: "/dashboard/analytics",
+        icon: BarChart3,
+        description: "Detailed performance insights",
+      },
+      {
+        label: "Manage Profile",
+        href: "/dashboard/profile",
+        icon: Settings,
+        description: "Update your seller profile",
+      },
+    ],
+    []
+  );
+
+  // Memoized utility functions
+  const formatActivityDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }, []);
 
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = useCallback((type: string) => {
     switch (type) {
       case "view":
         return <Eye className="h-4 w-4" />;
@@ -101,7 +203,70 @@ export function DashboardOverview({
       default:
         return <Bell className="h-4 w-4" />;
     }
-  };
+  }, []);
+
+  // Load enhanced metrics in background
+  useEffect(() => {
+    const loadEnhancedMetrics = async () => {
+      if (!sellerData?.id) return;
+
+      try {
+        setIsLoading(true);
+        const startTime = performance.now();
+
+        const metrics = await fetchWithCache(
+          `enhanced_metrics_${sellerData.id}`,
+          () => dashboardQueryOptimizer.getSellerMetrics(sellerData.id),
+          5 * 60 * 1000 // 5 minutes cache
+        );
+
+        setEnhancedMetrics(metrics);
+
+        const duration = performance.now() - startTime;
+        performanceTracker.recordResponseTime(duration);
+      } catch (error) {
+        console.error("Error loading enhanced metrics:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadEnhancedMetrics();
+  }, [sellerData?.id, fetchWithCache]);
+
+  // Memoized recent activity items
+  const recentActivityItems = useMemo(
+    () =>
+      recentActivity
+        .slice(0, 5)
+        .map((activity) => (
+          <ActivityItem
+            key={activity.id}
+            activity={activity}
+            formatActivityDate={formatActivityDate}
+            getActivityIcon={getActivityIcon}
+          />
+        )),
+    [recentActivity, formatActivityDate, getActivityIcon]
+  );
+
+  // Memoized listing items
+  const listingItems = useMemo(
+    () =>
+      listings
+        .slice(0, 6)
+        .map((listing) => (
+          <ListingItem
+            key={listing._id}
+            listing={listing}
+            isMobile={isMobile}
+          />
+        )),
+    [listings, isMobile]
+  );
+
+  // Use enhanced metrics if available, fallback to props
+  const displayMetrics = enhancedMetrics || analytics;
 
   return (
     <MobileResponsiveWrapper
@@ -146,42 +311,47 @@ export function DashboardOverview({
       <div
         className={`grid gap-4 ${isMobile ? "grid-cols-1 sm:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-5"}`}
       >
-        <MetricsCard
+        <MemoizedMetricsCard
           title="Total Views"
-          value={analytics.totalViews}
+          value={displayMetrics.totalViews}
           change={metricsChanges.views}
           changeType="increase"
           icon={Eye}
           trend={[45, 52, 48, 61, 55, 67, 72]}
+          description="Number of times your listings were viewed by potential renters"
         />
-        <MetricsCard
-          title="Total Contacts"
-          value={analytics.totalContacts}
+        <MemoizedMetricsCard
+          title="Contact Clicks"
+          value={displayMetrics.totalContacts}
           change={metricsChanges.contacts}
           changeType="increase"
           icon={MessageCircle}
           trend={[12, 15, 13, 18, 16, 21, 24]}
+          description="Number of times people clicked your contact buttons (WhatsApp/Phone)"
         />
-        <MetricsCard
-          title="Conversion Rate"
-          value={`${actualConversionRate.toFixed(1)}%`}
+        <MemoizedMetricsCard
+          title="Contact Rate"
+          value={`${contactRate.toFixed(1)}%`}
           change={0.3}
           changeType="increase"
           icon={TrendingUp}
+          description="Percentage of views that resulted in contact clicks - shows listing effectiveness"
         />
-        <MetricsCard
+        <MemoizedMetricsCard
           title="Active Listings"
-          value={analytics.activeListings}
+          value={displayMetrics.activeListings}
           change={metricsChanges.listings}
           changeType="neutral"
           icon={Package}
+          description="Number of your currently active rental listings"
         />
-        <MetricsCard
-          title="Performance Score"
+        <MemoizedMetricsCard
+          title="Engagement Score"
           value={performanceScore}
           change={metricsChanges.tier}
           changeType="increase"
           icon={Star}
+          description="Overall performance score based on views, clicks, and listing quality"
         />
       </div>
 
@@ -190,7 +360,7 @@ export function DashboardOverview({
       >
         {/* Quick Actions */}
         <div className={isMobile ? "" : "lg:col-span-2"}>
-          <QuickActions actions={quickActions} />
+          <MemoizedQuickActions actions={quickActions} />
         </div>
 
         {/* Seller Tier Progress */}
@@ -211,7 +381,7 @@ export function DashboardOverview({
                   Level {sellerData.tier.level}
                 </Badge>
               </div>
-              <UsageProgress
+              <MemoizedUsageProgress
                 label="Tier Points"
                 used={sellerData.tierPoints}
                 limit={sellerData.tier.maxPoints}
@@ -260,29 +430,7 @@ export function DashboardOverview({
                   No recent activity
                 </p>
               ) : (
-                recentActivity.slice(0, 5).map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50"
-                  >
-                    <div className="mt-1">{getActivityIcon(activity.type)}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {activity.listingTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.type === "view" && "New view"}
-                        {activity.type === "contact" && "New contact"}
-                        {activity.type === "whatsapp" && "WhatsApp click"}
-                        {activity.userLocation &&
-                          ` from ${activity.userLocation}`}
-                      </p>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatActivityDate(activity.timestamp)}
-                    </div>
-                  </div>
-                ))
+                recentActivityItems
               )}
             </div>
           </CardContent>
@@ -352,22 +500,22 @@ export function DashboardOverview({
           <div
             className={`grid gap-6 ${isMobile ? "grid-cols-1" : "md:grid-cols-3"}`}
           >
-            <UsageProgress
+            <MemoizedUsageProgress
               label="Listings"
-              used={analytics.totalListings}
-              limit={50} // This should come from subscription.package.limits
+              used={displayMetrics.totalListings}
+              limit={50}
               unit="listings"
             />
-            <UsageProgress
+            <MemoizedUsageProgress
               label="Featured Listings"
-              used={5} // This should come from actual usage data
-              limit={10} // This should come from subscription.package.limits
+              used={5}
+              limit={10}
               unit="featured"
             />
-            <UsageProgress
+            <MemoizedUsageProgress
               label="Analytics Access"
-              used={25} // Days used
-              limit={30} // Days in package
+              used={25}
+              limit={30}
               unit="days"
             />
           </div>
@@ -410,13 +558,16 @@ export function DashboardOverview({
 
         {/* Notifications and Performance Insights */}
         <div
-          className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:col-span-2 grid-cols-1 lg:grid-cols-2"}`}
+          className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-2"}`}
         >
-          <NotificationsPanel
+          <MemoizedNotificationsPanel
             sellerData={sellerData}
             subscription={subscription}
           />
-          <PerformanceInsights analytics={analytics} sellerData={sellerData} />
+          <MemoizedPerformanceInsights
+            analytics={displayMetrics}
+            sellerData={sellerData}
+          />
         </div>
       </div>
 
@@ -438,62 +589,21 @@ export function DashboardOverview({
             <div
               className={`grid gap-4 ${isMobile ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-3"}`}
             >
-              {listings.slice(0, 6).map((listing) => (
-                <div
-                  key={listing._id}
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-medium text-sm truncate">
-                      {listing.title}
-                    </h4>
-                    <Badge
-                      variant={
-                        listing.status === "active" ? "default" : "secondary"
-                      }
-                      className="text-xs"
-                    >
-                      {listing.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Intl.NumberFormat("en-PK", {
-                      style: "currency",
-                      currency: "PKR",
-                      minimumFractionDigits: 0,
-                    }).format(listing.price)}
-                    /{listing.priceType}
-                  </p>
-                  <div className={`flex gap-1 ${isMobile ? "flex-col" : ""}`}>
-                    <Button
-                      asChild
-                      size={isMobile ? "sm" : "sm"}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      <Link href={`/listing/${listing.slug?.current}`}>
-                        <Eye className="h-3 w-3 mr-1" />
-                        {isMobile ? "View" : "View"}
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      size={isMobile ? "sm" : "sm"}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      <Link href={`/dashboard/listings/edit/${listing._id}`}>
-                        <Edit className="h-3 w-3 mr-1" />
-                        {isMobile ? "Edit" : "Edit"}
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              ))}
+              {listingItems}
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Loading indicator for enhanced metrics */}
+      {isLoading && (
+        <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-2 shadow-lg">
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            Loading enhanced metrics...
+          </div>
+        </div>
+      )}
     </MobileResponsiveWrapper>
   );
-}
+});

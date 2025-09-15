@@ -192,8 +192,8 @@ export function ExportButton({
           Type: "Overview",
         },
         {
-          Metric: "Conversion Rate (%)",
-          Value: analyticsData.overview.conversionRate.toFixed(2),
+          Metric: "Contact Rate (%)",
+          Value: analyticsData.overview.contactRate.toFixed(2),
           Type: "Overview",
         },
         {
@@ -216,7 +216,7 @@ export function ExportButton({
           Date: trend.date,
           Views: trend.views,
           Contacts: trend.contacts,
-          Conversions: trend.conversions,
+          "Contact Clicks": trend.contactClicks,
           Type: "Trend Data",
         })),
         // Add geographic data
@@ -243,7 +243,7 @@ export function ExportButton({
       Record: index + 1,
       "Total Views": item.totalViews || 0,
       "Total Contacts": item.totalContacts || 0,
-      "Conversion Rate (%)": item.conversionRate?.toFixed(2) || "0.00",
+      "Contact Rate (%)": item.contactRate?.toFixed(2) || "0.00",
       "Unique Visitors": item.uniqueVisitors || 0,
       "Avg Session Duration": item.avgSessionDuration || 0,
       "Bounce Rate (%)": item.bounceRate?.toFixed(2) || "0.00",
@@ -259,7 +259,7 @@ export function ExportButton({
       "WhatsApp Clicks": listing.whatsappClicks,
       Shares: listing.shares,
       Saves: listing.saves,
-      "Conversion Rate (%)": listing.conversionRate.toFixed(2),
+      "Contact Rate (%)": listing.contactRate.toFixed(2),
       "Avg Time on Page (seconds)": listing.avgTimeOnPage,
       "Created Date": new Date(listing.createdAt).toLocaleDateString(),
       "Last Activity": new Date(listing.lastActivity).toLocaleDateString(),
@@ -327,8 +327,8 @@ export function ExportButton({
     // Views contribution (0-30 points)
     score += Math.min((listing.views / 100) * 30, 30);
 
-    // Conversion rate contribution (0-40 points)
-    score += Math.min(listing.conversionRate * 10, 40);
+    // Contact rate contribution (0-40 points)
+    score += Math.min(listing.contactRate * 10, 40);
 
     // Engagement contribution (0-30 points)
     const engagementRate =

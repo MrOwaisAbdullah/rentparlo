@@ -46,7 +46,7 @@ interface ListingExportOptions {
   includeEngagementMetrics: boolean;
   includePerformanceScores: boolean;
   includeRecommendations: boolean;
-  sortBy: "views" | "contacts" | "conversionRate" | "title" | "lastActivity";
+  sortBy: "views" | "contacts" | "contactRate" | "title" | "lastActivity";
   sortOrder: "asc" | "desc";
   filterByPerformance: "all" | "high" | "medium" | "low";
   minViews: number;
@@ -116,21 +116,20 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
 
     // Filter by performance level
     if (options.filterByPerformance !== "all") {
-      const avgConversionRate =
-        listings.reduce((sum, l) => sum + l.conversionRate, 0) /
-        listings.length;
+      const avgContactRate =
+        listings.reduce((sum, l) => sum + l.contactRate, 0) / listings.length;
 
       filtered = filtered.filter((listing) => {
         switch (options.filterByPerformance) {
           case "high":
-            return listing.conversionRate > avgConversionRate * 1.2;
+            return listing.contactRate > avgContactRate * 1.2;
           case "medium":
             return (
-              listing.conversionRate >= avgConversionRate * 0.8 &&
-              listing.conversionRate <= avgConversionRate * 1.2
+              listing.contactRate >= avgContactRate * 0.8 &&
+              listing.contactRate <= avgContactRate * 1.2
             );
           case "low":
-            return listing.conversionRate < avgConversionRate * 0.8;
+            return listing.contactRate < avgContactRate * 0.8;
           default:
             return true;
         }
@@ -177,7 +176,7 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
       if (options.includeBasicMetrics) {
         baseData["Views"] = listing.views;
         baseData["Contacts"] = listing.contacts;
-        baseData["Conversion Rate (%)"] = listing.conversionRate.toFixed(2);
+        baseData["Contact Rate (%)"] = listing.contactRate.toFixed(2);
         baseData["Avg Time on Page (seconds)"] = listing.avgTimeOnPage;
         baseData["Created Date"] = new Date(
           listing.createdAt
@@ -207,7 +206,7 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
         const performanceScore = calculateDetailedPerformanceScore(listing);
         baseData["Performance Score"] = performanceScore.overall;
         baseData["Views Score"] = performanceScore.viewsScore;
-        baseData["Conversion Score"] = performanceScore.conversionScore;
+        baseData["Contact Score"] = performanceScore.contactScore;
         baseData["Engagement Score"] = performanceScore.engagementScore;
         baseData["Performance Category"] = getPerformanceCategory(
           listing,
@@ -232,8 +231,8 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
     // Views score (0-30 points)
     const viewsScore = Math.min((listing.views / 100) * 30, 30);
 
-    // Conversion score (0-40 points)
-    const conversionScore = Math.min(listing.conversionRate * 10, 40);
+    // Contact score (0-40 points)
+    const contactScore = Math.min(listing.contactRate * 10, 40);
 
     // Engagement score (0-30 points)
     const engagementRate =
@@ -244,12 +243,12 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
         : 0;
     const engagementScore = Math.min(engagementRate * 3, 30);
 
-    const overall = Math.round(viewsScore + conversionScore + engagementScore);
+    const overall = Math.round(viewsScore + contactScore + engagementScore);
 
     return {
       overall,
       viewsScore: Math.round(viewsScore),
-      conversionScore: Math.round(conversionScore),
+      contactScore: Math.round(contactScore),
       engagementScore: Math.round(engagementScore),
     };
   };
@@ -258,13 +257,13 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
     listing: ListingAnalytics,
     allListings: ListingAnalytics[]
   ): string => {
-    const avgConversionRate =
-      allListings.reduce((sum, l) => sum + l.conversionRate, 0) /
+    const avgContactRate =
+      allListings.reduce((sum, l) => sum + l.contactRate, 0) /
       allListings.length;
 
-    if (listing.conversionRate > avgConversionRate * 1.2) {
+    if (listing.contactRate > avgContactRate * 1.2) {
       return "High Performing";
-    } else if (listing.conversionRate < avgConversionRate * 0.8) {
+    } else if (listing.contactRate < avgContactRate * 0.8) {
       return "Needs Attention";
     } else {
       return "Average Performance";
@@ -276,14 +275,14 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
     allListings: ListingAnalytics[]
   ): string[] => {
     const recommendations: string[] = [];
-    const avgConversionRate =
-      allListings.reduce((sum, l) => sum + l.conversionRate, 0) /
+    const avgContactRate =
+      allListings.reduce((sum, l) => sum + l.contactRate, 0) /
       allListings.length;
 
-    // Low conversion rate
-    if (listing.views > 100 && listing.conversionRate < 1.0) {
+    // Low contact rate
+    if (listing.views > 100 && listing.contactRate < 1.0) {
       recommendations.push(
-        "Improve photos and description to increase conversion rate"
+        "Improve photos and description to increase contact rate"
       );
     }
 
@@ -466,7 +465,7 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Eye className="h-4 w-4" />
-                  Basic Metrics (Views, Contacts, Conversion Rate)
+                  Basic Metrics (Views, Contacts, Contact Rate)
                 </Label>
               </div>
 
@@ -598,9 +597,7 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
                   <SelectContent>
                     <SelectItem value="views">Views</SelectItem>
                     <SelectItem value="contacts">Contacts</SelectItem>
-                    <SelectItem value="conversionRate">
-                      Conversion Rate
-                    </SelectItem>
+                    <SelectItem value="contactRate">Contact Rate</SelectItem>
                     <SelectItem value="title">Title</SelectItem>
                     <SelectItem value="lastActivity">Last Activity</SelectItem>
                   </SelectContent>

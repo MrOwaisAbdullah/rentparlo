@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useRef, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +44,10 @@ const COLORS = [
   "#f97316", // orange-500
 ];
 
+interface ExtendedInteractiveChartProps extends InteractiveChartProps {
+  title?: string;
+}
+
 export function InteractiveChart({
   type,
   data,
@@ -51,7 +55,8 @@ export function InteractiveChart({
   height = 300,
   responsive = true,
   loading = false,
-}: InteractiveChartProps) {
+  title,
+}: ExtendedInteractiveChartProps) {
   const isMobile = useIsMobile();
   const [zoomDomain, setZoomDomain] = useState<{
     left?: number;
@@ -68,7 +73,6 @@ export function InteractiveChart({
   // Mobile-specific height adjustment
   const mobileHeight = isMobile ? Math.min(height, 250) : height;
 
-  // Zoom and pan controls
   const handleZoomIn = useCallback(() => {
     if (!chartData.length) return;
     const dataLength = chartData.length;
@@ -96,33 +100,6 @@ export function InteractiveChart({
     setZoomDomain({
       left: Math.max(0, Math.floor(center - newRange / 2)),
       right: Math.min(dataLength - 1, Math.floor(center + newRange / 2)),
-    });
-  }, [zoomDomain, chartData]);
-
-  const handleResetZoom = useCallback(() => {
-    setZoomDomain(null);
-  }, []);
-
-  const handlePanLeft = useCallback(() => {
-    if (!zoomDomain || !chartData.length) return;
-    const range = zoomDomain.right - zoomDomain.left;
-    const step = Math.max(1, Math.floor(range * 0.1));
-
-    setZoomDomain({
-      left: Math.max(0, zoomDomain.left - step),
-      right: Math.max(range, zoomDomain.right - step),
-    });
-  }, [zoomDomain, chartData]);
-
-  const handlePanRight = useCallback(() => {
-    if (!zoomDomain || !chartData.length) return;
-    const dataLength = chartData.length;
-    const range = zoomDomain.right - zoomDomain.left;
-    const step = Math.max(1, Math.floor(range * 0.1));
-
-    setZoomDomain({
-      left: Math.min(dataLength - range - 1, zoomDomain.left + step),
-      right: Math.min(dataLength - 1, zoomDomain.right + step),
     });
   }, [zoomDomain, chartData]);
 
@@ -172,6 +149,33 @@ export function InteractiveChart({
     setTouchStart(null);
     setTouchDistance(null);
   }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoomDomain(null);
+  }, []);
+
+  const handlePanLeft = useCallback(() => {
+    if (!zoomDomain || !chartData.length) return;
+    const range = zoomDomain.right - zoomDomain.left;
+    const step = Math.max(1, Math.floor(range * 0.1));
+
+    setZoomDomain({
+      left: Math.max(0, zoomDomain.left - step),
+      right: Math.max(range, zoomDomain.right - step),
+    });
+  }, [zoomDomain, chartData]);
+
+  const handlePanRight = useCallback(() => {
+    if (!zoomDomain || !chartData.length) return;
+    const dataLength = chartData.length;
+    const range = zoomDomain.right - zoomDomain.left;
+    const step = Math.max(1, Math.floor(range * 0.1));
+
+    setZoomDomain({
+      left: Math.min(dataLength - range - 1, zoomDomain.left + step),
+      right: Math.min(dataLength - 1, zoomDomain.right + step),
+    });
+  }, [zoomDomain, chartData]);
 
   if (loading) {
     return (
@@ -279,11 +283,7 @@ export function InteractiveChart({
               <Bar
                 key={dataset.label}
                 dataKey={dataset.label}
-                                fill={
-                  typeof dataset.backgroundColor === "string"
-                    ? dataset.backgroundColor
-                    : COLORS[index % COLORS.length]
-                }
+                fill={typeof dataset.backgroundColor === 'string' ? dataset.backgroundColor : COLORS[index % COLORS.length]}
                 radius={isMobile ? [2, 2, 0, 0] : [4, 4, 0, 0]}
               />
             ))}
@@ -329,12 +329,8 @@ export function InteractiveChart({
                 type="monotone"
                 dataKey={dataset.label}
                 stackId="1"
-                                stroke={typeof dataset.borderColor === 'string' ? dataset.borderColor : COLORS[index % COLORS.length]}
-                                fill={
-                  typeof dataset.backgroundColor === "string"
-                    ? dataset.backgroundColor
-                    : COLORS[index % COLORS.length]
-                }
+                stroke={typeof dataset.borderColor === 'string' ? dataset.borderColor : COLORS[index % COLORS.length]}
+                fill={typeof dataset.backgroundColor === 'string' ? dataset.backgroundColor : COLORS[index % COLORS.length]}
                 fillOpacity={isMobile ? 0.4 : 0.6}
                 strokeWidth={isMobile ? 1.5 : 2}
               />
@@ -404,6 +400,7 @@ export function InteractiveChart({
 
   return (
     <div className="w-full">
+      {title && <CardHeader><CardTitle>{title}</CardTitle></CardHeader>}
       {/* Mobile Controls */}
       {isMobile && (type === "line" || type === "bar" || type === "area") && (
         <div className="flex items-center justify-between mb-3 px-2">

@@ -3,8 +3,18 @@ import { getListingById } from '@/lib/sanity-queries';
 import { redirect } from 'next/navigation';
 import { Listing } from '@/types';
 import CreateListingForm from '@/components/seller/create-listing-form';
+import { Suspense } from 'react';
+import EditListingSkeleton from '@/components/seller/edit-listing-skeleton';
 
 export default async function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<EditListingSkeleton />}>
+      <EditListingPageContent params={params} />
+    </Suspense>
+  );
+}
+
+async function EditListingPageContent({ params }: { params: Promise<{ id: string }> }) {
   // Await params before using its properties
   const { id } = await params;
   

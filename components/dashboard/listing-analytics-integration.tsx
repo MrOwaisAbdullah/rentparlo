@@ -43,13 +43,13 @@ interface ListingAnalyticsData {
   whatsappClicks: number;
   shares: number;
   saves: number;
-  conversionRate: number;
+  contactRate: number;
   avgTimeOnPage: number;
   lastActivity: string;
   trend: {
     views: number;
     contacts: number;
-    conversionRate: number;
+    contactRate: number;
   };
   dailyData: Array<{
     date: string;
@@ -86,8 +86,8 @@ export function ListingAnalyticsIntegration({
       case "contacts":
         sorted.sort((a, b) => b.contacts - a.contacts);
         break;
-      case "conversion":
-        sorted.sort((a, b) => b.conversionRate - a.conversionRate);
+      case "contact":
+        sorted.sort((a, b) => b.contactRate - a.contactRate);
         break;
       case "engagement":
         sorted.sort((a, b) => b.shares + b.saves - (a.shares + a.saves));

@@ -16,6 +16,7 @@ export function MetricsCard({
   icon: Icon,
   trend,
   loading = false,
+  description,
   "aria-label": ariaLabel,
   ...props
 }: MetricsCardProps & { "aria-label"?: string }) {
@@ -89,6 +90,7 @@ export function MetricsCard({
         <CardTitle
           className={`font-medium text-muted-foreground ${isMobile ? "text-xs" : "text-sm"}`}
           id={`metric-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+          title={description}
         >
           {title}
         </CardTitle>
