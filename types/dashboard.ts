@@ -273,6 +273,12 @@ export interface DashboardOverviewProps {
   analytics: SellerAnalytics;
   subscription: UserSubscription;
   recentActivity: ActivityEvent[];
+  listings?: any[]; // Listing type from main types
+  categories?: Array<{
+    _id: string;
+    title: string;
+    slug: string;
+  }>;
 }
 
 export interface MetricsCardProps {
@@ -405,6 +411,9 @@ export interface ExportButtonProps {
   format: "csv" | "pdf" | "excel";
   onExport?: () => void;
   disabled?: boolean;
+  exportType?: "analytics" | "listings" | "performance" | "general";
+  timeRange?: TimeRange;
+  includeCharts?: boolean;
 }
 
 export interface PerformanceInsightsProps {

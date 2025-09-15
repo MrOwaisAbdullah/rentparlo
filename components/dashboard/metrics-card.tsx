@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { MetricsCardProps } from "@/types/dashboard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 export function MetricsCard({
@@ -15,7 +16,10 @@ export function MetricsCard({
   icon: Icon,
   trend,
   loading = false,
-}: MetricsCardProps) {
+  "aria-label": ariaLabel,
+  ...props
+}: MetricsCardProps & { "aria-label"?: string }) {
+  const isMobile = useIsMobile();
   if (loading) {
     return (
       <Card>
@@ -69,34 +73,66 @@ export function MetricsCard({
   };
 
   return (
-    <Card className="transition-all duration-200 hover:shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card
+      className={cn(
+        "transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2",
+        isMobile && "touch-manipulation"
+      )}
+      role="region"
+      aria-label={ariaLabel || `${title} metric card`}
+      tabIndex={0}
+      {...props}
+    >
+      <CardHeader
+        className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? "pb-1" : "pb-2"}`}
+      >
+        <CardTitle
+          className={`font-medium text-muted-foreground ${isMobile ? "text-xs" : "text-sm"}`}
+          id={`metric-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+        >
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon
+          className={`text-muted-foreground ${isMobile ? "h-3 w-3" : "h-4 w-4"}`}
+          aria-hidden="true"
+        />
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-2xl font-bold">{formatValue(value)}</div>
+      <CardContent className={isMobile ? "pt-1" : ""}>
+        <div
+          className={`flex items-center ${isMobile ? "flex-col items-start gap-2" : "justify-between"}`}
+        >
+          <div className={isMobile ? "w-full" : ""}>
+            <div
+              className={`font-bold ${isMobile ? "text-xl" : "text-2xl"}`}
+              aria-describedby={`metric-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+            >
+              {formatValue(value)}
+            </div>
             {change !== undefined && (
-              <div className="flex items-center mt-1">
+              <div
+                className={`flex items-center ${isMobile ? "mt-1" : "mt-1"}`}
+              >
                 <Badge
                   variant="outline"
                   className={cn(
-                    "text-xs flex items-center gap-1",
+                    "flex items-center gap-1",
+                    isMobile ? "text-xs px-1.5 py-0.5" : "text-xs",
                     getChangeColor()
                   )}
+                  aria-label={`${changeType === "increase" ? "Increased" : changeType === "decrease" ? "Decreased" : "No change"} by ${Math.abs(change)} percent`}
                 >
                   {getChangeIcon()}
-                  {Math.abs(change)}%
+                  <span aria-hidden="true">{Math.abs(change)}%</span>
                 </Badge>
               </div>
             )}
           </div>
-          {trend && trend.length > 0 && (
-            <div className="flex items-end space-x-1 h-8">
+          {trend && trend.length > 0 && !isMobile && (
+            <div
+              className="flex items-end space-x-1 h-8"
+              role="img"
+              aria-label={`Trend chart showing ${trend.length} data points with values ranging from ${Math.min(...trend)} to ${Math.max(...trend)}`}
+            >
               {trend.map((point, index) => (
                 <div
                   key={index}
@@ -104,6 +140,25 @@ export function MetricsCard({
                   style={{
                     height: `${Math.max((point / Math.max(...trend)) * 100, 10)}%`,
                   }}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+          )}
+          {trend && trend.length > 0 && isMobile && (
+            <div
+              className="flex items-end space-x-0.5 h-6 w-full mt-2"
+              role="img"
+              aria-label={`Trend chart showing ${trend.length} data points with values ranging from ${Math.min(...trend)} to ${Math.max(...trend)}`}
+            >
+              {trend.map((point, index) => (
+                <div
+                  key={index}
+                  className="bg-primary/20 rounded-sm flex-1 min-w-[2px]"
+                  style={{
+                    height: `${Math.max((point / Math.max(...trend)) * 100, 15)}%`,
+                  }}
+                  aria-hidden="true"
                 />
               ))}
             </div>

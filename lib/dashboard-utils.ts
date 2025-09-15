@@ -262,6 +262,16 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 /**
+ * Calculate days remaining until a date
+ */
+export function calculateDaysRemaining(endDate: string): number {
+  const now = new Date();
+  const end = new Date(endDate);
+  const diffTime = end.getTime() - now.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
  * Debounce function for search inputs
  */
 export function debounce<T extends (...args: any[]) => any>(

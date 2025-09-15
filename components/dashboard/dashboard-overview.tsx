@@ -2,13 +2,19 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { MetricsCard } from "./metrics-card";
 import { QuickActions } from "./quick-actions";
 import { UsageProgress } from "./usage-progress";
 import { NotificationsPanel } from "./notifications-panel";
 import { PerformanceInsights } from "./performance-insights";
+import { ListingManagementIntegration } from "./listing-management-integration";
+import { QuickListingCreator } from "./quick-listing-creator";
+import { MobileResponsiveWrapper } from "./mobile-responsive-wrapper";
 import { DashboardOverviewProps, QuickAction } from "@/types/dashboard";
 import { formatDate, calculatePerformanceScore } from "@/lib/dashboard-utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Eye,
   MessageCircle,
@@ -20,6 +26,7 @@ import {
   Settings,
   Bell,
   Clock,
+  Edit,
 } from "lucide-react";
 
 export function DashboardOverview({
@@ -27,7 +34,11 @@ export function DashboardOverview({
   analytics,
   subscription,
   recentActivity,
+  listings = [],
+  categories = [],
 }: DashboardOverviewProps) {
+  const isMobile = useIsMobile();
+
   // Calculate metrics changes (placeholder - in real app, compare with previous period)
   const metricsChanges = {
     views: 12.5,
@@ -49,6 +60,12 @@ export function DashboardOverview({
       href: "/dashboard/create-listing",
       icon: Plus,
       description: "Add a new rental listing",
+    },
+    {
+      label: "Manage Listings",
+      href: "/dashboard/listings",
+      icon: Package,
+      description: "View and edit your listings",
     },
     {
       label: "View Analytics",
@@ -87,23 +104,38 @@ export function DashboardOverview({
   };
 
   return (
-    <div className="space-y-6">
+    <MobileResponsiveWrapper
+      className="space-y-6"
+      mobileClassName="space-y-4 px-2"
+      desktopClassName="space-y-6"
+    >
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
+      <div
+        className={`flex ${isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
+      >
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1
+            className={`font-bold tracking-tight ${isMobile ? "text-2xl" : "text-3xl"}`}
+          >
             Welcome back, {sellerData.name}!
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p
+            className={`text-muted-foreground mt-1 ${isMobile ? "text-sm" : ""}`}
+          >
             Here's what's happening with your business today.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-sm">
+        <div
+          className={`flex items-center gap-2 ${isMobile ? "flex-wrap" : ""}`}
+        >
+          <Badge variant="outline" className={isMobile ? "text-xs" : "text-sm"}>
             {sellerData.tier.name} Tier
           </Badge>
           {sellerData.verificationStatus.isVerified && (
-            <Badge variant="default" className="text-sm">
+            <Badge
+              variant="default"
+              className={isMobile ? "text-xs" : "text-sm"}
+            >
               Verified Seller
             </Badge>
           )}
@@ -111,7 +143,9 @@ export function DashboardOverview({
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div
+        className={`grid gap-4 ${isMobile ? "grid-cols-1 sm:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-5"}`}
+      >
         <MetricsCard
           title="Total Views"
           value={analytics.totalViews}
@@ -151,9 +185,11 @@ export function DashboardOverview({
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div
+        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
+      >
         {/* Quick Actions */}
-        <div className="lg:col-span-2">
+        <div className={isMobile ? "" : "lg:col-span-2"}>
           <QuickActions actions={quickActions} />
         </div>
 
@@ -206,9 +242,11 @@ export function DashboardOverview({
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div
+        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
+      >
         {/* Recent Activity */}
-        <Card className="lg:col-span-2">
+        <Card className={isMobile ? "" : "lg:col-span-2"}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -311,7 +349,9 @@ export function DashboardOverview({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            className={`grid gap-6 ${isMobile ? "grid-cols-1" : "md:grid-cols-3"}`}
+          >
             <UsageProgress
               label="Listings"
               used={analytics.totalListings}
@@ -334,14 +374,126 @@ export function DashboardOverview({
         </CardContent>
       </Card>
 
-      {/* Notifications and Performance Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <NotificationsPanel
-          sellerData={sellerData}
-          subscription={subscription}
-        />
-        <PerformanceInsights analytics={analytics} sellerData={sellerData} />
+      {/* Quick Listing Creator */}
+      <div
+        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
+      >
+        <Card className={isMobile ? "" : "lg:col-span-1"}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <QuickListingCreator
+              categories={categories}
+              onListingCreated={() => {
+                // Refresh listings or show success message
+                window.location.reload();
+              }}
+            />
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/listings">
+                <Package className="h-4 w-4 mr-2" />
+                Manage All Listings
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/dashboard/analytics">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                View Full Analytics
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Notifications and Performance Insights */}
+        <div
+          className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:col-span-2 grid-cols-1 lg:grid-cols-2"}`}
+        >
+          <NotificationsPanel
+            sellerData={sellerData}
+            subscription={subscription}
+          />
+          <PerformanceInsights analytics={analytics} sellerData={sellerData} />
+        </div>
       </div>
-    </div>
+
+      {/* Recent Listings Management */}
+      {listings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Recent Listings
+              </CardTitle>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/dashboard/listings">View All</Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={`grid gap-4 ${isMobile ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-3"}`}
+            >
+              {listings.slice(0, 6).map((listing) => (
+                <div
+                  key={listing._id}
+                  className="border rounded-lg p-4 space-y-2"
+                >
+                  <div className="flex items-start justify-between">
+                    <h4 className="font-medium text-sm truncate">
+                      {listing.title}
+                    </h4>
+                    <Badge
+                      variant={
+                        listing.status === "active" ? "default" : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {listing.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {new Intl.NumberFormat("en-PK", {
+                      style: "currency",
+                      currency: "PKR",
+                      minimumFractionDigits: 0,
+                    }).format(listing.price)}
+                    /{listing.priceType}
+                  </p>
+                  <div className={`flex gap-1 ${isMobile ? "flex-col" : ""}`}>
+                    <Button
+                      asChild
+                      size={isMobile ? "sm" : "sm"}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Link href={`/listing/${listing.slug?.current}`}>
+                        <Eye className="h-3 w-3 mr-1" />
+                        {isMobile ? "View" : "View"}
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      size={isMobile ? "sm" : "sm"}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Link href={`/dashboard/listings/edit/${listing._id}`}>
+                        <Edit className="h-3 w-3 mr-1" />
+                        {isMobile ? "Edit" : "Edit"}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </MobileResponsiveWrapper>
   );
 }

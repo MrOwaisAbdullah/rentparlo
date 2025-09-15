@@ -6,6 +6,13 @@ import {
   ActivityEvent,
   SellerTier,
   VerificationStatus,
+  AnalyticsData,
+  TimeRange,
+  OverviewMetrics,
+  TrendData,
+  GeographicData,
+  DeviceData,
+  ConversionData,
 } from "@/types/dashboard";
 
 export function createMockSellerProfile(): SellerProfile {
@@ -175,4 +182,172 @@ function generateMockListingAnalytics() {
       Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
     ).toISOString(),
   }));
+}
+
+export function createMockAnalyticsData(timeRange: TimeRange): AnalyticsData {
+  const totalViews = Math.floor(Math.random() * 10000) + 5000;
+  const totalContacts =
+    Math.floor(totalViews * 0.03) + Math.floor(Math.random() * 50);
+  const conversionRate = (totalContacts / totalViews) * 100;
+
+  const overview: OverviewMetrics = {
+    totalViews,
+    totalContacts,
+    conversionRate,
+    avgSessionDuration: Math.floor(Math.random() * 200) + 120,
+    bounceRate: Math.random() * 40 + 25,
+    uniqueVisitors:
+      Math.floor(totalViews * 0.7) + Math.floor(Math.random() * 1000),
+  };
+
+  const trends: TrendData[] = generateMockTrendData(timeRange);
+  const listings = generateMockListingAnalytics();
+  const geographic: GeographicData[] = generateMockGeographicData();
+  const devices: DeviceData[] = generateMockDeviceData();
+
+  const conversions: ConversionData = {
+    totalViews,
+    totalContacts,
+    conversionRate,
+    conversionsBySource: [
+      {
+        source: "Direct",
+        conversions: Math.floor(totalContacts * 0.4),
+        rate: 2.8,
+      },
+      {
+        source: "Search",
+        conversions: Math.floor(totalContacts * 0.35),
+        rate: 3.2,
+      },
+      {
+        source: "Social",
+        conversions: Math.floor(totalContacts * 0.15),
+        rate: 1.9,
+      },
+      {
+        source: "Referral",
+        conversions: Math.floor(totalContacts * 0.1),
+        rate: 4.1,
+      },
+    ],
+  };
+
+  return {
+    overview,
+    trends,
+    listings,
+    geographic,
+    devices,
+    conversions,
+  };
+}
+
+function generateMockTrendData(timeRange: TimeRange): TrendData[] {
+  const data: TrendData[] = [];
+  const start = new Date(timeRange.start);
+  const end = new Date(timeRange.end);
+  const daysDiff = Math.ceil(
+    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  for (let i = 0; i <= daysDiff; i++) {
+    const date = new Date(start);
+    date.setDate(date.getDate() + i);
+
+    const baseViews = Math.floor(Math.random() * 300) + 100;
+    const baseContacts =
+      Math.floor(baseViews * 0.03) + Math.floor(Math.random() * 10);
+
+    data.push({
+      date: date.toISOString().split("T")[0],
+      views: baseViews,
+      contacts: baseContacts,
+      conversions:
+        Math.floor(baseContacts * 0.8) + Math.floor(Math.random() * 3),
+    });
+  }
+
+  return data;
+}
+
+function generateMockGeographicData(): GeographicData[] {
+  const cities = [
+    "Karachi",
+    "Lahore",
+    "Islamabad",
+    "Faisalabad",
+    "Rawalpindi",
+    "Multan",
+    "Peshawar",
+    "Quetta",
+    "Sialkot",
+    "Gujranwala",
+    "Hyderabad",
+    "Bahawalpur",
+    "Sargodha",
+    "Sukkur",
+    "Larkana",
+  ];
+
+  const totalViews = Math.floor(Math.random() * 10000) + 5000;
+  let remainingViews = totalViews;
+
+  return cities
+    .map((city, index) => {
+      const isLast = index === cities.length - 1;
+      const views = isLast
+        ? remainingViews
+        : Math.floor(
+            Math.random() * (remainingViews / (cities.length - index))
+          ) + 50;
+      remainingViews -= views;
+
+      const contacts =
+        Math.floor(views * 0.03) + Math.floor(Math.random() * 10);
+      const percentage = (views / totalViews) * 100;
+
+      return {
+        city,
+        views,
+        contacts,
+        percentage,
+      };
+    })
+    .sort((a, b) => b.views - a.views);
+}
+
+function generateMockDeviceData(): DeviceData[] {
+  const totalViews = Math.floor(Math.random() * 10000) + 5000;
+
+  const mobileViews =
+    Math.floor(totalViews * 0.65) +
+    Math.floor(Math.random() * totalViews * 0.1);
+  const desktopViews =
+    Math.floor(totalViews * 0.25) +
+    Math.floor(Math.random() * totalViews * 0.1);
+  const tabletViews = totalViews - mobileViews - desktopViews;
+
+  return [
+    {
+      device: "mobile",
+      views: mobileViews,
+      contacts:
+        Math.floor(mobileViews * 0.025) + Math.floor(Math.random() * 20),
+      percentage: (mobileViews / totalViews) * 100,
+    },
+    {
+      device: "desktop",
+      views: desktopViews,
+      contacts:
+        Math.floor(desktopViews * 0.035) + Math.floor(Math.random() * 15),
+      percentage: (desktopViews / totalViews) * 100,
+    },
+    {
+      device: "tablet",
+      views: tabletViews,
+      contacts: Math.floor(tabletViews * 0.02) + Math.floor(Math.random() * 10),
+      percentage: (tabletViews / totalViews) * 100,
+    },
+  ];
 }
