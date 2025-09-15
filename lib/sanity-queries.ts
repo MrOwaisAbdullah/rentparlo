@@ -1038,6 +1038,7 @@ export async function getListingsBySeller(sellerId: string): Promise<Listing[]> 
         price,
         priceType,
         status,
+        badges,
         "imageUrl": images[0].asset->url
     }`;
     const params = { sellerId };

@@ -1189,3 +1189,6 @@ export interface PaginatedResults<T> {
 
 // Re-export unified search types
 export * from "./search";
+
+// Re-export dashboard types
+export * from "./dashboard";

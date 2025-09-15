@@ -1485,6 +1485,63 @@ export async function getSubscriptionPackages(): Promise<
   return data || [];
 }
 
+// Get subscription package by name
+export async function getSubscriptionPackageByName(
+  name: string
+): Promise<SubscriptionPackage | null> {
+  const supabase = await createClient();
+
+  // First try exact match
+  let { data, error } = await supabase
+    .from("subscription_packages")
+    .select("*")
+    .eq("name", name)
+    .eq("is_active", true)
+    .single();
+
+  // If no exact match, try case-insensitive match
+  if (error && error.code === 'PGRST116') {
+    console.log(`No exact match found for package name: ${name}, trying case-insensitive search`);
+    
+    const { data: fuzzyData, error: fuzzyError } = await supabase
+      .from("subscription_packages")
+      .select("*")
+      .ilike("name", name)
+      .eq("is_active", true)
+      .limit(1)
+      .single();
+      
+    if (!fuzzyError && fuzzyData) {
+      console.log(`Found package with case-insensitive match:`, fuzzyData);
+      return fuzzyData;
+    }
+    
+    // If still no match, try to get all packages to see what's available
+    const { data: allPackages, error: allError } = await supabase
+      .from("subscription_packages")
+      .select("*")
+      .eq("is_active", true);
+      
+    if (!allError && allPackages) {
+      console.log("Available packages in database:", allPackages);
+      
+      // If no packages exist at all, we might need to seed them
+      if (allPackages.length === 0) {
+        console.log("No packages found in database");
+      }
+    } else {
+      console.log("Error fetching all packages:", allError);
+    }
+  }
+
+  if (error) {
+    console.error("Error fetching subscription package by name:", error);
+    return null;
+  }
+
+  return data;
+}
+
 // Get user's active subscription
 export async function getUserActiveSubscription(
   userId: string

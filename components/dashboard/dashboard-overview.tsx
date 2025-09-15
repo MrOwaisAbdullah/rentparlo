@@ -70,8 +70,11 @@ const ListingItem = memo(({ listing, isMobile }: any) => (
     <div className="flex items-start justify-between">
       <h4 className="font-medium text-sm truncate">{listing.title}</h4>
       <Badge
-        variant={listing.status === "active" ? "default" : "secondary"}
-        className="text-xs"
+        className={`text-xs ${
+          listing.status === "active"
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
       >
         {listing.status}
       </Badge>
@@ -482,7 +485,13 @@ export const DashboardOverview = memo(function DashboardOverview({
                 <span className="text-sm text-muted-foreground">
                   Auto Renew
                 </span>
-                <Badge variant={subscription.autoRenew ? "default" : "outline"}>
+                <Badge
+                  className={(
+                    subscription.autoRenew
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  )}
+                >
                   {subscription.autoRenew ? "On" : "Off"}
                 </Badge>
               </div>

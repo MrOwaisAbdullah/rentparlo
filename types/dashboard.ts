@@ -1,5 +1,7 @@
 // Dashboard-specific TypeScript interfaces and data models
 
+import { EnhancedUserSubscription, SubscriptionPackage, PackageUsage, BillingRecord } from "@/types";
+
 // Core Analytics Models
 export interface SellerAnalytics {
   sellerId: string;
@@ -125,14 +127,6 @@ export interface UserSubscription {
   autoRenew: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface EnhancedUserSubscription extends UserSubscription {
-  package: SubscriptionPackage;
-  usage: PackageUsage;
-  daysRemaining: number;
-  nextBillingDate: string;
-  billingHistory: BillingRecord[];
 }
 
 export interface SubscriptionPackage {

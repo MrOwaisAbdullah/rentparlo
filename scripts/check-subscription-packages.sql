@@ -1,0 +1,1 @@
+SELECT id, name, price, is_active, display_order FROM public.subscription_packages ORDER BY display_order;
