@@ -47,7 +47,7 @@ interface ListingPerformanceProps {
 type SortField =
   | "views"
   | "contacts"
-  | "conversionRate"
+  | "contactRate"
   | "lastActivity"
   | "title";
 type SortOrder = "asc" | "desc";
@@ -75,23 +75,19 @@ export function ListingPerformance({
       (sum, listing) => sum + listing.contacts,
       0
     );
-    const avgConversionRate =
-      listings.length > 0
-        ? listings.reduce((sum, listing) => sum + listing.conversionRate, 0) /
-          listings.length
-        : 0;
+    const avgContactRate = totalViews > 0 ? (totalContacts / totalViews) * 100 : 0;
 
-    // Categorize listings by performance
+    // Categorize listings by performance (using contact rate)
     const highPerforming = listings.filter(
-      (l) => l.conversionRate > avgConversionRate * 1.2
+      (l) => l.views > 0 && (l.contacts / l.views) * 100 > avgContactRate * 1.2
     );
     const lowPerforming = listings.filter(
-      (l) => l.conversionRate < avgConversionRate * 0.8
+      (l) => l.views > 0 && (l.contacts / l.views) * 100 < avgContactRate * 0.8
     );
     const underperforming = listings.filter(
       (l) =>
         l.views > 100 &&
-        l.conversionRate < 1.0 &&
+        (l.views === 0 ? 0 : (l.contacts / l.views) * 100) < 1.0 &&
         new Date(l.lastActivity) <
           new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     );
@@ -99,7 +95,7 @@ export function ListingPerformance({
     return {
       totalViews,
       totalContacts,
-      avgConversionRate,
+      avgContactRate,
       highPerforming,
       lowPerforming,
       underperforming,
@@ -115,18 +111,19 @@ export function ListingPerformance({
 
     // Apply performance filter
     if (performanceFilter !== "all") {
-      const avgConversion = performanceMetrics.avgConversionRate;
+      const avgContactRate = performanceMetrics.avgContactRate;
       filtered = filtered.filter((listing) => {
+        const listingContactRate = listing.views > 0 ? (listing.contacts / listing.views) * 100 : 0;
         switch (performanceFilter) {
           case "high":
-            return listing.conversionRate > avgConversion * 1.2;
+            return listingContactRate > avgContactRate * 1.2;
           case "medium":
             return (
-              listing.conversionRate >= avgConversion * 0.8 &&
-              listing.conversionRate <= avgConversion * 1.2
+              listingContactRate >= avgContactRate * 0.8 &&
+              listingContactRate <= avgContactRate * 1.2
             );
           case "low":
-            return listing.conversionRate < avgConversion * 0.8;
+            return listingContactRate < avgContactRate * 0.8;
           default:
             return true;
         }
@@ -135,8 +132,14 @@ export function ListingPerformance({
 
     // Sort listings
     return filtered.sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+      let aValue: any = a[sortField as keyof typeof a];
+      let bValue: any = b[sortField as keyof typeof b];
+
+      // Special handling for contactRate
+      if (sortField === "contactRate") {
+        aValue = a.views > 0 ? (a.contacts / a.views) * 100 : 0;
+        bValue = b.views > 0 ? (b.contacts / b.views) * 100 : 0;
+      }
 
       if (sortField === "lastActivity") {
         aValue = new Date(aValue).getTime();
@@ -160,7 +163,7 @@ export function ListingPerformance({
     sortField,
     sortOrder,
     performanceFilter,
-    performanceMetrics.avgConversionRate,
+    performanceMetrics.avgContactRate,
   ]);
 
   const handleSort = (field: SortField) => {
@@ -173,12 +176,13 @@ export function ListingPerformance({
   };
 
   const getPerformanceBadge = (listing: ListingAnalytics) => {
-    const avgConversion = performanceMetrics.avgConversionRate;
-    if (listing.conversionRate > avgConversion * 1.2) {
+    const avgContactRate = performanceMetrics.avgContactRate;
+    const listingContactRate = listing.views > 0 ? (listing.contacts / listing.views) * 100 : 0;
+    if (listingContactRate > avgContactRate * 1.2) {
       return (
         <Badge className="bg-green-100 text-green-800">High Performing</Badge>
       );
-    } else if (listing.conversionRate < avgConversion * 0.8) {
+    } else if (listingContactRate < avgContactRate * 0.8) {
       return <Badge variant="destructive">Needs Attention</Badge>;
     } else {
       return <Badge variant="secondary">Average</Badge>;
@@ -187,11 +191,12 @@ export function ListingPerformance({
 
   const getRecommendations = (listing: ListingAnalytics) => {
     const recommendations = [];
-    const avgConversion = performanceMetrics.avgConversionRate;
+    const avgContactRate = performanceMetrics.avgContactRate;
+    const listingContactRate = listing.views > 0 ? (listing.contacts / listing.views) * 100 : 0;
 
-    if (listing.views > 100 && listing.conversionRate < 1.0) {
+    if (listing.views > 100 && listingContactRate < 1.0) {
       recommendations.push(
-        "Low conversion rate - consider improving photos or description"
+        "Low contact rate - consider improving photos or description"
       );
     }
     if (
@@ -294,12 +299,12 @@ export function ListingPerformance({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg Conversion Rate
+              Avg Contact Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {performanceMetrics.avgConversionRate.toFixed(1)}%
+              {performanceMetrics.avgContactRate.toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground">
               {performanceMetrics.underperforming.length} underperforming
@@ -321,7 +326,7 @@ export function ListingPerformance({
               value="table"
               role="tab"
               aria-controls="table-panel"
-              className={isMobile ? "flex-1" : ""}
+              className={`${isMobile ? "flex-1" : ""} data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm`}
             >
               {isMobile ? "Table" : "Detailed Table"}
             </TabsTrigger>
@@ -329,7 +334,7 @@ export function ListingPerformance({
               value="comparison"
               role="tab"
               aria-controls="comparison-panel"
-              className={isMobile ? "flex-1" : ""}
+              className={`${isMobile ? "flex-1" : ""} data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm`}
             >
               Comparison
             </TabsTrigger>
@@ -337,7 +342,7 @@ export function ListingPerformance({
               value="insights"
               role="tab"
               aria-controls="insights-panel"
-              className={isMobile ? "flex-1" : ""}
+              className={`${isMobile ? "flex-1" : ""} data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm`}
             >
               Insights
             </TabsTrigger>
@@ -423,20 +428,23 @@ export function ListingPerformance({
                   },
                   {
                     key: "conversionRate",
-                    header: "Conversion Rate",
+                    header: "Contact Rate",
                     sortable: true,
-                    render: (value, row) => (
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">
-                          {value.toFixed(1)}%
-                        </span>
-                        {value > performanceMetrics.avgConversionRate ? (
-                          <TrendingUp className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-500" />
-                        )}
-                      </div>
-                    ),
+                    render: (value, row) => {
+                      const contactRate = row.views > 0 ? (row.contacts / row.views) * 100 : 0;
+                      return (
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">
+                            {contactRate.toFixed(1)}%
+                          </span>
+                          {contactRate > performanceMetrics.avgContactRate ? (
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                      );
+                    },
                   },
                   {
                     key: "avgTimeOnPage",
@@ -525,8 +533,8 @@ export function ListingPerformance({
             className={`grid gap-4 ${isMobile ? "grid-cols-1" : "md:grid-cols-2"}`}
           >
             <MobileChartWrapper
-              title="Conversion Rate Distribution"
-              subtitle="Distribution of listings by conversion rate"
+              title="Contact Rate Distribution"
+              subtitle="Distribution of listings by contact rate"
               enableZoom={false}
               enablePan={false}
               enableFullscreen={true}
@@ -539,18 +547,18 @@ export function ListingPerformance({
                     {
                       label: "Listings",
                       data: [
-                        listings.filter((l) => l.conversionRate > 3).length,
+                        listings.filter((l) => l.views > 0 && (l.contacts / l.views) * 100 > 3).length,
                         listings.filter(
-                          (l) => l.conversionRate >= 1 && l.conversionRate <= 3
+                          (l) => l.views > 0 && (l.contacts / l.views) * 100 >= 1 && (l.contacts / l.views) * 100 <= 3
                         ).length,
-                        listings.filter((l) => l.conversionRate < 1).length,
+                        listings.filter((l) => l.views > 0 && (l.contacts / l.views) * 100 < 1).length,
                       ],
                       backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
                     },
                   ]
                 )}
                 options={createChartOptions(
-                  "Conversion Rate Distribution",
+                  "Contact Rate Distribution",
                   true,
                   true
                 )}
@@ -560,7 +568,7 @@ export function ListingPerformance({
 
             <MobileChartWrapper
               title="Performance Trends"
-              subtitle="Conversion rate trends across listings"
+              subtitle="Contact rate trends across listings"
               enableZoom={true}
               enablePan={true}
               enableFullscreen={true}
@@ -575,15 +583,15 @@ export function ListingPerformance({
                     ),
                   [
                     {
-                      label: "Conversion Rate",
-                      data: listings.slice(0, 10).map((l) => l.conversionRate),
+                      label: "Contact Rate",
+                      data: listings.slice(0, 10).map((l) => l.views > 0 ? (l.contacts / l.views) * 100 : 0),
                       borderColor: "#3b82f6",
                       backgroundColor: "#3b82f6",
                     },
                   ]
                 )}
                 options={createChartOptions(
-                  "Conversion Rate Trends",
+                  "Contact Rate Trends",
                   false,
                   true
                 )}
@@ -624,7 +632,7 @@ export function ListingPerformance({
                           </div>
                         </div>
                         <Badge className="bg-green-100 text-green-800">
-                          {listing.conversionRate.toFixed(1)}%
+                          {listing.views > 0 ? ((listing.contacts / listing.views) * 100).toFixed(1) : '0.0'}%
                         </Badge>
                       </div>
                     ))}
@@ -681,7 +689,7 @@ export function ListingPerformance({
                     </span>
                   </div>
                   <p className="text-sm text-blue-700">
-                    Electronics listings show 25% higher conversion rates on
+                    Electronics listings show 25% higher contact rates on
                     average
                   </p>
                 </div>

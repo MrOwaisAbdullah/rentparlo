@@ -82,33 +82,36 @@ export function CustomAnalyticsReports({
 }: CustomAnalyticsReportsProps) {
   if (!hasCustomAnalyticsReports) {
     return (
-      <Card className="col-span-1 md:col-span-2">
+      <Card className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Custom Analytics Reports
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Unlock Custom Analytics Reports
           </CardTitle>
           <CardDescription>
-            Get detailed insights about your listings performance
+            Upgrade your plan to get detailed insights about your listings performance.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-              <TrendingUp className="w-8 h-8 text-muted-foreground" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex-1 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Our <Badge variant="secondary">Premium</Badge> and <Badge variant="secondary">Business</Badge> packages offer powerful analytics tools to help you grow your rental business. Track trends, understand your audience, and optimize your listings for maximum visibility.
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5">
+                <li className="flex items-center gap-2"><BarChartHorizontal className="w-4 h-4 text-green-500" /> Top Performing Listings</li>
+                <li className="flex items-center gap-2"><Users className="w-4 h-4 text-green-500" /> Geographic Distribution of Views</li>
+                <li className="flex items-center gap-2"><LineChart className="w-4 h-4 text-green-500" /> Daily Performance Trends</li>
+              </ul>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Upgrade for Custom Analytics</h3>
-            <p className="text-muted-foreground mb-4">
-              Custom analytics reports are available with Premium and Business packages.
-            </p>
-            <Badge variant="secondary" className="mb-4">
-              Available in Premium & Business Packages
-            </Badge>
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" disabled>
-                <Download className="w-4 h-4 mr-2" />
-                Export Report
+            <div className="flex-shrink-0 text-center">
+               <div className="mx-auto w-20 h-20 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-md">
+                 <TrendingUp className="w-10 h-10 text-primary" />
+               </div>
+              <Button>
+                <a href="/dashboard/package">Upgrade Your Plan</a>
               </Button>
+              <p className="text-xs text-muted-foreground mt-2">Starting from PKR 1,799/month</p>
             </div>
           </div>
         </CardContent>
@@ -285,7 +288,7 @@ export function CustomAnalyticsReports({
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">Conversion Rate</span>
+                      <span className="text-sm font-medium">Contact Rate</span>
                       <span className="text-sm text-muted-foreground">5.2%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">

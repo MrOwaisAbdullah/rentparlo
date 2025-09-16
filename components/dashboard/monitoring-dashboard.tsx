@@ -371,10 +371,10 @@ const MonitoringDashboard = memo(function MonitoringDashboard() {
       {/* Main Content */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Overview</TabsTrigger>
+          <TabsTrigger value="errors" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Errors</TabsTrigger>
+          <TabsTrigger value="alerts" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Alerts</TabsTrigger>
+          <TabsTrigger value="performance" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Performance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

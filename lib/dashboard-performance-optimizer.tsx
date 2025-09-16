@@ -48,7 +48,12 @@ export const LazyDashboardComponents = {
     ssr: false
   }),
   
-  PerformanceInsights: dynamic(() => import('@/components/dashboard/performance-insights'), {
+  PerformanceScoreCard: dynamic(() => import('@/components/dashboard/performance-score-card'), {
+    loading: () => <InsightsSkeleton />,
+    ssr: false
+  }),
+
+  PerformanceRecommendationsCard: dynamic(() => import('@/components/dashboard/performance-recommendations-card'), {
     loading: () => <InsightsSkeleton />,
     ssr: false
   }),

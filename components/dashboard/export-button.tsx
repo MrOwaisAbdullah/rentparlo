@@ -193,7 +193,7 @@ export function ExportButton({
         },
         {
           Metric: "Contact Rate (%)",
-          Value: analyticsData.overview.contactRate.toFixed(2),
+          Value: (analyticsData.overview.totalViews > 0 ? ((analyticsData.overview.totalContacts / analyticsData.overview.totalViews) * 100).toFixed(2) : "0.00"),
           Type: "Overview",
         },
         {
@@ -243,7 +243,7 @@ export function ExportButton({
       Record: index + 1,
       "Total Views": item.totalViews || 0,
       "Total Contacts": item.totalContacts || 0,
-      "Contact Rate (%)": item.contactRate?.toFixed(2) || "0.00",
+      "Contact Rate (%)": item.totalViews > 0 ? ((item.totalContacts / item.totalViews) * 100).toFixed(2) : "0.00",
       "Unique Visitors": item.uniqueVisitors || 0,
       "Avg Session Duration": item.avgSessionDuration || 0,
       "Bounce Rate (%)": item.bounceRate?.toFixed(2) || "0.00",
@@ -259,7 +259,7 @@ export function ExportButton({
       "WhatsApp Clicks": listing.whatsappClicks,
       Shares: listing.shares,
       Saves: listing.saves,
-      "Contact Rate (%)": listing.contactRate.toFixed(2),
+      "Contact Rate (%)": listing.views > 0 ? ((listing.contacts / listing.views) * 100).toFixed(2) : "0.00",
       "Avg Time on Page (seconds)": listing.avgTimeOnPage,
       "Created Date": new Date(listing.createdAt).toLocaleDateString(),
       "Last Activity": new Date(listing.lastActivity).toLocaleDateString(),
@@ -328,7 +328,7 @@ export function ExportButton({
     score += Math.min((listing.views / 100) * 30, 30);
 
     // Contact rate contribution (0-40 points)
-    score += Math.min(listing.contactRate * 10, 40);
+    score += Math.min((listing.views > 0 ? (listing.contacts / listing.views) * 100 : 0) * 10, 40);
 
     // Engagement contribution (0-30 points)
     const engagementRate =

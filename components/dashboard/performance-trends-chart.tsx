@@ -144,7 +144,7 @@ export function PerformanceTrendsChart({
                 {data.contacts.toLocaleString()}
               </p>
               <p className="text-sm">
-                <span className="text-gray-600">Conversion:</span>{" "}
+                <span className="text-gray-600">Contact Rate:</span>{" "}
                 {data.conversionRate.toFixed(1)}%
               </p>
             </div>
@@ -354,7 +354,7 @@ export function PerformanceTrendsChart({
                   stroke="#10b981"
                   strokeWidth={2}
                   dot={{ r: 3 }}
-                  name="Conversion Rate"
+                  name="Contact Rate"
                 />
               </LineChart>
             </ResponsiveContainer>

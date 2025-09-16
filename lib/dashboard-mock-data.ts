@@ -58,15 +58,19 @@ export function createMockVerificationStatus(): VerificationStatus {
 }
 
 export function createMockSellerAnalytics(): SellerAnalytics {
+  const totalViews = 12450;
+  const totalContacts = 342;
+  const conversionRate = (totalContacts / totalViews) * 100;
+
   return {
     sellerId: "seller-123",
-    totalViews: 12450,
-    totalContacts: 342,
+    totalViews,
+    totalContacts,
     totalWhatsAppClicks: 189,
     totalShares: 67,
     totalSaves: 234,
     uniqueVisitors: 8920,
-    conversionRate: 2.75,
+    conversionRate,
     avgSessionDuration: 145, // seconds
     bounceRate: 34.2,
     topCities: [
@@ -83,8 +87,6 @@ export function createMockSellerAnalytics(): SellerAnalytics {
     ],
     timeSeriesData: generateMockTimeSeriesData(),
     listingPerformance: generateMockListingAnalytics(),
-    totalListings: 12,
-    activeListings: 10,
     totalListings: 12,
     activeListings: 10,
   };
@@ -165,23 +167,29 @@ function generateMockListingAnalytics() {
     "Apartment in DHA - 2 Bedroom",
   ];
 
-  return listings.map((title, index) => ({
-    listingId: `listing-${index}`,
-    title,
-    views: Math.floor(Math.random() * 2000) + 500,
-    contacts: Math.floor(Math.random() * 50) + 10,
-    whatsappClicks: Math.floor(Math.random() * 30) + 5,
-    shares: Math.floor(Math.random() * 15) + 2,
-    saves: Math.floor(Math.random() * 25) + 5,
-    conversionRate: Math.random() * 5 + 1,
-    avgTimeOnPage: Math.floor(Math.random() * 300) + 60,
-    createdAt: new Date(
-      Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-    ).toISOString(),
-    lastActivity: new Date(
-      Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-    ).toISOString(),
-  }));
+  return listings.map((title, index) => {
+    const views = Math.floor(Math.random() * 2000) + 500;
+    const contacts = Math.floor(Math.random() * 50) + 10;
+    const conversionRate = views > 0 ? (contacts / views) * 100 : 0;
+
+    return {
+      listingId: `listing-${index}`,
+      title,
+      views,
+      contacts,
+      whatsappClicks: Math.floor(Math.random() * 30) + 5,
+      shares: Math.floor(Math.random() * 15) + 2,
+      saves: Math.floor(Math.random() * 25) + 5,
+      conversionRate,
+      avgTimeOnPage: Math.floor(Math.random() * 300) + 60,
+      createdAt: new Date(
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      lastActivity: new Date(
+        Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+    };
+  });
 }
 
 export function createMockAnalyticsData(timeRange: TimeRange): AnalyticsData {

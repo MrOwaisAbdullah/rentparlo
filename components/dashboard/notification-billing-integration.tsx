@@ -439,10 +439,10 @@ export function NotificationBillingIntegration({
 
       <Tabs defaultValue="notifications" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="support">Support</TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Notifications</TabsTrigger>
+          <TabsTrigger value="settings" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Settings</TabsTrigger>
+          <TabsTrigger value="billing" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Billing</TabsTrigger>
+          <TabsTrigger value="support" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Support</TabsTrigger>
         </TabsList>
 
         {/* Notifications Tab */}

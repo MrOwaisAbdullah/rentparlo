@@ -576,7 +576,7 @@ export function DeviceBreakdown({ data, height = 300 }: DeviceBreakdownProps) {
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {conversionRate.toFixed(1)}% conversion rate
+                          {conversionRate.toFixed(1)}% contact rate
                         </div>
                       </div>
                     </div>
@@ -642,7 +642,7 @@ export function DeviceBreakdown({ data, height = 300 }: DeviceBreakdownProps) {
                     100
                   ).toFixed(1)
                 : 0}
-              % conversion rate
+              % contact rate
             </p>
           </CardContent>
         </Card>

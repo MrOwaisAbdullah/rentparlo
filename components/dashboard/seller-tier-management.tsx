@@ -206,10 +206,10 @@ export function SellerTierManagement({
 
       <Tabs defaultValue="benefits" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="benefits">Benefits</TabsTrigger>
-          <TabsTrigger value="requirements">Requirements</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="benefits" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Benefits</TabsTrigger>
+          <TabsTrigger value="requirements" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Requirements</TabsTrigger>
+          <TabsTrigger value="achievements" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Achievements</TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">History</TabsTrigger>
         </TabsList>
 
         {/* Benefits Tab */}

@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -21,7 +19,6 @@ import {
   Smartphone,
   MapPin,
   BarChart3,
-  PieChart,
   LineChart,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,19 +26,12 @@ import { MobileResponsiveWrapper } from "./mobile-responsive-wrapper";
 import { MobileChartWrapper } from "./mobile-chart-wrapper";
 import { AnalyticsDashboardProps, TimeRange } from "@/types/dashboard";
 import { MetricsCard } from "./metrics-card";
-import {
-  InteractiveChart,
-  createChartData,
-  createChartOptions,
-} from "./interactive-chart";
-import { DataTable } from "./data-table";
 import { ExportButton } from "./export-button";
 import { AnalyticsExport } from "./analytics-export";
 import { ListingPerformance } from "./listing-performance";
 import {
   TrendChart,
   ConversionFunnel,
-  PerformanceComparison,
   GeographicHeatmap,
   DeviceBreakdown,
 } from "./advanced-charts";
@@ -133,7 +123,7 @@ export function AnalyticsDashboard({
             onValueChange={handleTimeRangePresetChange}
           >
             <SelectTrigger
-              className={isMobile ? "w-full" : "w-[140px]"}
+              className={isMobile ? "w-full" : "w-[180px]"}
               aria-label="Select time range for analytics data"
               aria-describedby="time-range-help"
             >
@@ -203,12 +193,10 @@ export function AnalyticsDashboard({
           aria-label={`Total contacts: ${data.overview.totalContacts.toLocaleString()}, increased by 8.2%`}
         />
         <MetricsCard
-          title="Conversion Rate"
+          title="Contact Rate"
+          icon={MessageCircle}
           value={`${data.overview.conversionRate.toFixed(1)}%`}
-          change={-2.1}
-          changeType="decrease"
-          icon={TrendingUp}
-          aria-label={`Conversion rate: ${data.overview.conversionRate.toFixed(1)}%, decreased by 2.1%`}
+          aria-label={`Contact rate: ${data.overview.conversionRate.toFixed(1)}%, decreased by 2.1%`}
         />
         <MetricsCard
           title="Unique Visitors"
@@ -220,7 +208,7 @@ export function AnalyticsDashboard({
         />
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs */} 
       <Tabs
         value={activeView}
         onValueChange={(value) => setActiveView(value as typeof activeView)}
@@ -235,7 +223,7 @@ export function AnalyticsDashboard({
         >
           <TabsTrigger
             value="overview"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
             role="tab"
             aria-controls="overview-panel"
             aria-selected={activeView === "overview"}
@@ -248,7 +236,7 @@ export function AnalyticsDashboard({
           </TabsTrigger>
           <TabsTrigger
             value="listings"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
             role="tab"
             aria-controls="listings-panel"
             aria-selected={activeView === "listings"}
@@ -263,7 +251,7 @@ export function AnalyticsDashboard({
             <>
               <TabsTrigger
                 value="geographic"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
                 role="tab"
                 aria-controls="geographic-panel"
                 aria-selected={activeView === "geographic"}
@@ -274,7 +262,7 @@ export function AnalyticsDashboard({
               </TabsTrigger>
               <TabsTrigger
                 value="devices"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
                 role="tab"
                 aria-controls="devices-panel"
                 aria-selected={activeView === "devices"}
@@ -293,7 +281,7 @@ export function AnalyticsDashboard({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
                 value="geographic"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
                 role="tab"
                 aria-controls="geographic-panel"
                 aria-selected={activeView === "geographic"}
@@ -304,7 +292,7 @@ export function AnalyticsDashboard({
               </TabsTrigger>
               <TabsTrigger
                 value="devices"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
                 role="tab"
                 aria-controls="devices-panel"
                 aria-selected={activeView === "devices"}
@@ -344,9 +332,9 @@ export function AnalyticsDashboard({
               />
             </MobileChartWrapper>
 
-            {/* Conversion Funnel */}
+            {/* Contact Funnel */}
             <MobileChartWrapper
-              title="Conversion Funnel"
+              title="Contact Funnel"
               subtitle="User journey from views to contacts"
               enableZoom={false}
               enablePan={false}
@@ -356,11 +344,7 @@ export function AnalyticsDashboard({
                 data={{
                   views: data.overview.totalViews,
                   contacts: data.overview.totalContacts,
-                  conversions: Math.round(
-                    (data.overview.totalContacts *
-                      data.overview.conversionRate) /
-                      100
-                  ),
+                  conversions: data.overview.totalContacts, // Using contacts as conversions since that's what we're tracking
                 }}
                 height={isMobile ? 250 : 350}
               />

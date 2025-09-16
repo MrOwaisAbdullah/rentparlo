@@ -135,11 +135,9 @@ export function ListingAnalyticsIntegration({
     (sum, item) => sum + item.contacts,
     0
   );
-  const avgConversionRate =
-    analyticsData.length > 0
-      ? analyticsData.reduce((sum, item) => sum + item.conversionRate, 0) /
-        analyticsData.length
-      : 0;
+  const totalViews = analyticsData.reduce((sum, item) => sum + item.views, 0);
+  const totalContacts = analyticsData.reduce((sum, item) => sum + item.contacts, 0);
+  const avgContactRate = totalViews > 0 ? (totalContacts / totalViews) * 100 : 0;
 
   // Prepare chart data for selected listing
   const selectedListingData = selectedListing
@@ -240,9 +238,9 @@ export function ListingAnalyticsIntegration({
                 <Target className="h-4 w-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg. Conversion</p>
+                <p className="text-sm text-muted-foreground">Avg. Contact Rate</p>
                 <p className="text-xl font-bold">
-                  {avgConversionRate.toFixed(1)}%
+                  {avgContactRate.toFixed(1)}%
                 </p>
               </div>
             </div>
@@ -297,7 +295,7 @@ export function ListingAnalyticsIntegration({
               <SelectContent>
                 <SelectItem value="views">Most Views</SelectItem>
                 <SelectItem value="contacts">Most Contacts</SelectItem>
-                <SelectItem value="conversion">Best Conversion</SelectItem>
+                <SelectItem value="conversion">Best Contact Rate</SelectItem>
                 <SelectItem value="engagement">Most Engagement</SelectItem>
                 <SelectItem value="recent">Most Recent Activity</SelectItem>
               </SelectContent>
@@ -313,7 +311,7 @@ export function ListingAnalyticsIntegration({
                   <TableHead>Listing</TableHead>
                   <TableHead>Views</TableHead>
                   <TableHead>Contacts</TableHead>
-                  <TableHead>Conversion</TableHead>
+                  <TableHead>Contact Rate</TableHead>
                   <TableHead>Engagement</TableHead>
                   <TableHead>Last Activity</TableHead>
                   <TableHead>Actions</TableHead>
@@ -374,13 +372,13 @@ export function ListingAnalyticsIntegration({
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <span className="font-medium">
-                            {item.conversionRate.toFixed(1)}%
+                            {item.views > 0 ? ((item.contacts / item.views) * 100).toFixed(1) : '0.0'}%
                           </span>
-                          {getTrendIcon(item.trend.conversionRate)}
+                          {getTrendIcon(item.views > 0 ? (item.contacts / item.views) * 100 : 0)}
                           <span
-                            className={`text-xs ${getTrendColor(item.trend.conversionRate)}`}
+                            className={`text-xs ${getTrendColor(item.views > 0 ? (item.contacts / item.views) * 100 : 0)}`}
                           >
-                            {formatTrend(item.trend.conversionRate)}
+                            {formatTrend(item.views > 0 ? (item.contacts / item.views) * 100 : 0)}
                           </span>
                         </div>
                       </TableCell>
@@ -482,7 +480,7 @@ export function ListingAnalyticsIntegration({
                 <div className="space-y-1">
                   {sortedData
                     .filter(
-                      (item) => item.conversionRate < 2.0 && item.views > 10
+                      (item) => item.views > 10 && (item.views > 0 ? (item.contacts / item.views) * 100 : 0) < 2.0
                     )
                     .slice(0, 3)
                     .map((item) => (
@@ -498,12 +496,12 @@ export function ListingAnalyticsIntegration({
                         </Badge>
                         <span className="truncate">{item.title}</span>
                         <span className="text-muted-foreground">
-                          {item.conversionRate.toFixed(1)}%
+                          {item.views > 0 ? ((item.contacts / item.views) * 100).toFixed(1) : '0.0'}%
                         </span>
                       </div>
                     ))}
                   {sortedData.filter(
-                    (item) => item.conversionRate < 2.0 && item.views > 10
+                    (item) => item.views > 10 && (item.views > 0 ? (item.contacts / item.views) * 100 : 0) < 2.0
                   ).length === 0 && (
                     <p className="text-sm text-muted-foreground">
                       All listings performing well!

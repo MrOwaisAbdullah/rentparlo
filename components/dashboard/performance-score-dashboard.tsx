@@ -86,7 +86,7 @@ export function PerformanceScoreDashboard({
             Performance Score
           </CardTitle>
           <CardDescription>
-            Your overall performance based on conversion rate, response time,
+            Your overall performance based on contact rate, response time,
             ratings, and verification
           </CardDescription>
         </CardHeader>
@@ -146,7 +146,7 @@ export function PerformanceScoreDashboard({
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Conversion</span>
+                <span>Contact Rate</span>
                 <span className="font-medium">
                   {performanceScore.breakdown.conversionRate}/100
                 </span>

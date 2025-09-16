@@ -113,8 +113,8 @@ export function AnalyticsExport({
       });
       exportData.push({
         section: "Overview Metrics",
-        metric: "Conversion Rate",
-        value: data.overview.conversionRate,
+        metric: "Contact Rate",
+        value: data.overview.totalViews > 0 ? ((data.overview.totalContacts / data.overview.totalViews) * 100) : 0,
         type: "percentage",
       });
       exportData.push({
@@ -146,8 +146,8 @@ export function AnalyticsExport({
           contacts: trend.contacts,
           conversions: trend.conversions,
           conversion_rate:
-            trend.contacts > 0
-              ? ((trend.conversions / trend.contacts) * 100).toFixed(2)
+            trend.views > 0
+              ? ((trend.contacts / trend.views) * 100).toFixed(2)
               : "0.00",
         });
       });
@@ -164,7 +164,7 @@ export function AnalyticsExport({
           whatsapp_clicks: listing.whatsappClicks,
           shares: listing.shares,
           saves: listing.saves,
-          conversion_rate: listing.conversionRate,
+          conversion_rate: listing.views > 0 ? ((listing.contacts / listing.views) * 100).toFixed(2) : "0.00",
           avg_time_on_page: listing.avgTimeOnPage,
           created_date: listing.createdAt,
           last_activity: listing.lastActivity,
@@ -198,21 +198,21 @@ export function AnalyticsExport({
 
     if (options.includeConversions && data.conversions) {
       exportData.push({
-        section: "Conversion Summary",
+        section: "Contact Summary",
         metric: "Total Views",
         value: data.conversions.totalViews,
         type: "count",
       });
       exportData.push({
-        section: "Conversion Summary",
+        section: "Contact Summary",
         metric: "Total Contacts",
         value: data.conversions.totalContacts,
         type: "count",
       });
       exportData.push({
-        section: "Conversion Summary",
-        metric: "Overall Conversion Rate",
-        value: data.conversions.conversionRate,
+        section: "Contact Summary",
+        metric: "Overall Contact Rate",
+        value: data.conversions.totalViews > 0 ? ((data.conversions.totalContacts / data.conversions.totalViews) * 100) : 0,
         type: "percentage",
       });
     }
@@ -225,18 +225,59 @@ export function AnalyticsExport({
     filename: string,
     format: string
   ) => {
-    // Use the enhanced ExportButton functionality
-    const exportButton = new ExportButton({
-      data,
-      filename,
-      format: format as "csv" | "pdf" | "excel",
-      exportType: "analytics",
-      timeRange,
-    });
-
-    // Simulate the export process
-    if (format === "csv") {
-      await exportButton.exportToCSV(data, filename, "analytics", timeRange);
+    // Directly create CSV content with proper handling of different data structures
+    switch (format) {
+      case "csv":
+      case "excel":
+        // Import the export utilities
+        const { formatCSVValue } = await import("@/lib/export-utils");
+        
+        let csvContent = "";
+        
+        // Add metadata header
+        csvContent += `# ANALYTICS EXPORT REPORT\n`;
+        csvContent += `# Generated: ${new Date().toLocaleString()}\n`;
+        csvContent += `# Total Records: ${data.length}\n`;
+        csvContent += `\n`;
+        
+        // Export all data as a flat structure
+        if (data.length > 0) {
+          // Get all unique keys from all data
+          const allKeys = new Set<string>();
+          data.forEach(item => {
+            Object.keys(item).forEach(key => {
+              allKeys.add(key);
+            });
+          });
+          
+          const headers = Array.from(allKeys);
+          csvContent += headers.map(header => formatCSVValue(header)).join(",") + "\n";
+          
+          csvContent += data
+            .map(item => 
+              headers.map(header => formatCSVValue(item[header] || "")).join(",")
+            )
+            .join("\n");
+        }
+        
+        // Download the CSV
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        const fileExtension = format === "excel" ? ".xlsx" : ".csv";
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${filename}${fileExtension}`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        break;
+        
+      case "pdf":
+        // PDF export would go here
+        console.log("PDF export not yet implemented");
+        break;
     }
   };
 
@@ -428,7 +469,7 @@ export function AnalyticsExport({
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <TrendingUp className="h-4 w-4" />
-                  Conversion Summary
+                  Contact Summary
                 </Label>
               </div>
             </div>

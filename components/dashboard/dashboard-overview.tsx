@@ -9,7 +9,8 @@ import { MetricsCard } from "./metrics-card";
 import { QuickActions } from "./quick-actions";
 import { UsageProgress } from "./usage-progress";
 import { NotificationsPanel } from "./notifications-panel";
-import { PerformanceInsights } from "./performance-insights";
+import { PerformanceScoreCard } from "./performance-score-card";
+import { PerformanceRecommendationsCard } from "./performance-recommendations-card";
 import { MobileResponsiveWrapper } from "./mobile-responsive-wrapper";
 import { QuickListingCreator } from "./quick-listing-creator";
 import { CustomAnalyticsReports } from "./custom-analytics-reports";
@@ -41,7 +42,7 @@ const MemoizedMetricsCard = memo(MetricsCard);
 const MemoizedQuickActions = memo(QuickActions);
 const MemoizedUsageProgress = memo(UsageProgress);
 const MemoizedNotificationsPanel = memo(NotificationsPanel);
-const MemoizedPerformanceInsights = memo(PerformanceInsights);
+
 
 // Optimized activity item component
 const ActivityItem = memo(
@@ -293,9 +294,7 @@ export const DashboardOverview = memo(function DashboardOverview({
       </div>
 
       {/* Metrics Overview */}
-      <div
-        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-4"}`}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <MemoizedMetricsCard
           title="Total Views"
           value={displayMetrics.totalViews}
@@ -335,7 +334,9 @@ export const DashboardOverview = memo(function DashboardOverview({
 
       {/* Package Benefits and Recent Activity */}
       <div
-        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
+        className={`grid gap-6 ${
+          isMobile ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-3"
+        }`}
       >
         {/* Package Benefits */}
         <Card>
@@ -348,7 +349,7 @@ export const DashboardOverview = memo(function DashboardOverview({
           <CardContent>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Your {subscription.subscription_packages?.name || "Pro"} package includes:
+                Your {subscription.subscription_packages?.name || "Basic"} package includes:
               </p>
               <ul className="space-y-2">
                 {subscription.subscription_packages?.features?.location_boost && (
@@ -422,7 +423,7 @@ export const DashboardOverview = memo(function DashboardOverview({
         </Card>
 
         {/* Recent Activity */}
-        <Card className={isMobile ? "" : "lg:col-span-2"}>
+        <Card className={isMobile ? "" : ""}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -461,7 +462,7 @@ export const DashboardOverview = memo(function DashboardOverview({
                     subscription.status === "active" ? "default" : "secondary"
                   }
                 >
-                  {subscription.subscription_packages?.name || "Unknown"} Package
+                  {subscription.subscription_packages?.name || "Basic"} Package
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
@@ -510,7 +511,7 @@ export const DashboardOverview = memo(function DashboardOverview({
         </CardHeader>
         <CardContent>
           <div
-            className={`grid gap-6 ${isMobile ? "grid-cols-1" : "md:grid-cols-3"}`}
+            className={`grid gap-6 ${isMobile ? "grid-cols-1" : "sm:grid-cols-2 md:grid-cols-3"}`}
           >
             <MemoizedUsageProgress
               label="Listings"
@@ -534,11 +535,9 @@ export const DashboardOverview = memo(function DashboardOverview({
         </CardContent>
       </Card>
 
-      {/* Quick Listing Creator */}
-      <div
-        className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-3"}`}
-      >
-        <Card className={isMobile ? "" : "lg:col-span-1"}>
+      {/* Quick Actions, Notifications, Performance Score, and Recommendations */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
@@ -567,20 +566,18 @@ export const DashboardOverview = memo(function DashboardOverview({
             </Button>
           </CardContent>
         </Card>
-
-        {/* Notifications and Performance Insights */}
-        <div
-          className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-2"}`}
-        >
-          <MemoizedNotificationsPanel
-            sellerData={sellerData}
-            subscription={subscription}
-          />
-          <MemoizedPerformanceInsights
-            analytics={displayMetrics}
-            sellerData={sellerData}
-          />
-        </div>
+        <MemoizedNotificationsPanel
+          sellerData={sellerData}
+          subscription={subscription}
+        />
+        <PerformanceScoreCard
+          analytics={displayMetrics}
+          sellerData={sellerData}
+        />
+        <PerformanceRecommendationsCard
+          analytics={displayMetrics}
+          sellerData={sellerData}
+        />
       </div>
 
       {/* Recent Listings Management */}

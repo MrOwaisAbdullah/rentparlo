@@ -269,10 +269,10 @@ export function PerformanceInsightsPage({
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Overview</TabsTrigger>
+          <TabsTrigger value="trends" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Trends</TabsTrigger>
+          <TabsTrigger value="achievements" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Achievements</TabsTrigger>
+          <TabsTrigger value="recommendations" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Recommendations</TabsTrigger>
         </TabsList>
 
         {/* Performance Overview Tab */}

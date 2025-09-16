@@ -249,7 +249,7 @@ export function NotificationsPanel({
                 {getNotificationIcon(notification.type)}
               </div>
               <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <p className="text-sm font-medium">{notification.title}</p>
                   {onDismissNotification && (
                     <Button
@@ -265,7 +265,7 @@ export function NotificationsPanel({
                 <p className="text-xs text-muted-foreground">
                   {notification.message}
                 </p>
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-1">
                   {notification.actionUrl && notification.actionLabel && (
                     <Button
                       variant="outline"

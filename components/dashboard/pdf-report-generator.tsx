@@ -258,7 +258,7 @@ export function PDFReportGenerator({
     {
       title: "Improve Response Time",
       description:
-        "Faster response times lead to higher conversion rates. Aim to respond to inquiries within 2 hours.",
+        "Faster response times lead to higher contact rates. Aim to respond to inquiries within 2 hours.",
       priority: "medium" as const,
     },
     {

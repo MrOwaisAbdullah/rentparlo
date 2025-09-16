@@ -284,6 +284,7 @@ export interface MetricsCardProps {
   trend?: number[];
   loading?: boolean;
   description?: string;
+  isPercentage?: boolean;
 }
 
 export interface QuickActionsProps {

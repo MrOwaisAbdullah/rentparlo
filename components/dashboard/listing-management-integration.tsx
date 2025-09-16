@@ -414,7 +414,7 @@ export function ListingManagementIntegration({
                   <TableHead>Price</TableHead>
                   <TableHead>Views</TableHead>
                   <TableHead>Contacts</TableHead>
-                  <TableHead>Conversion</TableHead>
+                  <TableHead>Contact Rate</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -467,7 +467,7 @@ export function ListingManagementIntegration({
                       </TableCell>
                       <TableCell>
                         <span className="font-medium">
-                          {listing.analytics?.conversionRate?.toFixed(1) ||
+                          {listing.analytics?.conversionRate ? (listing.analytics.views > 0 ? ((listing.analytics.contacts / listing.analytics.views) * 100).toFixed(1) : '0.0') :
                             "0.0"}
                           %
                         </span>

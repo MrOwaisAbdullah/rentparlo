@@ -18,6 +18,7 @@ export function MetricsCard({
   loading = false,
   description,
   "aria-label": ariaLabel,
+  isPercentage,
   ...props
 }: MetricsCardProps & { "aria-label"?: string }) {
   const isMobile = useIsMobile();
@@ -40,6 +41,9 @@ export function MetricsCard({
 
   const formatValue = (val: string | number): string => {
     if (typeof val === "number") {
+      if (isPercentage) {
+        return `${val}%`;
+      }
       if (val >= 1000000) {
         return `${(val / 1000000).toFixed(1)}M`;
       }
@@ -88,7 +92,7 @@ export function MetricsCard({
         className={`flex flex-row items-center justify-between space-y-0 ${isMobile ? "pb-1" : "pb-2"}`}
       >
         <CardTitle
-          className={`font-medium text-muted-foreground ${isMobile ? "text-xs" : "text-sm"}`}
+          className={`font-medium text-muted-foreground truncate ${isMobile ? "text-xs" : "text-sm"}`}
           id={`metric-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
           title={description}
         >
@@ -105,7 +109,7 @@ export function MetricsCard({
         >
           <div className={isMobile ? "w-full" : ""}>
             <div
-              className={`font-bold ${isMobile ? "text-xl" : "text-2xl"}`}
+              className={`font-bold truncate ${isMobile ? "text-xl" : "text-2xl"}`}
               aria-describedby={`metric-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
             >
               {formatValue(value)}
