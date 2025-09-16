@@ -56,13 +56,6 @@ const conditionConfig = {
 
 const conditionOptions = Object.entries(conditionConfig).map(([value, { label }]) => ({ value, label }));
 
-const priceTypeOptions = [
-  { value: 'hourly', label: 'Per Hour' },
-  { value: 'daily', label: 'Per Day' },
-  { value: 'weekly', label: 'Per Week' },
-  { value: 'monthly', label: 'Per Month' }
-];
-
 export function CategoryFilters({ slug, currentFilters, subcategories = [], onNavigate }: CategoryFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,7 +74,6 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [], onNa
     return {
       minPrice: currentFilters?.minPrice || 0,
       maxPrice: currentFilters?.maxPrice || 100000,
-      priceType: currentFilters?.priceType || 'any',
       location: currentFilters?.location || 'any',
       condition: conditionArray,
       open: false
@@ -126,7 +118,6 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [], onNa
     const updates: Record<string, string | string[] | undefined> = {};
     updates.minPrice = localFilters.minPrice > 0 ? localFilters.minPrice.toString() : undefined;
     updates.maxPrice = localFilters.maxPrice < 100000 ? localFilters.maxPrice.toString() : undefined;
-    updates.priceType = localFilters.priceType !== 'any' ? localFilters.priceType : undefined;
     updates.location = localFilters.location !== 'any' ? localFilters.location : undefined;
     updates.condition = localFilters.condition.length > 0 ? localFilters.condition : undefined;
     updateSearchParams(updates);
@@ -186,16 +177,6 @@ export function CategoryFilters({ slug, currentFilters, subcategories = [], onNa
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span>PKR {localFilters.minPrice.toLocaleString()}</span>
               <span>PKR {localFilters.maxPrice.toLocaleString()}</span>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Price Type</Label>
-              <Select value={localFilters.priceType} onValueChange={(value) => setLocalFilters(prev => ({ ...prev, priceType: value }))}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Any price type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any price type</SelectItem>
-                  {priceTypeOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>

@@ -65,7 +65,6 @@ interface SearchFiltersProps {
     minPrice: number;
     maxPrice: number;
     availability?: string;
-    priceType?: string;
   };
   onFilterChange: (filterName: string, value: string | number) => void;
   onClearFilters: () => void;
@@ -80,14 +79,6 @@ const CONDITIONS = [
   { value: "good", label: "Good" },
   { value: "fair", label: "Fair" },
   { value: "poor", label: "Poor" },
-];
-
-const PRICE_TYPE_OPTIONS = [
-  { value: "any", label: "All Price Types" },
-  { value: "hourly", label: "Per Hour" },
-  { value: "daily", label: "Per Day" },
-  { value: "weekly", label: "Per Week" },
-  { value: "monthly", label: "Per Month" },
 ];
 
 const PRICE_RANGES = [
@@ -108,15 +99,14 @@ export function SearchFilters({
   className,
   limitedFilters,
 }: SearchFiltersProps) {
-  const [localFilters, setLocalFilters] = React.useState({
+    const [localFilters, setLocalFilters] = React.useState({
     category: currentFilters.category || "any",
     city: currentFilters.city || "any",
-    area: currentFilters.area || "any",
+    area: currentFilters.area || "",
     condition: currentFilters.condition || "any",
     minPrice: currentFilters.minPrice || 0,
     maxPrice: currentFilters.maxPrice || 100000,
     availability: currentFilters.availability || "any",
-    priceType: currentFilters.priceType || "any",
   });
   
   const [priceRange, setPriceRange] = React.useState([
@@ -422,43 +412,6 @@ export function SearchFilters({
                       {CONDITIONS.map((condition) => (
                         <SelectItem key={condition.value} value={condition.value}>
                           {condition.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CollapsibleContent>
-              </Collapsible>
-              <Separator />
-            </>
-          )}
-
-          {/* Price Type Filter */}
-          {shouldShowFilter("priceType") && (
-            <>
-              <Collapsible
-                open={openSections.priceType}
-                onOpenChange={() => toggleSection("priceType")}
-              >
-                <CollapsibleTrigger className="flex items-center justify-between w-full py-2">
-                  <Label className="text-sm font-semibold">Price Type</Label>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${openSections.priceType ? "rotate-180" : ""}`}
-                  />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2">
-                  <Select
-                    value={localFilters.priceType}
-                    onValueChange={(value) =>
-                      setLocalFilters(prev => ({ ...prev, priceType: value }))
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="All Price Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRICE_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -102,25 +102,47 @@ export default async function ListingPage({ params }: ListingPageProps) {
     const referrer = headersList.get('referer') || '';
     const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || '';
     
-    // Track analytics event with actual listing ID
-    await trackAnalyticsEvent({
-      event_type: 'page_view',
-      listing_id: listing._id,
-      user_id: user?.id || undefined,
-      guest_id: !user ? `guest_${Date.now()}` : undefined,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      referrer: referrer,
-      city: '', // Would be determined from IP in real implementation
-      device_type: userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-      os: userAgent.includes('Windows') ? 'Windows' : 
-          userAgent.includes('Mac') ? 'MacOS' : 
-          userAgent.includes('Linux') ? 'Linux' : 'Other',
-      browser: userAgent.includes('Chrome') ? 'Chrome' : 
-               userAgent.includes('Firefox') ? 'Firefox' : 
-               userAgent.includes('Safari') ? 'Safari' : 'Other',
-      session_id: `session_${Date.now()}`,
-    });
+    // Only track analytics if we have a valid listing ID
+    if (listing && listing._id) {
+      try {
+        console.log("Tracking page view for listing:", {
+          listing_id: listing._id,
+          user_id: user?.id || undefined,
+          guest_id: !user ? `guest_${Date.now()}` : undefined,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          referrer: referrer,
+          device_type: userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+          os: userAgent.includes('Windows') ? 'Windows' : 
+              userAgent.includes('Mac') ? 'MacOS' : 
+              userAgent.includes('Linux') ? 'Linux' : 'Other',
+          browser: userAgent.includes('Chrome') ? 'Chrome' : 
+                   userAgent.includes('Firefox') ? 'Firefox' : 
+                   userAgent.includes('Safari') ? 'Safari' : 'Other',
+        });
+        
+        await trackAnalyticsEvent({
+          event_type: 'page_view',
+          listing_id: listing._id,
+          user_id: user?.id || undefined,
+          guest_id: !user ? `guest_${Date.now()}` : undefined,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          referrer: referrer,
+          city: '', // Would be determined from IP in real implementation
+          device_type: userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+          os: userAgent.includes('Windows') ? 'Windows' : 
+              userAgent.includes('Mac') ? 'MacOS' : 
+              userAgent.includes('Linux') ? 'Linux' : 'Other',
+          browser: userAgent.includes('Chrome') ? 'Chrome' : 
+                   userAgent.includes('Firefox') ? 'Firefox' : 
+                   userAgent.includes('Safari') ? 'Safari' : 'Other',
+        });
+      } catch (analyticsError) {
+        console.error("Failed to track analytics event:", analyticsError);
+        // Don't let analytics errors break the page
+      }
+    }
 
     // Get similar listings
     const similarListings = await getSimilarListings(listing._id, listing.category?.title || '', 4);

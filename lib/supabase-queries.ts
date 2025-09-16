@@ -1176,13 +1176,26 @@ export async function trackAnalyticsEvent(
   }
 ): Promise<boolean> {
   try {
+    // Validate input data
+    if (!eventData || typeof eventData !== 'object') {
+      console.warn("Invalid eventData provided to trackAnalyticsEvent");
+      return false;
+    }
+
+    // Log the incoming event data for debugging (before processing)
+    console.log("Tracking analytics event with data:", JSON.stringify(eventData, null, 2));
+
     const supabase = await createClient(); // Use server client for proper authentication
+
+    // Log that we successfully created the Supabase client
+    console.log("Successfully created Supabase client");
 
     let sessionId = eventData.session_id;
 
     // Get or create session if not provided and we have enough data
     if (!sessionId && (eventData.user_id || eventData.guest_id)) {
       try {
+        console.log("Attempting to get or create session");
         const { data: session, error: sessionError } = await supabase.rpc(
           "get_or_create_session",
           {
@@ -1194,7 +1207,19 @@ export async function trackAnalyticsEvent(
           }
         );
 
-        if (!sessionError && session) {
+        if (sessionError) {
+          console.warn("Session creation error:", sessionError);
+          // Log more details about the session error
+          if (sessionError && typeof sessionError === 'object') {
+            console.warn("Session error details:", {
+              message: (sessionError as any).message || 'No message',
+              code: (sessionError as any).code || 'No code',
+              hint: (sessionError as any).hint || 'No hint',
+              details: (sessionError as any).details || 'No details'
+            });
+          }
+        } else if (session) {
+          console.log("Successfully got or created session:", session);
           sessionId = session;
         }
       } catch (error) {
@@ -1202,6 +1227,8 @@ export async function trackAnalyticsEvent(
           "Session creation failed, tracking without session:",
           error
         );
+        // Log more details about the caught error
+        console.warn("Session creation error details:", error);
       }
     }
 
@@ -1213,21 +1240,39 @@ export async function trackAnalyticsEvent(
     // If we have a user_id, check if the user exists in our database
     if (userId) {
       try {
+        console.log("Verifying user existence for user_id:", userId);
         const { data: userExists, error: userError } = await supabase
           .from("users")
           .select("id, guest_id")
           .eq("id", userId)
           .single();
 
-        if (userError || !userExists) {
+        if (userError) {
+          console.warn("User verification error:", userError);
+          // Log more details about the user verification error
+          if (userError && typeof userError === 'object') {
+            console.warn("User verification error details:", {
+              message: (userError as any).message || 'No message',
+              code: (userError as any).code || 'No code',
+              hint: (userError as any).hint || 'No hint',
+              details: (userError as any).details || 'No details'
+            });
+          }
+          // User doesn't exist, nullify the user_id
+          userId = null;
+        } else if (!userExists) {
+          console.warn("User does not exist:", userId);
           // User doesn't exist, nullify the user_id
           userId = null;
         } else if (userExists.guest_id) {
+          console.log("Using guest_id from user profile:", userExists.guest_id);
           // Use the guest_id from the user profile
           guestId = userExists.guest_id;
         }
       } catch (error) {
         console.warn("Could not verify user existence:", error);
+        // Log more details about the caught error
+        console.warn("User verification exception details:", error);
         // If we can't verify, nullify the user_id to avoid FK constraint errors
         userId = null;
       }
@@ -1237,24 +1282,78 @@ export async function trackAnalyticsEvent(
     if (!guestId) {
       guestId =
         "guest-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+      console.log("Generated new guest_id:", guestId);
     }
 
-    const { error } = await supabase.from("analytics_events").insert({
+    // Prepare the data for insertion, ensuring no null or undefined values that might cause issues
+    const insertData: any = {
       ...eventData,
-      user_id: userId, // Use verified user_id or null
+      user_id: userId || null, // Use verified user_id or null
       guest_id: guestId, // Ensure guest_id is always set
-      session_ref: sessionId,
+      session_ref: sessionId || null,
       created_at: new Date().toISOString(),
+      // Remove any properties that might cause issues
+      session_id: undefined,
+    };
+
+    // Remove undefined properties
+    Object.keys(insertData).forEach(key => {
+      if (insertData[key] === undefined) {
+        delete insertData[key];
+      }
     });
+
+    console.log("Inserting analytics event with data:", JSON.stringify(insertData, null, 2));
+    
+    // Validate that session_ref is a valid UUID if provided
+    if (insertData.session_ref && typeof insertData.session_ref === 'string') {
+      // Simple UUID validation regex
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(insertData.session_ref)) {
+        console.warn("Invalid session_ref format (not a UUID):", insertData.session_ref);
+        // Set to null to avoid database error
+        insertData.session_ref = null;
+      }
+    }
+    
+    // Additional validation for other fields
+    if (insertData.user_id && typeof insertData.user_id === 'string') {
+      // Simple UUID validation for user_id
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(insertData.user_id)) {
+        console.warn("Invalid user_id format (not a UUID):", insertData.user_id);
+        // Set to null to avoid database error
+        insertData.user_id = null;
+      }
+    }
+
+    const { error, data } = await supabase.from("analytics_events").insert(insertData);
 
     if (error) {
       console.error("Error tracking analytics event:", error);
+      // More robust error logging
+      if (error && typeof error === 'object') {
+        console.error("Error details:", {
+          message: (error as any).message || 'No message',
+          code: (error as any).code || 'No code',
+          hint: (error as any).hint || 'No hint',
+          details: (error as any).details || 'No details'
+        });
+      }
       return false;
     }
 
+    console.log("Successfully tracked analytics event:", data);
     return true;
   } catch (error) {
+    // Log the full error for debugging
     console.error("Error tracking analytics event:", error);
+    // Also log the event data that was being tracked (safely)
+    try {
+      console.error("Event data:", JSON.stringify(eventData, null, 2));
+    } catch (e) {
+      console.error("Could not serialize event data for logging");
+    }
     return false;
   }
 }

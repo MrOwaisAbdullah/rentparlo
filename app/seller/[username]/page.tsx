@@ -54,13 +54,15 @@ async function trackProfileView(sellerId: string) {
     const userAgent = headersList.get('user-agent') || '';
     const referer = headersList.get('referer') || '';
     
-    // Track the profile view
-    await trackAnalyticsEvent({
-      event_type: 'profile_view',
-      metadata: { seller_id: sellerId },
-      referrer: referer,
-      user_agent: userAgent
-    });
+    // Track the profile view only if we have a valid seller ID
+    if (sellerId) {
+      await trackAnalyticsEvent({
+        event_type: 'profile_view',
+        metadata: { seller_id: sellerId },
+        referrer: referer,
+        user_agent: userAgent
+      });
+    }
   } catch (error) {
     console.error('Error tracking profile view:', error);
     // Don't fail the page load for analytics errors

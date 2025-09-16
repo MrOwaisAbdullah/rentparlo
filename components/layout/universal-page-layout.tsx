@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { UniversalSidebar } from "./universal-sidebar";
 import { SidebarProvider } from "@/contexts/sidebar-context";
 import { ResponsiveContainer, ResponsiveFlex } from "./responsive-container";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { Filter, X } from "lucide-react";
 import { CategoryFilters } from "@/components/category/category-filters";
 
 export interface UniversalPageLayoutProps {
@@ -48,13 +48,29 @@ export function UniversalPageLayout({
                     Filters
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-full max-w-sm overflow-y-auto p-6">
-                  <CategoryFilters
-                    slug={pageContext.categorySlug}
-                    currentFilters={pageContext.filters}
-                    subcategories={pageContext.subcategories}
-                    onNavigate={() => setIsSheetOpen(false)}
-                  />
+                <SheetContent side="left" className="w-full max-w-sm overflow-y-auto p-0">
+                  <SheetHeader className="p-6 pb-4 border-b">
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="text-lg font-semibold">Filters</SheetTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setIsSheetOpen(false)}
+                      >
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Close</span>
+                      </Button>
+                    </div>
+                  </SheetHeader>
+                  <div className="p-6 overflow-y-auto">
+                    <CategoryFilters
+                      slug={pageContext.categorySlug}
+                      currentFilters={pageContext.filters}
+                      subcategories={pageContext.subcategories}
+                      onNavigate={() => setIsSheetOpen(false)}
+                    />
+                  </div>
                 </SheetContent>
               </Sheet>
             </ResponsiveContainer>

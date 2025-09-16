@@ -100,14 +100,17 @@ async function SellerProfilePage({ params }: { params: Promise<{ username: strin
     
     // Track profile view on server side to ensure it works for all users
     try {
-      const trackResult = await trackAnalyticsEvent({
-        event_type: 'view',
-        user_id: seller.id,
-        listing_id: null, // No listing ID for profile views
-        metadata: { page: 'seller_profile', username: username }
-      });
-      
-      console.log(`Profile view tracking result for ${username}:`, trackResult);
+      // Only track if we have a valid seller ID
+      if (seller && seller.id) {
+        const trackResult = await trackAnalyticsEvent({
+          event_type: 'view',
+          user_id: seller.id,
+          listing_id: null, // No listing ID for profile views
+          metadata: { page: 'seller_profile', username: username }
+        });
+        
+        console.log(`Profile view tracking result for ${username}:`, trackResult);
+      }
     } catch (trackingError) {
       console.error('Error tracking profile view:', trackingError);
     }
