@@ -1,6 +1,6 @@
 // Dashboard-specific TypeScript interfaces and data models
 
-import { EnhancedUserSubscription, SubscriptionPackage, PackageUsage, BillingRecord } from "@/types";
+import { EnhancedUserSubscription, SubscriptionPackage, PackageUsage } from "@/types";
 
 // Core Analytics Models
 export interface SellerAnalytics {
@@ -129,18 +129,7 @@ export interface UserSubscription {
   updatedAt: string;
 }
 
-export interface SubscriptionPackage {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  duration: number; // in days
-  features: PackageFeature[];
-  limits: PackageLimits;
-  isPopular?: boolean;
-  isActive: boolean;
-}
+
 
 export interface PackageFeature {
   name: string;
@@ -159,15 +148,6 @@ export interface PackageLimits {
   advancedAnalytics: boolean;
 }
 
-export interface PackageUsage {
-  listingsUsed: number;
-  listingsLimit: number;
-  featuredListingsUsed: number;
-  featuredListingsLimit: number;
-  analyticsAccessDays: number;
-  storageUsed: number;
-  storageLimit: number;
-}
 
 export interface BillingRecord {
   id: string;
@@ -391,6 +371,7 @@ export interface DataTableProps<T> {
   filtering?: boolean;
   exportable?: boolean;
   loading?: boolean;
+  title?: string;
 }
 
 export interface ColumnDef<T> {
@@ -404,7 +385,7 @@ export interface ColumnDef<T> {
 export interface ExportButtonProps {
   data: any[];
   filename: string;
-  format: "csv" | "pdf" | "excel";
+  format: "csv" | "pdf";
   onExport?: () => void;
   disabled?: boolean;
   exportType?: "analytics" | "listings" | "performance" | "general";

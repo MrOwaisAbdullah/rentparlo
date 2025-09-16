@@ -229,7 +229,7 @@ export function VerificationUpload({
   return (
     <div className={cn("space-y-6", className)}>
       {/* Instructions */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md" role="alert">
+      <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md verification-upload-card" role="alert">
         <p className="font-bold">Document Submission Guidelines</p>
         <ul className="mt-2 list-disc list-inside text-sm space-y-1">
           <li>
@@ -248,15 +248,7 @@ export function VerificationUpload({
       </div>
 
       {/* Overall Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Verification Progress</span>
-            <Badge variant={verificationStatus === 'approved' ? 'default' : 'secondary'}>
-              {statusConfig[verificationStatus]?.label || verificationStatus}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
+      <Card className="verification-upload-card">
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm">
@@ -293,13 +285,13 @@ export function VerificationUpload({
               transition={{ duration: 0.3 }}
             >
               <Card className={cn(
-                "transition-all duration-200",
+                "transition-all duration-200 verification-upload-card",
                 config && `${config.borderColor} ${config.bgColor}`,
                 dragOver === requirement.type && "border-primary border-dashed"
               )}>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
+                  <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center space-x-2 flex-wrap gap-1">
                       <span className="text-base">{requirement.label}</span>
                       {requirement.required && (
                         <Badge variant="secondary" className="text-xs">Required</Badge>
@@ -325,15 +317,15 @@ export function VerificationUpload({
                     <div className="space-y-4">
                       {/* Existing Document */}
                       <div className={cn(
-                        "p-4 rounded-lg border-2 border-dashed",
+                        "p-4 rounded-lg border-2 border-dashed verification-document-container",
                         config?.borderColor || "border-gray-200"
                       )}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <FileText className="h-8 w-8 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium text-sm">{existingDoc.fileName}</p>
-                              <p className="text-xs text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 verification-document-info">
+                          <div className="flex items-start space-x-3">
+                            <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{existingDoc.fileName}</p>
+                              <p className="text-xs text-muted-foreground truncate">
                                 Uploaded {formatDate(existingDoc.uploadedAt)}
                                 {existingDoc.fileSize && ` • ${formatFileSize(existingDoc.fileSize)}`}
                               </p>
@@ -383,7 +375,7 @@ export function VerificationUpload({
                   ) : (
                     <div
                       className={cn(
-                        "border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors",
+                        "border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors",
                         dragOver === requirement.type && "border-primary bg-primary/5",
                         "hover:border-gray-400"
                       )}
@@ -392,7 +384,7 @@ export function VerificationUpload({
                       onDragEnter={() => setDragOver(requirement.type)}
                       onDragLeave={() => setDragOver(null)}
                     >
-                      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <Upload className="mx-auto h-10 w-10 text-gray-400 mb-3" />
                       <div className="space-y-2">
                         <p className="text-sm font-medium">
                           Drop your {requirement.label.toLowerCase()} here, or{' '}

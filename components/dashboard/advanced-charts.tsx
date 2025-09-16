@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -350,6 +351,7 @@ export function GeographicHeatmap({
   data,
   height = 400,
 }: GeographicHeatmapProps) {
+  const isMobile = useIsMobile();
   const [sortBy, setSortBy] = useState<"views" | "contacts" | "percentage">(
     "views"
   );
@@ -380,50 +382,52 @@ export function GeographicHeatmap({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {sortedData.map((city, index) => {
-            const intensity = (city[sortBy] / maxValue) * 100;
-            const getTrendIcon = () => {
-              if (index < 3)
-                return <TrendingUp className="h-4 w-4 text-green-500" />;
-              if (index > sortedData.length - 4)
-                return <TrendingDown className="h-4 w-4 text-red-500" />;
-              return <Minus className="h-4 w-4 text-gray-500" />;
-            };
+        <div className={isMobile ? "overflow-x-auto -mx-4 px-4" : ""}>
+          <div className={`space-y-3 ${isMobile ? "min-w-[500px]" : ""}`}>
+            {sortedData.map((city, index) => {
+              const intensity = (city[sortBy] / maxValue) * 100;
+              const getTrendIcon = () => {
+                if (index < 3)
+                  return <TrendingUp className="h-4 w-4 text-green-500" />;
+                if (index > sortedData.length - 4)
+                  return <TrendingDown className="h-4 w-4 text-red-500" />;
+                return <Minus className="h-4 w-4 text-gray-500" />;
+              };
 
-            return (
-              <div
-                key={city.city}
-                className="flex items-center gap-3 p-3 rounded-lg border"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  {getTrendIcon()}
-                  <span className="font-medium truncate">{city.city}</span>
-                </div>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="text-right">
-                    <div className="font-semibold">
-                      {city.views.toLocaleString()}
+              return (
+                <div
+                  key={city.city}
+                  className="flex items-center gap-3 p-3 rounded-lg border"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {getTrendIcon()}
+                    <span className="font-medium truncate">{city.city}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="text-right">
+                      <div className="font-semibold">
+                        {city.views.toLocaleString()}
+                      </div>
+                      <div className="text-muted-foreground">views</div>
                     </div>
-                    <div className="text-muted-foreground">views</div>
+                    <div className="text-right">
+                      <div className="font-semibold">{city.contacts}</div>
+                      <div className="text-muted-foreground">contacts</div>
+                    </div>
+                    <div className="w-20 bg-muted rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
+                        style={{ width: `${intensity}%` }}
+                      />
+                    </div>
+                    <Badge variant="secondary">
+                      {city.percentage.toFixed(1)}%
+                    </Badge>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold">{city.contacts}</div>
-                    <div className="text-muted-foreground">contacts</div>
-                  </div>
-                  <div className="w-20 bg-muted rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
-                      style={{ width: `${intensity}%` }}
-                    />
-                  </div>
-                  <Badge variant="secondary">
-                    {city.percentage.toFixed(1)}%
-                  </Badge>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -441,6 +445,7 @@ interface DeviceBreakdownProps {
 }
 
 export function DeviceBreakdown({ data, height = 300 }: DeviceBreakdownProps) {
+  const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"pie" | "bar">("pie");
 
   const pieData = data.map((item, index) => ({
@@ -488,8 +493,8 @@ export function DeviceBreakdown({ data, height = 300 }: DeviceBreakdownProps) {
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
+                    innerRadius={isMobile ? 40 : 60}
+                    outerRadius={isMobile ? 80 : 120}
                     paddingAngle={2}
                     dataKey="views"
                   >

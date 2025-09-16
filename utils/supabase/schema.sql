@@ -874,6 +874,31 @@ COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary anal
 COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
 COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
 
+-- Trigger function to sync user profile image to seller profile
+CREATE OR REPLACE FUNCTION public.sync_avatar_to_seller_profile()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Only sync if profile_image_url is being updated or inserted
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    -- Update seller profile avatar_url if it exists
+    UPDATE public.seller_profiles 
+    SET avatar_url = NEW.profile_image_url
+    WHERE id = NEW.id 
+    AND (avatar_url IS NULL OR avatar_url != NEW.profile_image_url);
+    
+    RETURN NEW;
+  END IF;
+  
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to sync avatar when user profile is updated
+CREATE TRIGGER sync_user_avatar_to_seller_profile
+  AFTER INSERT OR UPDATE OF profile_image_url ON public.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_avatar_to_seller_profile();
+
 -- Summary of fixes and improvements
 /*
 This schema is consolidated to provide a clean and robust starting point.
@@ -886,6 +911,7 @@ It includes:
 - Triggers for automatic timestamp updates.
 - Views for aggregated data.
 - Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+- Trigger to automatically sync avatar URLs from users.profile_image_url to seller_profiles.avatar_url
 
 This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
 */

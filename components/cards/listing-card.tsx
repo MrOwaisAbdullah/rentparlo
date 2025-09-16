@@ -705,8 +705,8 @@ export function ListingCard({
               </div>
 
             {/* Seller info */}
-            {/* <div className="flex items-center justify-between pt-3 border-t">
-              {effectiveSeller && listing?.seller?.profile && (
+            <div className="flex items-center justify-between pt-3 border-t">
+              {listing?.seller?.profile?.username && (
                 <Link href={`/seller/${listing.seller.profile.username}`} className="flex items-center gap-2 hover:opacity-80">
                   <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                     <span className="text-xs font-medium">
@@ -740,7 +740,7 @@ export function ListingCard({
               )}
               
 
-            </div> */}
+            </div>
           </div>
         </div>
       </Card>
@@ -1034,29 +1034,60 @@ export function ListingCard({
           {showSellerInfo && effectiveSeller && (
             <div className="flex items-center justify-between pt-2 border-t">
               <div className="flex items-center space-x-2">
-                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                  {effectiveSeller?.avatar ? (
-                    <Image
-                      src={effectiveSeller.avatar || "/placeholder-blog.svg"}
-                      alt={effectiveSeller.name}
-                      width={24}
-                      height={24}
-                      className="rounded-full"
-                      onError={(e) => {
-                        // Fallback to placeholder if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-xs font-medium">{effectiveSeller?.name?.charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-                <span className="text-sm text-muted-foreground">{effectiveSeller?.name}</span>
-                {effectiveSeller?.isVerified && (
-                  <Badge variant="outline" className="text-xs">
-                    Verified
-                  </Badge>
+                {listing?.seller?.profile?.username ? (
+                  <Link href={`/seller/${listing.seller.profile.username}`} className="flex items-center space-x-2 hover:opacity-80">
+                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                      {effectiveSeller?.avatar ? (
+                        <Image
+                          src={effectiveSeller.avatar || "/placeholder-blog.svg"}
+                          alt={effectiveSeller.name}
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                        />
+                      ) : (
+                        <span className="text-xs font-medium">{effectiveSeller?.name?.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">{effectiveSeller?.name}</span>
+                    {effectiveSeller?.isVerified && (
+                      <Badge variant="outline" className="text-xs">
+                        Verified
+                      </Badge>
+                    )}
+                  </Link>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                      {effectiveSeller?.avatar ? (
+                        <Image
+                          src={effectiveSeller.avatar || "/placeholder-blog.svg"}
+                          alt={effectiveSeller.name}
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                        />
+                      ) : (
+                        <span className="text-xs font-medium">{effectiveSeller?.name?.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">{effectiveSeller?.name}</span>
+                    {effectiveSeller?.isVerified && (
+                      <Badge variant="outline" className="text-xs">
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
                 )}
               </div>
 

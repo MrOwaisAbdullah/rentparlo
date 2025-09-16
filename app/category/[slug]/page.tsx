@@ -136,7 +136,7 @@ async function CategoryContent({
       maxPrice: searchParams.maxPrice ? parseInt(searchParams.maxPrice) : 0,
       priceType: searchParams.priceType || "",
       sortBy: searchParams.sort || "newest",
-      category: formattedCategory.slug, // Use category slug for filtering
+      category: formattedCategory._id, // Use category ID for proper filtering
     };
 
     // Page context for sidebar

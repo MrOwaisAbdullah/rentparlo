@@ -1195,7 +1195,13 @@ export async function trackAnalyticsEvent(
     // Get or create session if not provided and we have enough data
     if (!sessionId && (eventData.user_id || eventData.guest_id)) {
       try {
-        console.log("Attempting to get or create session");
+        console.log("Attempting to get or create session with parameters:", {
+          p_user_id: eventData.user_id,
+          p_guest_id: eventData.guest_id,
+          p_ip_address: eventData.ip_address,
+          p_user_agent: eventData.user_agent,
+          p_referrer: eventData.referrer,
+        });
         const { data: session, error: sessionError } = await supabase.rpc(
           "get_or_create_session",
           {

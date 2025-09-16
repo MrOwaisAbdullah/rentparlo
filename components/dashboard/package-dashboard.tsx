@@ -130,10 +130,27 @@ export function PackageDashboard({
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="active" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Active Package</TabsTrigger>
-          <TabsTrigger value="compare" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Compare Packages</TabsTrigger>
-          <TabsTrigger value="billing" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm">Billing History</TabsTrigger>
+        <TabsList className="w-full flex flex-col sm:flex-row sm:grid sm:grid-cols-3 gap-1 h-auto sm:h-12">
+          <TabsTrigger 
+            value="active" 
+            className="w-full sm:w-auto min-h-[48px] sm:min-h-0 py-3 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm px-2 sm:px-3 order-1"
+          >
+            Active Package
+          </TabsTrigger>
+          <div className="flex w-full gap-1 sm:contents order-2">
+            <TabsTrigger 
+              value="compare" 
+              className="flex-1 sm:flex-auto w-1/2 sm:w-auto min-h-[48px] sm:min-h-0 py-3 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm px-2 sm:px-3"
+            >
+              Compare
+            </TabsTrigger>
+            <TabsTrigger 
+              value="billing" 
+              className="flex-1 sm:flex-auto w-1/2 sm:w-auto min-h-[48px] sm:min-h-0 py-3 sm:py-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm px-2 sm:px-3"
+            >
+              Billing
+            </TabsTrigger>
+          </div>
         </TabsList>
 
         <TabsContent value="active" className="mt-6">

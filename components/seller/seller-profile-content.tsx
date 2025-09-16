@@ -2,13 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { VerifiedBadge } from '@/components/seller/verified-badge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   DropdownMenu, 
@@ -16,13 +14,26 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { FeaturedListings } from '@/components/sections/featured-listings';
 import { SellerTierBadge } from '@/components/seller/seller-tier-badge';
 import { SellerStats } from '@/components/seller/seller-stats';
-import { SellerContact } from '@/components/seller/seller-contact';
 import { cn } from '@/lib/utils';
 import { trackAnalyticsEventClient } from '@/lib/supabase-queries-client';
 import { Listing } from '@/types';
+import { 
+  AlertCircle, 
+  Shield, 
+  ChevronDown, 
+  MapPin, 
+  Calendar, 
+  Phone as PhoneIcon, 
+  Mail, 
+  Globe, 
+  Building, 
+  Star,
+  Map,
+  Phone,
+} from 'lucide-react';
+import { WhatsAppButton } from './whatsapp-button';
 
 interface Seller {
   id: string;
@@ -117,10 +128,10 @@ const tierConfig = {
 };
 
 const verificationConfig = {
-  pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Verification Pending', icon: Clock },
+  pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Verification Pending', icon: AlertCircle },
   approved: { color: 'bg-green-100 text-green-800', label: 'Verified Seller', icon: VerifiedBadge },
   rejected: { color: 'bg-red-100 text-red-800', label: 'Verification Failed', icon: AlertCircle },
-  under_review: { color: 'bg-blue-100 text-blue-800', label: 'Under Review', icon: Clock }
+  under_review: { color: 'bg-blue-100 text-blue-800', label: 'Under Review', icon: Shield }
 };
 
 export function SellerProfileContent({ seller, listings, analytics }: SellerProfileContentProps) {
@@ -355,19 +366,18 @@ export function SellerProfileContent({ seller, listings, analytics }: SellerProf
 
             {/* Contact Actions - WhatsApp, Call, and Map buttons */}
             <div className="w-full lg:w-auto flex flex-col sm:flex-row lg:flex-col gap-2 sm:gap-3">
-              <Button 
-                className="w-full sm:w-auto lg:w-full" 
-                size="sm"
+              <WhatsAppButton
+                className="w-full sm:w-auto lg:w-full h-10 sm:h-11"
+                size="default" 
                 onClick={handleWhatsAppClick}
-              >
-                <WhatsAppIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="text-xs sm:text-sm">WhatsApp</span>
-              </Button>
+                phoneNumber={seller?.phone || ''}
+                message={`Hi ${displayName}, I saw your profile on RentParLo.pk`}
+              />
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none h-10 sm:h-11"
                   onClick={handleCallClick}
                 >
                   <PhoneIcon className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -376,7 +386,7 @@ export function SellerProfileContent({ seller, listings, analytics }: SellerProf
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none h-10 sm:h-11"
                   onClick={handleMapClick}
                 >
                   <Map className="w-3 h-3 sm:w-4 sm:h-4" />

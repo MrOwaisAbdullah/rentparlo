@@ -224,6 +224,11 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     saveOnboardingState(stateToSave);
   }, [currentStep, getValues]);
 
+  // Scroll to top when step changes
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
+
   const steps = [
     {
       id: 'role',
@@ -243,7 +248,7 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       id: 'business',
       title: 'Business Details',
       subtitle: 'For sellers only',
-      description: 'Provide your business information for verification',
+      description: 'Provide your business information',
       content: 'business'
     },
     {
@@ -350,6 +355,9 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
         window.dispatchEvent(new CustomEvent('profileImageUpdated'));
       }
       
+      // Scroll to top after completion
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       toast.success('Welcome to RentParLo.pk! Your profile has been completed.');
       onComplete();
 
@@ -362,17 +370,24 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
     }
   };
 
+  // Add scroll utility function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Update handleNext function
   const handleNext = () => {
     if (currentStep < filteredSteps.length - 1) {
-      setCurrentStep(prev => prev + 1);
-      setError(null);
+      setCurrentStep(currentStep + 1);
+      scrollToTop();
     }
   };
-
+  
+  // Update handlePrevious function
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-      setError(null);
+      setCurrentStep(currentStep - 1);
+      scrollToTop();
     }
   };
 

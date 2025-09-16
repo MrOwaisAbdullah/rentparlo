@@ -262,21 +262,22 @@ export function CreateListingForm({
           listing.images
             ?.map((img) => {
               // For edit mode, we need to extract asset ID from the existing image
-              if (img.asset?._ref) {
-                // If we have the asset reference, use it
-                return {
-                  url: img.asset.url || "",
-                  assetId: img.asset._ref,
-                };
-              } else if (img.asset?.url) {
-                // If we only have URL, extract asset ID from it
-                const urlParts = img.asset.url.split("/");
-                const filename = urlParts[urlParts.length - 1];
-                const assetId = filename.split("-")[0];
-                return {
-                  url: img.asset.url,
-                  assetId: assetId,
-                };
+              // Fix _ref property access in image processing
+              if (img.asset && '_ref' in img.asset && img.asset._ref) {
+              // If we have the asset reference, use it
+              return {
+              url: img.asset.url || "",
+              assetId: img.asset._ref,
+              };
+              } else if (img.asset && 'url' in img.asset && img.asset.url) {
+              // If we only have URL, extract asset ID from it
+              const urlParts = img.asset.url.split("/");
+              const filename = urlParts[urlParts.length - 1];
+              const assetId = filename.split("-")[0];
+              return {
+              url: img.asset.url,
+              assetId: assetId,
+              };
               }
               return null;
             })
@@ -427,7 +428,7 @@ export function CreateListingForm({
 
       console.log("Final imageAssets:", imageAssets);
 
-      // Map form data to Sanity schema
+      // Map form data to Sanity schema with proper type checking
       const listingData = {
         title: data.title,
         description: data.description,
@@ -559,9 +560,10 @@ export function CreateListingForm({
       if (typeof value === "object" && value !== null) {
         // Special case for location
         if (field === "location") {
-          const result = value.city && value.area;
+          const locationValue = value as { city?: string; area?: string };
+          const result = locationValue?.city && locationValue?.area;
           console.log(
-            `Location validation: ${result} (city: ${value.city}, area: ${value.area})`
+            `Location validation: ${result} (city: ${locationValue?.city}, area: ${locationValue?.area})`
           );
           return result;
         }
@@ -574,12 +576,15 @@ export function CreateListingForm({
         return result;
       }
       if (field === "price") {
-        const result = value && value > 0;
-        console.log(`Price validation: ${result} (value: ${value})`);
+        const numericValue = typeof value === 'number' ? value : parseFloat(String(value || '0'));
+        const result = numericValue > 0;
+        console.log(`Price validation: ${result} (value: ${numericValue})`);
         return result;
       }
-      const result = value !== undefined && value !== "";
-      console.log(`Generic field validation: ${result} (value: ${value})`);
+      // Handle string/number values
+      const stringValue = String(value || '');
+      const result = stringValue !== undefined && stringValue !== '' && stringValue !== '0';
+      console.log(`Generic field validation: ${result} (value: ${stringValue})`);
       return result;
     });
 
@@ -710,53 +715,106 @@ export function CreateListingForm({
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          {steps.map((step, index) => {
-            const { hasErrors, isComplete } = getStepValidation(index);
-            const isActive = index === currentStep;
-            const isPast = index < currentStep;
+          {/* Mobile: Horizontal scroll with peeking */}
+          <div className="sm:hidden flex items-center overflow-x-auto px-4 py-2 snap-x snap-mandatory scroll-smooth no-scrollbar">
+            <div className="flex items-center space-x-4 min-w-max px-4">
+              {steps.map((step, index) => {
+                const { hasErrors, isComplete } = getStepValidation(index);
+                const isActive = index === currentStep;
+                const isPast = index < currentStep;
 
-            return (
-              <div key={index} className="flex-1">
-                <div className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
-                      isPast
-                        ? "bg-green-500 text-white"
-                        : isActive
-                          ? "bg-blue-500 text-white"
-                          : hasErrors
-                            ? "bg-red-100 text-red-600"
-                            : isComplete
-                              ? "bg-green-100 text-green-600"
-                              : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {isPast ? "✓" : index + 1}
-                  </div>
-                  {index < steps.length - 1 && (
+                return (
+                  <div key={index}
+                       className={`flex flex-col items-center transition-all duration-300 snap-center
+                                   ${isActive
+                                     ? 'opacity-100 scale-100'
+                                     : 'opacity-40 scale-90 blur-sm'}`}>
                     <div
-                      className={`flex-1 h-1 mx-4 ${
-                        isPast ? "bg-green-500" : "bg-gray-200"
+                      className={`w-12 h-12 rounded-full flex items-center justify-center
+                                 text-sm font-bold shrink-0 transition-all duration-300
+                                 ${isPast ? "bg-green-500 text-white"
+                                   : isActive ? "bg-blue-500 text-white scale-110 shadow-lg shadow-blue-500/30"
+                                   : hasErrors ? "bg-red-100 text-red-600"
+                                   : isComplete ? "bg-green-100 text-green-600"
+                                   : "bg-gray-100 text-gray-600"}`}
+                    >
+                      {isPast ? "✓" : index + 1}
+                    </div>
+
+                    <div className="mt-2 text-center">
+                      <div className={`text-xs font-bold transition-colors duration-300
+                                     ${isActive ? "text-blue-600" : "text-gray-700"}`}>
+                        {step.title}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Desktop: Original horizontal layout */}
+          <div className="hidden sm:flex items-center justify-between w-full">
+            {steps.map((step, index) => {
+              const { hasErrors, isComplete } = getStepValidation(index);
+              const isActive = index === currentStep;
+              const isPast = index < currentStep;
+          
+              return (
+                <div key={index} className="flex items-center flex-1">
+                  <div className="flex items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
+                        isPast
+                          ? "bg-green-500 text-white"
+                          : isActive
+                            ? "bg-blue-500 text-white"
+                            : hasErrors
+                              ? "bg-red-100 text-red-600"
+                              : isComplete
+                                ? "bg-green-100 text-green-600"
+                                : "bg-gray-100 text-gray-600"
                       }`}
-                    />
-                  )}
-                </div>
-                <div className="mt-2">
-                  <div
-                    className={`text-sm font-medium ${
-                      isActive ? "text-blue-600" : "text-gray-900"
-                    }`}
-                  >
-                    {step.title}
+                    >
+                      {isPast ? "✓" : index + 1}
+                    </div>
+                    
+                    <div className="ml-3 text-left">
+                      <div
+                        className={`text-sm font-medium ${
+                          isActive ? "text-blue-600" : "text-gray-900"
+                        }`}
+                      >
+                        {step.title}
+                      </div>
+                      <div className="text-xs text-gray-500 lg:w-[80%]">
+                        {step.description}
+                      </div>
+                    </div>
+                    
+                    {index < steps.length - 1 && (
+                      <div
+                        className={`h-1 flex-1 mx-2 ${
+                          isPast ? "bg-green-500" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
                   </div>
-                  <div className="text-xs text-gray-500 lg:w-[80%]">
-                    {step.description}
-                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
+        
+        <style jsx>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
       </div>
 
       {/* Step Content */}
@@ -1020,7 +1078,7 @@ export function CreateListingForm({
                         <img
                           src={getImageUrl(img)}
                           alt={`Uploaded ${idx + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border"
+                          className="w-full h-24 object-contain rounded-lg border"
                         />
                         <Button
                           type="button"

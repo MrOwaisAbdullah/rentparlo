@@ -95,15 +95,15 @@ export function BillingHistory({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Billing History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {billingHistory.length === 0 ? (
+      {billingHistory.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Billing History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No Billing History</h3>
@@ -111,17 +111,18 @@ export function BillingHistory({
                 Your billing history will appear here once you make payments.
               </p>
             </div>
-          ) : (
-            <DataTable
+          </CardContent>
+        </Card>
+      ) : (
+        <DataTable
               data={billingHistory}
               columns={billingColumns}
               pagination={true}
               sorting={true}
               filtering={true}
+              title="Billing History"
             />
-          )}
-        </CardContent>
-      </Card>
+      )}
     </div>
   );
 }

@@ -47,7 +47,7 @@ interface ExportOptions {
   includeGeographic: boolean;
   includeDevices: boolean;
   includeConversions: boolean;
-  format: "csv" | "pdf" | "excel";
+  format: "csv" | "pdf";
   dateRange: "current" | "custom";
 }
 
@@ -239,7 +239,6 @@ export function AnalyticsExport({
     // Directly create CSV content with proper handling of different data structures
     switch (format) {
       case "csv":
-      case "excel":
         // Import the export utilities
         const { formatCSVValue } = await import("@/lib/export-utils");
         
@@ -346,7 +345,7 @@ export function AnalyticsExport({
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
-        const fileExtension = format === "excel" ? ".xlsx" : ".csv";
+        const fileExtension = ".csv";
         link.setAttribute("href", url);
         link.setAttribute("download", `${filename}${fileExtension}`);
         link.style.visibility = "hidden";
@@ -357,8 +356,118 @@ export function AnalyticsExport({
         break;
         
       case "pdf":
-        // PDF export would go here
-        console.log("PDF export not yet implemented");
+        // Import PDF export utilities
+        const { generateAnalyticsReport } = await import("@/lib/pdf-export-utils");
+        
+        // Prepare data for PDF report
+        const analyticsData: any = {
+          overview: {},
+          trends: [],
+          listings: [],
+          geographic: [],
+          devices: [],
+          conversions: {}
+        };
+        
+        // Separate different types of data for PDF
+        const pdfOverviewData = data.filter(item => item.section === "Overview Metrics");
+        const pdfTrendData = data.filter(item => item.section === "Trend Data");
+        const pdfListingData = data.filter(item => item.section === "Listing Performance");
+        const pdfGeographicData = data.filter(item => item.section === "Geographic Analytics");
+        const pdfDeviceData = data.filter(item => item.section === "Device Analytics");
+        const pdfContactSummaryData = data.filter(item => item.section === "Contact Summary");
+        
+        // Extract and organize data for PDF report
+        pdfOverviewData.forEach(item => {
+          if (item.metric === "Total Views") analyticsData.overview.totalViews = item.value;
+          if (item.metric === "Total Contacts") analyticsData.overview.totalContacts = item.value;
+          if (item.metric === "Contact Rate") analyticsData.overview.contactRate = item.value;
+          if (item.metric === "Unique Visitors") analyticsData.overview.uniqueVisitors = item.value;
+          if (item.metric === "Avg Session Duration") analyticsData.overview.avgSessionDuration = item.value;
+          if (item.metric === "Bounce Rate") analyticsData.overview.bounceRate = item.value;
+        });
+        
+        pdfTrendData.forEach(item => {
+          analyticsData.trends.push({
+            date: item.date,
+            views: item.views,
+            contacts: item.contacts,
+            conversions: item.conversions
+          });
+        });
+        
+        pdfListingData.forEach(item => {
+          analyticsData.listings.push({
+            listingId: item.listing_id,
+            title: item.title,
+            views: item.views,
+            contacts: item.contacts,
+            whatsappClicks: item.whatsapp_clicks,
+            shares: item.shares,
+            saves: item.saves,
+            avgTimeOnPage: item.avg_time_on_page,
+            createdAt: item.created_date,
+            lastActivity: item.last_activity
+          });
+        });
+        
+        pdfGeographicData.forEach(item => {
+          analyticsData.geographic.push({
+            city: item.city,
+            views: item.views,
+            contacts: item.contacts,
+            percentage: item.percentage
+          });
+        });
+        
+        pdfDeviceData.forEach(item => {
+          analyticsData.devices.push({
+            device: item.device_type,
+            views: item.views,
+            contacts: item.contacts,
+            percentage: item.percentage
+          });
+        });
+        
+        pdfContactSummaryData.forEach(item => {
+          if (item.metric === "Total Views") analyticsData.conversions.totalViews = item.value;
+          if (item.metric === "Total Contacts") analyticsData.conversions.totalContacts = item.value;
+          if (item.metric === "Overall Contact Rate") analyticsData.conversions.contactRate = item.value;
+        });
+        
+        // Generate PDF report
+        const reportOptions = {
+          title: "Analytics Performance Report",
+          subtitle: `Generated on ${new Date().toLocaleDateString()}`,
+          timeRange: timeRange,
+          includeCharts: true,
+          includeRecommendations: true,
+          branding: {
+            logo: "/rentparlo.png",
+            companyName: "RentParLo.pk",
+            colors: {
+              primary: "#428bca",
+              secondary: "#5cb85c",
+            },
+          },
+        };
+        
+        try {
+          const pdfBlob = await generateAnalyticsReport(analyticsData, reportOptions);
+          
+          // Download the PDF
+          const url = URL.createObjectURL(pdfBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${filename}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error("PDF export failed:", error);
+          throw new Error(`PDF export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
         break;
     }
   };
@@ -392,7 +501,7 @@ export function AnalyticsExport({
             <Label className="text-sm font-medium">Export Format</Label>
             <Select
               value={exportOptions.format}
-              onValueChange={(value: "csv" | "pdf" | "excel") =>
+              onValueChange={(value: "csv" | "pdf") =>
                 setExportOptions({ ...exportOptions, format: value })
               }
             >
@@ -406,16 +515,10 @@ export function AnalyticsExport({
                     CSV (Comma Separated Values)
                   </div>
                 </SelectItem>
-                <SelectItem value="excel">
+                <SelectItem value="pdf">
                   <div className="flex items-center gap-2">
                     <FileSpreadsheet className="h-4 w-4" />
-                    Excel (Enhanced CSV)
-                  </div>
-                </SelectItem>
-                <SelectItem value="pdf" disabled>
-                  <div className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-4 w-4" />
-                    PDF (Coming in next task)
+                    PDF Report
                   </div>
                 </SelectItem>
               </SelectContent>

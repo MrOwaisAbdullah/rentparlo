@@ -38,6 +38,7 @@ export function DataTable<T extends Record<string, any>>({
   filtering = true,
   exportable = false,
   loading = false,
+  title = "Data Table",
 }: DataTableProps<T>) {
   const isMobile = useIsMobile();
   const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
@@ -164,7 +165,7 @@ export function DataTable<T extends Record<string, any>>({
             className={`flex ${isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
           >
             <CardTitle className={isMobile ? "text-lg" : ""}>
-              Data Table
+              {title}
             </CardTitle>
             <div
               className={`flex gap-2 ${isMobile ? "flex-col" : "items-center"}`}

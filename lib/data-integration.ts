@@ -128,34 +128,151 @@ export async function getEnhancedListingBySlug(slug: string, userId?: string): P
         console.log('Seller data for listing:', seller); // Debugging
         
         if (seller) {
-          // Transform seller data to match expected structure
+          // Always try to get seller profile, regardless of role
+          let sellerProfile: SellerProfile | null = null
+          
+          // Try to get seller profile first
+          sellerProfile = await getSellerProfile(seller.id)
+          console.log('Seller profile data:', sellerProfile); // Debugging
+          
+          // If no seller profile exists, but user is a seller, create a minimal one
+          if (!sellerProfile && seller.role === 'seller') {
+            console.log('Creating minimal seller profile for seller user');
+            sellerProfile = {
+              id: seller.id,
+              username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`,
+              is_verified: seller.is_verified || false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: seller.created_at || new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              created_at: seller.created_at || new Date().toISOString(),
+              updated_at: seller.created_at || new Date().toISOString(),
+              listing_count: 0,
+              is_top_seller: false
+            };
+          }
+          
+          // If we still don't have a seller profile but have user data, create minimal profile
+          if (!sellerProfile) {
+            console.log('Creating minimal seller profile from user data');
+            sellerProfile = {
+              id: seller.id,
+              username: seller.email ? seller.email.split('@')[0] : `user-${seller.id.substring(0, 8)}`,
+              is_verified: seller.is_verified || false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: seller.created_at || new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              avatar_url: seller.profile_image_url || null, // Add avatar_url from user's profile_image_url
+              created_at: seller.created_at || new Date().toISOString(),
+              updated_at: seller.created_at || new Date().toISOString(),
+              listing_count: 0,
+              is_top_seller: false
+            };
+          }
+          
+          // Combine data
           enhancedSeller = {
             ...seller,
-            // Map seller profile data if it exists
-            ...(seller.seller_profiles?.[0] ? {
-              seller_profile: seller.seller_profiles[0]
-            } : {})
+            guest_id: null,
+            profile: sellerProfile || {
+              id: seller.id,
+              username: seller.email,
+              is_verified: false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              avatar_url: seller.profile_image_url || null, // Add avatar_url from user's profile_image_url
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              listing_count: 0,
+              is_top_seller: false
+            }
           };
+        } else {
+          console.log('No seller found for listing with supabaseId:', listing.supabaseId); // Debugging
         }
-      } catch (error) {
-        console.error('Error fetching seller data:', error);
-        // Don't fail the whole listing if seller data is missing
+      } catch (sellerError) {
+        console.error('Error fetching seller data:', sellerError);
+        // Try to create minimal seller profile from listing data if possible
+        try {
+          // Create a very minimal seller profile with just the ID
+          enhancedSeller = {
+            id: listing.supabaseId,
+            email: 'unknown@example.com',
+            role: 'seller',
+            is_verified: false,
+            guest_id: null,
+            created_at: new Date().toISOString(),
+            active: true,
+            email_verified: false,
+            country: 'Pakistan',
+            notification_preferences: { email: true, sms: false, push: true },
+            preferred_language: 'en',
+            profile: {
+              id: listing.supabaseId,
+              username: `user-${listing.supabaseId.substring(0, 8)}`,
+              is_verified: false,
+              tier: 'basic',
+              tier_points: 0,
+              tier_last_updated: new Date().toISOString(),
+              verification_status: 'pending',
+              verification_documents: {
+                cnic_front: null,
+                cnic_back: null,
+                business_license: null
+              },
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              listing_count: 0,
+              is_top_seller: false
+            }
+          };
+        } catch (minimalProfileError) {
+          console.error('Error creating minimal seller profile:', minimalProfileError);
+        }
       }
     }
 
-    // Transform the listing data
+    // Get listing analytics
+    const analytics = await getListingAnalytics(listing._id)
+
+    // Combine data
     const enhancedListing: Listing = {
       ...listing,
-      seller: enhancedSeller,
-      // Add any other transformations needed
-    };
+      views: analytics.views,
+      contactClicks: analytics.contactClicks,
+      seller: enhancedSeller
+    }
+
+    console.log('Enhanced listing with seller:', enhancedListing); // Debugging
 
     // Cache the result
-    await cacheManager.set(cacheKey, enhancedListing, 300); // Cache for 5 minutes
+    await cacheManager.set(cacheKey, enhancedListing, { 
+      ttl: CACHE_TTL.listing,
+      tags: [`listing:${slug}`]
+    });
 
     return enhancedListing;
   } catch (error) {
-    console.error('Error in getEnhancedListingBySlug:', error);
+    console.error('Error getting enhanced listing:', error);
     return null;
   }
 }
@@ -239,12 +356,7 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
 
     // Enhance listings with seller information (limit concurrent requests)
     const batchSize = 5;
-    const enhancedListings: (Listing & { 
-      hasSearchTopPlacement?: boolean; 
-      hasGuaranteedTopPlacement?: boolean;
-      hasEnhancedSearchVisibility?: boolean; // Add enhanced search visibility flag
-      hasSearchPriority?: boolean; // Add search priority flag for Bronze tier
-    })[] = [];
+    const enhancedListings: Listing[] = [];
 
     for (let i = 0; i < paginatedListings.length; i += batchSize) {
       const batch = paginatedListings.slice(i, i + batchSize);
@@ -252,51 +364,11 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
         batch.map(async (listing) => {
           try {
             const seller = await getUserById(listing.supabaseId);
-            if (!seller) return { 
-              ...listing, 
-              hasSearchTopPlacement: false, 
-              hasGuaranteedTopPlacement: false,
-              hasEnhancedSearchVisibility: false,
-              hasSearchPriority: false // Add default search priority flag
-            };
+            if (!seller) return listing;
 
             let sellerProfile: SellerProfile | null = null;
             if (seller.role === 'seller') {
               sellerProfile = await getSellerProfile(seller.id);
-            }
-
-            // Get seller's subscription to check for search top placement feature
-            const subscription = await getUserActiveSubscription(seller.id);
-            const hasSearchTopPlacement = subscription?.subscription_packages?.features?.search_top_placement === true;
-            
-            // Check for guaranteed top placement (from package features or seller tier features)
-            let hasGuaranteedTopPlacement = false;
-            if (subscription?.subscription_packages?.features?.guaranteed_top_placement === true) {
-              hasGuaranteedTopPlacement = true;
-            } else if (sellerProfile) {
-              // Check seller tier features
-              const tier = sellerProfile.tier;
-              if (['platinum', 'diamond'].includes(tier)) {
-                hasGuaranteedTopPlacement = true;
-              }
-            }
-            
-            // Check for enhanced search visibility (Silver tier feature)
-            let hasEnhancedSearchVisibility = false;
-            if (sellerProfile) {
-              const tier = sellerProfile.tier;
-              if (['silver', 'gold', 'platinum', 'diamond'].includes(tier)) {
-                hasEnhancedSearchVisibility = true;
-              }
-            }
-            
-            // Check for search priority (Bronze tier feature)
-            let hasSearchPriority = false;
-            if (sellerProfile) {
-              const tier = sellerProfile.tier;
-              if (['bronze', 'silver', 'gold', 'platinum', 'diamond'].includes(tier)) {
-                hasSearchPriority = true;
-              }
             }
 
             return {
@@ -305,53 +377,16 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
                 ...seller,
                 guest_id: seller.guest_id || null,
                 profile: sellerProfile
-              } : undefined,
-              hasSearchTopPlacement, // Add search top placement flag
-              hasGuaranteedTopPlacement, // Add guaranteed top placement flag
-              hasEnhancedSearchVisibility, // Add enhanced search visibility flag
-              hasSearchPriority // Add search priority flag
+              } : undefined
             };
           } catch (error) {
             console.error(`Error enhancing listing ${listing._id}:`, error);
-            return { 
-              ...listing, 
-              hasSearchTopPlacement: false, 
-              hasGuaranteedTopPlacement: false,
-              hasEnhancedSearchVisibility: false,
-              hasSearchPriority: false // Add default search priority flag
-            };
+            return listing;
           }
         })
       );
       enhancedListings.push(...enhancedBatch);
     }
-
-    // Sort listings to prioritize listings with guaranteed top placement, then search top placement, 
-    // then enhanced search visibility, then search priority, then featured
-    enhancedListings.sort((a, b) => {
-      // First, prioritize listings with guaranteed top placement
-      if (a.hasGuaranteedTopPlacement && !b.hasGuaranteedTopPlacement) return -1;
-      if (!a.hasGuaranteedTopPlacement && b.hasGuaranteedTopPlacement) return 1;
-      
-      // Then, prioritize listings with search top placement
-      if (a.hasSearchTopPlacement && !b.hasSearchTopPlacement) return -1;
-      if (!a.hasSearchTopPlacement && b.hasSearchTopPlacement) return 1;
-      
-      // Then, prioritize listings with enhanced search visibility
-      if (a.hasEnhancedSearchVisibility && !b.hasEnhancedSearchVisibility) return -1;
-      if (!a.hasEnhancedSearchVisibility && b.hasEnhancedSearchVisibility) return 1;
-      
-      // Then, prioritize listings with search priority (Bronze tier feature)
-      if (a.hasSearchPriority && !b.hasSearchPriority) return -1;
-      if (!a.hasSearchPriority && b.hasSearchPriority) return 1;
-      
-      // Then, prioritize featured listings
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-      
-      // Finally, sort by creation date (newest first)
-      return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
-    });
 
     const result: SearchResults = {
       results: enhancedListings,
@@ -460,16 +495,11 @@ export async function getSellerDashboardData(sellerId: string) {
 
     // Get analytics for each listing
     const listingsWithAnalytics = await Promise.all(
-      sellerListings.map(async (listing: any) => {
-        try {
-          const analytics = await getListingAnalytics(listing._id);
-          return {
-            ...listing,
-            ...analytics
-          };
-        } catch (error) {
-          console.error(`Error getting analytics for listing ${listing._id}:`, error);
-          return listing;
+      sellerListings.map(async (listing) => {
+        const analytics = await getListingAnalytics(listing._id)
+        return {
+          ...listing,
+          ...analytics
         }
       })
     )
@@ -479,16 +509,12 @@ export async function getSellerDashboardData(sellerId: string) {
 
     // Get subscription information
     const subscription: EnhancedUserSubscription | null = await getUserActiveSubscription(sellerId)
-    
-    // Check if seller has custom analytics reports feature
-    const hasCustomAnalyticsReports = subscription?.subscription_packages?.features?.custom_analytics_reports === true;
 
     return {
       profile: sellerProfile,
       listings: listingsWithAnalytics,
       analytics: sellerAnalytics,
-      subscription,
-      hasCustomAnalyticsReports // Add custom analytics reports flag
+      subscription
     }
   } catch (error) {
     console.error('Error getting seller dashboard data:', error)
@@ -946,7 +972,7 @@ export async function getCategoryWithListings(slug: string, filters: any) {
     // Get listings for this category with filters using search function
     // Only include non-empty parameters to avoid filtering out results
     const searchParams: any = {
-      category: category._id, // Use category ID instead of slug for proper filtering
+      category: slug, // Always include category slug
       offset: filters.offset || 0,
       limit: filters.limit || 20
     };
@@ -959,21 +985,19 @@ export async function getCategoryWithListings(slug: string, filters: any) {
     if (filters.minPrice && parseInt(String(filters.minPrice)) > 0) searchParams.minPrice = parseInt(String(filters.minPrice));
     if (filters.maxPrice && parseInt(String(filters.maxPrice)) > 0) searchParams.maxPrice = parseInt(String(filters.maxPrice));
 
-    // Use searchListings which properly filters by category ID
+    // Use searchListings which properly filters by category slug
     const listings = await searchListings(searchParams);
     
     // Get total count for pagination
-    const countParams: any = { category: category._id }; // Use category ID
-    
-    // Only add filters if they have actual values
-    if (filters.q && filters.q.trim()) countParams.query = filters.q.trim();
-    if (filters.location && filters.location.trim()) countParams.city = filters.location.trim();
-    if (filters.area && filters.area.trim()) countParams.area = filters.area.trim();
-    if (filters.condition && filters.condition.trim()) countParams.condition = filters.condition.trim();
-    if (filters.minPrice && parseInt(String(filters.minPrice)) > 0) countParams.minPrice = parseInt(String(filters.minPrice));
-    if (filters.maxPrice && parseInt(String(filters.maxPrice)) > 0) countParams.maxPrice = parseInt(String(filters.maxPrice));
-    
-    const totalCount = await searchListingsCount(countParams);
+    const totalCount = await searchListingsCount({
+      query: searchParams.query,
+      category: slug,
+      city: searchParams.city,
+      area: searchParams.area,
+      condition: searchParams.condition,
+      minPrice: searchParams.minPrice,
+      maxPrice: searchParams.maxPrice
+    });
     
     // Get subcategories (if any)
     const subcategories = await getCategories()
@@ -993,40 +1017,6 @@ export async function getCategoryWithListings(slug: string, filters: any) {
             sellerProfile = await getSellerProfile(seller.id)
           }
 
-          // Get seller's subscription to check for priority placement feature
-          const subscription = await getUserActiveSubscription(seller.id);
-          const hasPriorityPlacement = subscription?.subscription_packages?.features?.category_priority_placement === true;
-          
-          // Check for guaranteed top placement (from package features or seller tier features)
-          let hasGuaranteedTopPlacement = false;
-          if (subscription?.subscription_packages?.features?.guaranteed_top_placement === true) {
-            hasGuaranteedTopPlacement = true;
-          } else if (sellerProfile) {
-            // Check seller tier features
-            const tier = sellerProfile.tier;
-            if (['platinum', 'diamond'].includes(tier)) {
-              hasGuaranteedTopPlacement = true;
-            }
-          }
-          
-          // Check for search priority (Bronze tier feature)
-          let hasSearchPriority = false;
-          if (sellerProfile) {
-            const tier = sellerProfile.tier;
-            if (['bronze', 'silver', 'gold', 'platinum', 'diamond'].includes(tier)) {
-              hasSearchPriority = true;
-            }
-          }
-          
-          // Check for category top placement (Gold tier feature)
-          let hasCategoryTopPlacement = false;
-          if (sellerProfile) {
-            const tier = sellerProfile.tier;
-            if (['gold', 'platinum', 'diamond'].includes(tier)) {
-              hasCategoryTopPlacement = true;
-            }
-          }
-
           return {
             ...listing,
             seller: {
@@ -1034,12 +1024,9 @@ export async function getCategoryWithListings(slug: string, filters: any) {
               username: sellerProfile?.username || seller.email,
               tier: sellerProfile?.tier || 'basic',
               isVerified: seller.is_verified || false,
+              rating: undefined, // SellerProfile doesn't have a rating field
               is_top_seller: sellerProfile?.is_top_seller || false
-            },
-            hasPriorityPlacement, // Add priority placement flag
-            hasGuaranteedTopPlacement, // Add guaranteed top placement flag
-            hasSearchPriority, // Add search priority flag
-            hasCategoryTopPlacement // Add category top placement flag for Gold tier
+            }
           }
         } catch (error) {
           console.error(`Error enhancing listing ${listing._id}:`, error)
@@ -1047,33 +1034,6 @@ export async function getCategoryWithListings(slug: string, filters: any) {
         }
       })
     )
-
-    // Sort listings to prioritize listings with guaranteed top placement, then priority placement, 
-    // then category top placement, then search priority, then featured
-    enhancedListings.sort((a, b) => {
-      // First, prioritize listings with guaranteed top placement
-      if (a.hasGuaranteedTopPlacement && !b.hasGuaranteedTopPlacement) return -1;
-      if (!a.hasGuaranteedTopPlacement && b.hasGuaranteedTopPlacement) return 1;
-      
-      // Then, prioritize listings with category priority placement
-      if (a.hasPriorityPlacement && !b.hasPriorityPlacement) return -1;
-      if (!a.hasPriorityPlacement && b.hasPriorityPlacement) return 1;
-      
-      // Then, prioritize listings with category top placement (Gold tier feature)
-      if (a.hasCategoryTopPlacement && !b.hasCategoryTopPlacement) return -1;
-      if (!a.hasCategoryTopPlacement && b.hasCategoryTopPlacement) return 1;
-      
-      // Then, prioritize listings with search priority (Bronze tier feature)
-      if (a.hasSearchPriority && !b.hasSearchPriority) return -1;
-      if (!a.hasSearchPriority && b.hasSearchPriority) return 1;
-      
-      // Then, prioritize featured listings
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-      
-      // Finally, sort by creation date (newest first)
-      return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
-    });
 
     const result = {
       category,

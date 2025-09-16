@@ -1,40 +1,86 @@
-import { client } from '@/sanity/lib/client';
-import { Category, Listing } from '@/types';
-import { groq } from 'next-sanity';
+// Mock data and functions for categories
+import { Category } from "@/types";
+
+export const CATEGORIES: Category[] = [
+  {
+    _id: "1",
+    title: "Automobiles",
+    slug: "automobiles",
+    description: "Rent cars, bikes, scooters and more",
+    order: 1,
+    popular: true,
+  },
+  {
+    _id: "2",
+    title: "Medical",
+    slug: "medical-equipment",
+    description: "Rent medical devices and equipment",
+    order: 2,
+    popular: true,
+  },
+  {
+    _id: "3",
+    title: "Camera",
+    slug: "camera",
+    description: "Professional camera rentals for photography and videography",
+    order: 3,
+    popular: true,
+  },
+  {
+    _id: "4",
+    title: "Generators",
+    slug: "generators",
+    description: "Rent generators for events and emergencies",
+    order: 4,
+    popular: true,
+  },
+  {
+    _id: "5",
+    title: "Wedding Couture",
+    slug: "wedding-couture",
+    description: "Rent wedding dresses, suits, and accessories",
+    order: 5,
+    popular: true,
+  },
+  {
+    _id: "6",
+    title: "Events",
+    slug: "events",
+    description: "Rent event supplies and equipment",
+    order: 6,
+    popular: true,
+  },
+  {
+    _id: "7",
+    title: "Construction",
+    slug: "construction-equipment",
+    description: "Rent construction tools and heavy equipment",
+    order: 7,
+    popular: true,
+  },
+  {
+    _id: "8",
+    title: "Studio",
+    slug: "studio",
+    description: "Rent studio equipment and supplies",
+    order: 8,
+    popular: true,
+  },
+  {
+    _id: "9",
+    title: "Advertisements",
+    slug: "advertisements",
+    description: "Rent advertising equipment and materials",
+    order: 9,
+    popular: true,
+  }
+];
 
 export async function getCategories(): Promise<Category[]> {
-  return client.fetch(
-    groq`*[_type == "category"]{
-      ...,
-      "slug": slug.current
-    } | order(order asc)`
-  );
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return CATEGORIES;
 }
 
-export async function getCategoryWithListings(slug: string): Promise<{
-  category: Category;
-  listings: Listing[];
-}> {
-  const category = await client.fetch(
-    groq`*[_type == "category" && slug.current == $slug][0]{
-      ...,
-      "slug": slug.current
-    }`,
-    { slug }
-  );
-
-  const listings = await client.fetch(
-    groq`*[_type == "listing" && references($categoryId) && approved == true]{
-      ...,
-      "slug": slug.current,
-      "mainImage": mainImage.asset->url,
-      "owner": owner->{
-        ...,
-        "slug": slug.current
-      }
-    }`,
-    { categoryId: category._id }
-  );
-
-  return { category, listings };
+export function getCategoryBySlug(slug: string): Category | undefined {
+  return CATEGORIES.find((category) => category.slug === slug);
 }

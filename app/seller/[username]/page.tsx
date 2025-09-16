@@ -6,6 +6,7 @@ import { SellerStats } from '@/components/seller/seller-stats';
 import { AdBanner } from '@/components/ads/ad-banner';
 import { ClientProductListingSection } from '@/components/seller/client-product-listing-section';
 import { SellerProfileActions } from '@/components/seller/seller-profile-actions';
+import { ListingCard } from '@/components/cards/listing-card';
 import { getSellerProfileByUsername } from '@/lib/supabase-queries';
 import { trackAnalyticsEvent } from '@/lib/supabase-queries';
 import { headers } from 'next/headers';
@@ -113,23 +114,62 @@ export default async function SellerPage({ params }: SellerPageProps) {
           {/* Products Tab */}
           <SellerProfileTabContent value="products">
             <div className="space-y-8">
-              {/* Hot Rental Section - Client Component Wrapper */}
-              <ClientProductListingSection
-                title="Hot Rental"
-                listings={mockHotRentalListings}
-              />
+              {/* Improved Listing Organization - All listings in one responsive grid */}
+              <div className="space-y-8">
+                {/* Featured Listings Section */}
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold">Featured Listings</h2>
+                  {mockHotRentalListings.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                      {mockHotRentalListings.map((listing) => (
+                        <ListingCard
+                          key={listing._id}
+                          listing={listing}
+                          variant="category"
+                          showSellerInfo={false}
+                          className="h-full"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>No featured listings available.</p>
+                    </div>
+                  )}
+                </div>
 
-              {/* Hot Rental Products Section - Client Component Wrapper */}
-              <ClientProductListingSection
-                title="Hot Rental Products"
-                listings={mockHotRentalProductsListings}
-              />
+                {/* Categories Section */}
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold">Categories</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {mockHotRentalProductsListings.map((listing) => (
+                      <ListingCard
+                        key={listing._id}
+                        listing={listing}
+                        variant="category"
+                        showSellerInfo={false}
+                        className="h-full"
+                      />
+                    ))}
+                  </div>
+                </div>
 
-              {/* Rental Products Section - Client Component Wrapper */}
-              <ClientProductListingSection
-                title="Rental Products"
-                listings={mockRentalProductsListings}
-              />
+                {/* All Listings Section */}
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold">All Listings</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {mockRentalProductsListings.map((listing) => (
+                      <ListingCard
+                        key={listing._id}
+                        listing={listing}
+                        variant="category"
+                        showSellerInfo={false}
+                        className="h-full"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
 
               {/* Advertisement Banner */}
               <AdBanner placement="seller-profile" size="large-banner" />  

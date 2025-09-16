@@ -48,7 +48,7 @@ export function ExportButton({
 }: EnhancedExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = async (exportFormat: "csv" | "pdf" | "excel") => {
+  const handleExport = async (exportFormat: "csv" | "pdf") => {
     if (disabled || isExporting) return;
 
     setIsExporting(true);
@@ -74,9 +74,6 @@ export function ExportButton({
             timeRange,
             includeCharts
           );
-          break;
-        case "excel":
-          await exportToExcel(data, filename, exportType, timeRange);
           break;
       }
     } catch (error) {
@@ -501,32 +498,19 @@ export function ExportButton({
     }
   };
 
-  const exportToExcel = async (
-    data: any[],
-    filename: string,
-    exportType: string,
-    timeRange?: TimeRange
-  ) => {
-    // Excel export - enhanced CSV format for now, proper Excel in future
-    console.log("Excel export using enhanced CSV format");
-    await exportToCSV(data, filename + "_excel", exportType, timeRange);
-  };
-
   const getFormatIcon = (format: string) => {
     switch (format) {
       case "csv":
         return <FileSpreadsheet className="h-4 w-4" />;
       case "pdf":
         return <FileText className="h-4 w-4" />;
-      case "excel":
-        return <FileSpreadsheet className="h-4 w-4" />;
       default:
         return <Download className="h-4 w-4" />;
     }
   };
 
   // Single format button
-  if (format !== "csv" && format !== "pdf" && format !== "excel") {
+  if (format !== "csv" && format !== "pdf") {
     return (
       <Button
         variant="outline"
@@ -571,10 +555,6 @@ export function ExportButton({
         <DropdownMenuItem onClick={() => handleExport("pdf")}>
           <FileText className="h-4 w-4 mr-2" />
           Export as PDF
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport("excel")}>
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
-          Export as Excel
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

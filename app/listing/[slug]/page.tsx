@@ -122,7 +122,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
         });
         
         await trackAnalyticsEvent({
-          event_type: 'page_view',
+          event_type: 'view',
           listing_id: listing._id,
           user_id: user?.id || undefined,
           guest_id: !user ? `guest_${Date.now()}` : undefined,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
@@ -11,7 +11,19 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
 import { BreadcrumbItem } from "@/types/dashboard";
 
+// Add scroll utility
+const useScrollToTop = () => {
+  const pathname = usePathname();
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pathname]);
+};
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  // Add scroll to top on route changes
+  useScrollToTop();
+  
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const pathname = usePathname();
 
