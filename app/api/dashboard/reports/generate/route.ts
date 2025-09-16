@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
       includeRecommendations: includeRecommendations || true,
       template: template as "standard" | "executive" | "detailed",
       branding: {
+        logo: "/rentparlo.png", // Path to the logo in the public directory
         companyName: "RentParLo.pk",
         colors: {
           primary: "#428bca",

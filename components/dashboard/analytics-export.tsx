@@ -75,6 +75,10 @@ export function AnalyticsExport({
     try {
       // Prepare data based on selected options
       const exportData = prepareExportData(analyticsData, exportOptions);
+      
+      // Debug: Log the export data to see what's being generated
+      console.log("Export data:", exportData);
+      console.log("Export data length:", exportData.length);
 
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().split("T")[0];
@@ -138,6 +142,7 @@ export function AnalyticsExport({
     }
 
     if (options.includeTrends && data.trends) {
+      console.log("Adding trend data:", data.trends.length, "records");
       data.trends.forEach((trend) => {
         exportData.push({
           section: "Trend Data",
@@ -154,6 +159,7 @@ export function AnalyticsExport({
     }
 
     if (options.includeListings && data.listings) {
+      console.log("Adding listing data:", data.listings.length, "records");
       data.listings.forEach((listing) => {
         exportData.push({
           section: "Listing Performance",
@@ -173,6 +179,7 @@ export function AnalyticsExport({
     }
 
     if (options.includeGeographic && data.geographic) {
+      console.log("Adding geographic data:", data.geographic.length, "records");
       data.geographic.forEach((geo) => {
         exportData.push({
           section: "Geographic Analytics",
@@ -185,6 +192,7 @@ export function AnalyticsExport({
     }
 
     if (options.includeDevices && data.devices) {
+      console.log("Adding device data:", data.devices.length, "records");
       data.devices.forEach((device) => {
         exportData.push({
           section: "Device Analytics",
@@ -216,6 +224,9 @@ export function AnalyticsExport({
         type: "percentage",
       });
     }
+    
+    console.log("Prepared export data:", exportData);
+    console.log("Total export records:", exportData.length);
 
     return exportData;
   };
@@ -240,25 +251,96 @@ export function AnalyticsExport({
         csvContent += `# Total Records: ${data.length}\n`;
         csvContent += `\n`;
         
-        // Export all data as a flat structure
-        if (data.length > 0) {
-          // Get all unique keys from all data
-          const allKeys = new Set<string>();
-          data.forEach(item => {
-            Object.keys(item).forEach(key => {
-              allKeys.add(key);
-            });
-          });
-          
-          const headers = Array.from(allKeys);
-          csvContent += headers.map(header => formatCSVValue(header)).join(",") + "\n";
-          
-          csvContent += data
+        // Separate different types of data
+        const overviewData = data.filter(item => item.section === "Overview Metrics");
+        const trendData = data.filter(item => item.section === "Trend Data");
+        const listingData = data.filter(item => item.section === "Listing Performance");
+        const geographicData = data.filter(item => item.section === "Geographic Analytics");
+        const deviceData = data.filter(item => item.section === "Device Analytics");
+        const contactSummaryData = data.filter(item => item.section === "Contact Summary");
+        
+        // Export Overview Metrics
+        if (overviewData.length > 0) {
+          csvContent += `# OVERVIEW METRICS\n`;
+          csvContent += `"Metric","Value","Type"\n`;
+          csvContent += overviewData
             .map(item => 
-              headers.map(header => formatCSVValue(item[header] || "")).join(",")
+              `${formatCSVValue(item.metric)},${formatCSVValue(item.value)},${formatCSVValue(item.type || "")}`
             )
             .join("\n");
+          csvContent += "\n\n";
         }
+        
+        // Export Trend Data
+        if (trendData.length > 0) {
+          csvContent += `# TREND DATA\n`;
+          // Get headers from the first item
+          const headers = Object.keys(trendData[0]).filter(key => key !== "section");
+          csvContent += headers.map(header => formatCSVValue(header)).join(",") + "\n";
+          csvContent += trendData
+            .map(item => 
+              headers.map(header => formatCSVValue(item[header])).join(",")
+            )
+            .join("\n");
+          csvContent += "\n\n";
+        }
+        
+        // Export Listing Performance
+        if (listingData.length > 0) {
+          csvContent += `# LISTING PERFORMANCE\n`;
+          // Get headers from the first item
+          const headers = Object.keys(listingData[0]).filter(key => key !== "section");
+          csvContent += headers.map(header => formatCSVValue(header)).join(",") + "\n";
+          csvContent += listingData
+            .map(item => 
+              headers.map(header => formatCSVValue(item[header])).join(",")
+            )
+            .join("\n");
+          csvContent += "\n\n";
+        }
+        
+        // Export Geographic Analytics
+        if (geographicData.length > 0) {
+          csvContent += `# GEOGRAPHIC ANALYTICS\n`;
+          // Get headers from the first item
+          const headers = Object.keys(geographicData[0]).filter(key => key !== "section");
+          csvContent += headers.map(header => formatCSVValue(header)).join(",") + "\n";
+          csvContent += geographicData
+            .map(item => 
+              headers.map(header => formatCSVValue(item[header])).join(",")
+            )
+            .join("\n");
+          csvContent += "\n\n";
+        }
+        
+        // Export Device Analytics
+        if (deviceData.length > 0) {
+          csvContent += `# DEVICE ANALYTICS\n`;
+          // Get headers from the first item
+          const headers = Object.keys(deviceData[0]).filter(key => key !== "section");
+          csvContent += headers.map(header => formatCSVValue(header)).join(",") + "\n";
+          csvContent += deviceData
+            .map(item => 
+              headers.map(header => formatCSVValue(item[header])).join(",")
+            )
+            .join("\n");
+          csvContent += "\n\n";
+        }
+        
+        // Export Contact Summary
+        if (contactSummaryData.length > 0) {
+          csvContent += `# CONTACT SUMMARY\n`;
+          csvContent += `"Metric","Value","Type"\n`;
+          csvContent += contactSummaryData
+            .map(item => 
+              `${formatCSVValue(item.metric)},${formatCSVValue(item.value)},${formatCSVValue(item.type || "")}`
+            )
+            .join("\n");
+          csvContent += "\n\n";
+        }
+        
+        // Debug: Log the CSV content
+        console.log("Final CSV Content:", csvContent);
         
         // Download the CSV
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

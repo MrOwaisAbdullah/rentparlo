@@ -191,6 +191,7 @@ export class ScheduledReportsProcessor {
         report.report_config?.includeRecommendations || true,
       template: report.template,
       branding: {
+        logo: "/rentparlo.png", // Path to the logo in the public directory
         companyName: "RentParLo.pk",
         colors: {
           primary: "#428bca",

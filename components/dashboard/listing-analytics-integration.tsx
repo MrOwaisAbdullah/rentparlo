@@ -135,8 +135,6 @@ export function ListingAnalyticsIntegration({
     (sum, item) => sum + item.contacts,
     0
   );
-  const totalViews = analyticsData.reduce((sum, item) => sum + item.views, 0);
-  const totalContacts = analyticsData.reduce((sum, item) => sum + item.contacts, 0);
   const avgContactRate = totalViews > 0 ? (totalContacts / totalViews) * 100 : 0;
 
   // Prepare chart data for selected listing

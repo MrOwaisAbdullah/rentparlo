@@ -149,6 +149,7 @@ export function PDFReportGenerator({
         includeRecommendations,
         template: selectedTemplate as "standard" | "executive" | "detailed",
         branding: {
+          logo: "/rentparlo.png", // Path to the logo in the public directory
           companyName: "RentParLo.pk",
           colors: {
             primary: "#428bca",

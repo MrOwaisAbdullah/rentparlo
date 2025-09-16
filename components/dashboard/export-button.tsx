@@ -23,14 +23,11 @@ import {
   TimeRange,
   SellerAnalytics,
 } from "@/types/dashboard";
-import { cn } from "@/lib/utils";
 import {
   createCSVContent,
   downloadCSV,
-  formatAnalyticsForExport,
-  formatListingsForExport,
-  generateExportFilename,
-  validateExportData,
+  processAnalyticsDataForCSV,
+  formatCSVValue,
 } from "@/lib/export-utils";
 
 interface EnhancedExportButtonProps extends ExportButtonProps {
@@ -102,7 +99,8 @@ export function ExportButton({
     let processedData: any[] = [];
 
     // Add metadata header
-    csvContent += `# ${exportType.toUpperCase()} EXPORT REPORT\n`;
+    csvContent += `# ${((exportType as string) || 'general').toUpperCase()} EXPORT REPORT
+`;
     csvContent += `# Generated: ${new Date().toLocaleString()}\n`;
     if (timeRange) {
       csvContent += `# Date Range: ${timeRange.start} to ${timeRange.end}\n`;
@@ -112,7 +110,7 @@ export function ExportButton({
 
     switch (exportType) {
       case "analytics":
-        processedData = processAnalyticsData(data as AnalyticsData[]);
+        processedData = processAnalyticsDataForCSV(data[0] as AnalyticsData);
         break;
       case "listings":
         processedData = processListingsData(data as ListingAnalytics[]);
@@ -216,7 +214,7 @@ export function ExportButton({
           Date: trend.date,
           Views: trend.views,
           Contacts: trend.contacts,
-          "Contact Clicks": trend.contactClicks,
+          Conversions: trend.conversions,
           Type: "Trend Data",
         })),
         // Add geographic data
@@ -348,12 +346,14 @@ export function ExportButton({
     includeCharts?: boolean
   ) => {
     try {
+      console.log("PDF Export - Data:", data);
+      console.log("PDF Export - Export Type:", exportType);
+      
       const {
         generateAnalyticsReport,
         generateListingReport,
         generateComprehensiveReport,
         PDFReportGenerator,
-        ReportData,
       } = await import("@/lib/pdf-export-utils");
 
       let pdfBlob: Blob;
@@ -365,6 +365,7 @@ export function ExportButton({
         includeCharts: includeCharts || false,
         includeRecommendations: true,
         branding: {
+          logo: "/rentparlo.png", // Path to the logo in the public directory
           companyName: "RentParLo.pk",
           colors: {
             primary: "#428bca",
@@ -375,29 +376,61 @@ export function ExportButton({
 
       switch (exportType) {
         case "analytics":
-          if (data[0] && "totalViews" in data[0]) {
-            pdfBlob = await generateAnalyticsReport(data[0], reportOptions);
+          console.log("Analytics PDF export - Raw data:", data);
+          if (data && data.length > 0) {
+            // Extract analytics data properly
+            let analyticsData = null;
+            
+            // Check if it's already an analytics object
+            if (data[0] && (data[0].overview || data[0].totalViews !== undefined)) {
+              analyticsData = data[0];
+            } 
+            // Check if it's nested in an object
+            else if (data[0] && data[0].analytics) {
+              analyticsData = data[0].analytics;
+            }
+            
+            console.log("Analytics PDF export - Processed analytics data:", analyticsData);
+            
+            if (analyticsData) {
+              pdfBlob = await generateAnalyticsReport(analyticsData, reportOptions);
+            } else {
+              throw new Error("Invalid analytics data structure for PDF export");
+            }
           } else {
-            throw new Error("Invalid analytics data for PDF export");
+            throw new Error("No analytics data available for PDF export");
           }
           break;
 
         case "listings":
-          if (Array.isArray(data) && data.every((item) => "title" in item)) {
-            pdfBlob = await generateListingReport(data, reportOptions);
+          console.log("Listings PDF export data:", data);
+          if (Array.isArray(data) && data.length > 0) {
+            // Try to extract the listings data properly
+            const listingsData = data;
+            console.log("Listings data structure:", listingsData);
+            
+            if (listingsData && listingsData.length > 0) {
+              pdfBlob = await generateListingReport(listingsData, reportOptions);
+            } else {
+              throw new Error("Invalid listings data structure for PDF export");
+            }
           } else {
-            throw new Error("Invalid listing data for PDF export");
+            throw new Error("No listings data available for PDF export");
           }
           break;
 
         case "performance":
+          console.log("Performance PDF export data:", data);
           // For performance reports, we need comprehensive data
-          const reportData: ReportData = {
-            analytics: data.find((item) => "totalViews" in item),
-            listings: data.filter((item) => "title" in item),
-            performanceScore: data.find((item) => "overall" in item),
-            recommendations: data.find((item) => Array.isArray(item)),
+          const reportData: any = {
+            analytics: data.find((item) => item.overview || item.totalViews !== undefined),
+            listings: data.filter((item) => item.title || item.listingId),
+            performanceScore: data.find((item) => item.overall !== undefined),
+            recommendations: data.find((item) => Array.isArray(item) || (item && typeof item === 'object')),
           };
+          
+          console.log("Performance report data:", reportData);
+          
           pdfBlob = await generateComprehensiveReport(
             reportData,
             reportOptions
@@ -405,12 +438,16 @@ export function ExportButton({
           break;
 
         default:
+          console.log("Generic PDF export data:", data);
           // Generic PDF export for other data types
           const generator = new PDFReportGenerator(reportOptions);
-          const genericData: ReportData = {
-            analytics: data.find((item) => "totalViews" in item) || undefined,
-            listings: data.filter((item) => "title" in item) || undefined,
+          const genericData: any = {
+            analytics: data.find((item) => item.overview || item.totalViews !== undefined) || undefined,
+            listings: data.filter((item) => item.title || item.listingId) || undefined,
           };
+          
+          console.log("Generic report data:", genericData);
+          
           pdfBlob = await generator.generateReport(genericData);
       }
 
@@ -496,14 +533,13 @@ export function ExportButton({
         size="sm"
         onClick={() => handleExport(format as any)}
         disabled={disabled || isExporting || !data.length}
-        className={cn(disabled && "opacity-50 cursor-not-allowed")}
       >
         {isExporting ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : (
           <>
             {getFormatIcon(format)}
-            <span className="ml-2">Export {format.toUpperCase()}</span>
+            <span className="ml-2">Export {(format as string).toUpperCase()}</span>
           </>
         )}
       </Button>
@@ -518,7 +554,6 @@ export function ExportButton({
           variant="outline"
           size="sm"
           disabled={disabled || isExporting || !data.length}
-          className={cn(disabled && "opacity-50 cursor-not-allowed")}
         >
           {isExporting ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
