@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 export const reviewFormSchema = z.object({
   rating: z.number().min(1, "Rating is required").max(5, "Rating must be between 1 and 5"),
@@ -50,31 +51,20 @@ export function ReviewFormModal({
   onReviewSubmitted,
 }: ReviewFormModalProps) {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { user, loading } = useAuth();
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
-      const fetchUserStatus = async () => {
-        setAuthLoading(true);
-        try {
-          const response = await fetch('/api/auth/status');
-          const data = await response.json();
-          if (data.isAuthenticated) {
-            setCurrentUser(data.user);
-          } else {
-            setCurrentUser(null);
-          }
-        } catch (error) {
-          console.error('Failed to fetch user status:', error);
-          setCurrentUser(null);
-        } finally {
-          setAuthLoading(false);
-        }
-      };
-      fetchUserStatus();
+      // When modal opens, check auth status
+      setAuthLoading(loading);
     }
-  }, [isOpen]);
+  }, [isOpen, loading]);
+
+  useEffect(() => {
+    // Update auth loading state when useAuth loading changes
+    setAuthLoading(loading);
+  }, [loading]);
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
@@ -86,7 +76,7 @@ export function ReviewFormModal({
   });
 
   const onSubmit = async (values: ReviewFormValues) => {
-    if (!currentUser) {
+    if (!user) {
       toast.info("Please log in or register to submit a review.");
       onClose();
       router.push("/auth/login");
@@ -138,7 +128,7 @@ export function ReviewFormModal({
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : !currentUser ? (
+        ) : !user ? (
           <div className="text-center py-8 space-y-4">
             <p className="text-lg font-semibold">You need to be logged in to write a review.</p>
             <Button onClick={() => {

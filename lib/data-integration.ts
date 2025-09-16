@@ -199,7 +199,7 @@ export async function getEnhancedListingBySlug(slug: string, userId?: string): P
                 cnic_back: null,
                 business_license: null
               },
-              avatar_url: seller.profile_image_url || null, // Add avatar_url from user's profile_image_url
+              avatar_url: null, // No profile image available for fallback
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               listing_count: 0,
@@ -226,6 +226,7 @@ export async function getEnhancedListingBySlug(slug: string, userId?: string): P
             country: 'Pakistan',
             notification_preferences: { email: true, sms: false, push: true },
             preferred_language: 'en',
+            onboarding_completed: false, // Add missing required field
             profile: {
               id: listing.supabaseId,
               username: `user-${listing.supabaseId.substring(0, 8)}`,
@@ -239,6 +240,7 @@ export async function getEnhancedListingBySlug(slug: string, userId?: string): P
                 cnic_back: null,
                 business_license: null
               },
+              avatar_url: null, // No profile image available for fallback
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               listing_count: 0,
