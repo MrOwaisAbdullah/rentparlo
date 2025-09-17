@@ -10,6 +10,7 @@ import { trackAnalyticsEvent } from "@/lib/supabase-queries";
 import { ListingDetailContent } from "@/components/listing/listing-detail-content";
 import { ListingDetailSkeleton } from "@/components/listing/listing-detail-skeleton";
 import { ClientRetryButton } from "@/components/listing/client-retry-button";
+import { ListingPageLoader } from "@/components/listing/listing-page-loader";
 import { headers } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -223,6 +224,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <ListingPageLoader />
         <ErrorBoundary>
           <Suspense fallback={<ListingDetailSkeleton />}>
             <ListingDetailContent
