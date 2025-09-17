@@ -31,7 +31,7 @@ import { useAuth } from "@/hooks/use-auth";
 export const reviewFormSchema = z.object({
   rating: z.number().min(1, "Rating is required").max(5, "Rating must be between 1 and 5"),
   title: z.string().min(1, "Title is required").max(100, "Title must be at most 100 characters"),
-  comment: z.string().min(20, "Comment must be at least 20 characters"),
+  comment: z.string().min(10, "Comment must be at least 10 characters"),
   images: z.custom<FileList>().optional(),
 });
 

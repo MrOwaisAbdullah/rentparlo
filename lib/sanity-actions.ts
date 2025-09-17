@@ -22,6 +22,12 @@ interface CreateReviewData {
 
 export async function createReview(data: CreateReviewData) {
   try {
+    // Add _key to each image for Sanity
+    const imagesWithKeys = data.images?.map((image, index) => ({
+      ...image,
+      _key: `image-${Date.now()}-${index}`
+    })) || [];
+
     const newReview = await sanityWriteClient.create({
       _type: 'review',
       listing: {
@@ -32,8 +38,8 @@ export async function createReview(data: CreateReviewData) {
       rating: data.rating,
       title: data.title,
       comment: data.comment,
-      images: data.images,
-      status: 'pending', // Default status
+      images: imagesWithKeys,
+      status: 'approved', // Changed from 'pending' to 'approved' for immediate display
     });
     return newReview;
   } catch (error) {

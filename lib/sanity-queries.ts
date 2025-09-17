@@ -670,7 +670,14 @@ export const LISTING_REVIEWS_QUERY = `
         url
       }
     },
-    supabaseUserId
+    supabaseUserId,
+    "user": *[_type == "user" && id == ^.supabaseUserId][0] {
+      name,
+      email,
+      profile_image_url,
+      city,
+      is_verified
+    }
   }
 `
 

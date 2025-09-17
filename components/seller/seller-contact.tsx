@@ -113,7 +113,7 @@ export function SellerContact({
               locationUrl={seller.locationUrl} 
               sellerName={displayName}
               onClick={onContact}
-              className="py-10 w-full cursor-pointer"
+              className="w-full cursor-pointer"
             />
           ) : (
             <Button 

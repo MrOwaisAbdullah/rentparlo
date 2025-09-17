@@ -111,10 +111,9 @@ export default async function SellerPage({ params }: SellerPageProps) {
   const featuredListings = seller.listings.filter((l: Listing) => l.isFeatured);
   const listingsByCategory = seller.listings.reduce((acc: Record<string, Listing[]>, listing: Listing) => {
     // Use category slug instead of title for better URL compatibility
-    const category = listing.category?.slug?.current || 
-                     listing.category?.slug || 
-                     listing.category?.title || 
-                     'Uncategorized';
+    const category = typeof listing.category?.slug === 'object' && 'current' in listing.category?.slug
+      ? listing.category?.slug.current
+      : listing.category?.slug || listing.category?.title || 'Uncategorized';
                      
     if (!acc[category]) {
       acc[category] = [];

@@ -283,7 +283,7 @@ export function ListingCard({
           }
         }}
       >
-        <Card className="w-72 sm:w-80 h-full py-0 gap-1 bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col transform hover:-translate-y-1 hover:border-primary/10 hover:ring-1 hover:ring-primary/20">
+        <Card className="w-72 sm:w-80 h-full py-0 gap-1 bg-white border-0 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col transform hover:-translate-y-1 hover:border-primary/10 hover:ring-1 hover:ring-primary/20 group">
           <div className="relative">
             <div className="aspect-[4/3] overflow-hidden">
               {swiperImageUrl ? (
@@ -309,6 +309,74 @@ export function ListingCard({
                   </div>
                 </div>
               )}
+              
+              {/* Action buttons */}
+              <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-x-0 md:group-hover:translate-x-0 translate-x-2 group-hover:translate-x-0">
+                {listing && <SaveButton listing={listing} className="w-8 h-8 p-0 bg-white/90 hover:bg-white" />}
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showLoading();
+                    const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
+                    
+                    // Track the share event
+                    try {
+                      await trackAnalyticsEventClient({
+                        event_type: 'share',
+                        listing_id: listing?._id,
+                        metadata: { 
+                          method: navigator.share ? 'native' : 'clipboard',
+                          url: url
+                        }
+                      });
+                    } catch (error) {
+                      console.error('Error tracking share event:', error);
+                    }
+                    
+                    try {
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: listing?.title ? `${listing.title} | RentParLo.pk` : 'Check out this listing on RentParLo.pk',
+                          text: listing?.description 
+                            ? (typeof listing.description === 'string' 
+                              ? listing.description 
+                              : Array.isArray(listing.description) 
+                                ? listing.description.map(block => 
+                                    block.children?.map((child: any) => child.text || '').join('') || ''
+                                  ).join(' ')
+                                : 'No description available')
+                            : '',
+                          url
+                        });
+                      } else {
+                        // Fallback to clipboard
+                        await navigator.clipboard.writeText(url);
+                      }
+                      
+                      // Show toast notification
+                      toast.success("Link copied to clipboard!");
+                    } catch (error) {
+                      console.error('Error sharing:', error);
+                      // Fallback to clipboard
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        toast.success("Link copied to clipboard!");
+                      } catch (clipboardError) {
+                        console.error('Error copying to clipboard:', clipboardError);
+                        toast.error("Unable to copy link");
+                      }
+                    } finally {
+                      hideLoading();
+                    }
+                  }}
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div>
               
               {/* Multiple Badges Display */}
               {badgesToDisplay.length > 0 && (
@@ -432,7 +500,7 @@ export function ListingCard({
             
             {/* Overlay actions passed as prop */}
             {overlayActions || (
-              <div className="absolute top-3 right-3 flex gap-2">
+              <div className="absolute top-3 right-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-x-0 md:group-hover:translate-x-0 translate-x-2 group-hover:translate-x-0">
                 {listing && <SaveButton listing={listing} className="w-8 h-8 p-0 bg-white/90 hover:bg-white" />}
                 <Button 
                   size="sm" 
@@ -458,32 +526,41 @@ export function ListingCard({
                       console.error('Error tracking share event:', error);
                     }
                     
-                    if (navigator.share) {
-                      try {
+                    try {
+                      if (navigator.share) {
                         await navigator.share({
-                          title: listing?.title,
-                          text: Array.isArray(listing?.description) 
-                            ? listing.description
-                                .filter((block: any) => block._type === 'block' && block.children)
-                                .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
-                                .join(' ')
-                            : typeof listing?.description === 'string' 
+                          title: listing?.title ? `${listing.title} | RentParLo.pk` : 'Check out this listing on RentParLo.pk',
+                          text: listing?.description 
+                            ? (typeof listing.description === 'string' 
                               ? listing.description 
-                              : '',
+                              : Array.isArray(listing.description) 
+                                ? listing.description.map(block => 
+                                    block.children?.map((child: any) => child.text || '').join('') || ''
+                                  ).join(' ')
+                                : 'No description available')
+                            : '',
                           url
                         });
-                      } catch (error) {
-                        console.error('Error sharing:', error);
+                      } else {
                         // Fallback to clipboard
                         await navigator.clipboard.writeText(url);
                       }
-                    } else {
+                      
+                      // Show toast notification
+                      toast.success("Link copied to clipboard!");
+                    } catch (error) {
+                      console.error('Error sharing:', error);
                       // Fallback to clipboard
-                      await navigator.clipboard.writeText(url);
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        toast.success("Link copied to clipboard!");
+                      } catch (clipboardError) {
+                        console.error('Error copying to clipboard:', clipboardError);
+                        toast.error("Unable to copy link");
+                      }
+                    } finally {
+                      hideLoading();
                     }
-                    
-                    // Show toast notification
-                    toast.success("Link copied to clipboard!");
                   }}
                 >
                   <Share2 className="w-4 h-4" />
@@ -596,7 +673,7 @@ export function ListingCard({
             )}
             
             {/* Overlay actions */}
-            <div className="absolute top-3 right-3 flex flex-col gap-2">
+            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-x-0 md:group-hover:translate-x-0 translate-x-2 group-hover:translate-x-0">
               {listing && <SaveButton listing={listing} className="w-8 h-8 p-0 bg-white/90 hover:bg-white" />}
               <Button 
                 size="sm" 
@@ -607,32 +684,55 @@ export function ListingCard({
                   showLoading();
                   const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
                   
-                  if (navigator.share) {
-                    try {
+                  // Track the share event
+                  try {
+                    await trackAnalyticsEventClient({
+                      event_type: 'share',
+                      listing_id: listing?._id,
+                      metadata: { 
+                        method: navigator.share ? 'native' : 'clipboard',
+                        url: url
+                      }
+                    });
+                  } catch (error) {
+                    console.error('Error tracking share event:', error);
+                  }
+                  
+                  try {
+                    if (navigator.share) {
                       await navigator.share({
-                        title: listing?.title,
-                        text: Array.isArray(listing?.description) 
-                          ? listing.description
-                              .filter((block: any) => block._type === 'block' && block.children)
-                              .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
-                              .join(' ')
-                          : typeof listing.description === 'string' 
+                        title: listing?.title ? `${listing.title} | RentParLo.pk` : 'Check out this listing on RentParLo.pk',
+                        text: listing?.description 
+                          ? (typeof listing.description === 'string' 
                             ? listing.description 
-                            : '',
+                            : Array.isArray(listing.description) 
+                              ? listing.description.map(block => 
+                                  block.children?.map((child: any) => child.text || '').join('') || ''
+                                ).join(' ')
+                            : 'No description available')
+                          : '',
                         url
                       });
-                    } catch (error) {
-                      console.error('Error sharing:', error);
+                    } else {
                       // Fallback to clipboard
                       await navigator.clipboard.writeText(url);
                     }
-                  } else {
+                    
+                    // Show toast notification
+                    toast.success("Link copied to clipboard!");
+                  } catch (error) {
+                    console.error('Error sharing:', error);
                     // Fallback to clipboard
-                    await navigator.clipboard.writeText(url);
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      toast.success("Link copied to clipboard!");
+                    } catch (clipboardError) {
+                      console.error('Error copying to clipboard:', clipboardError);
+                      toast.error("Unable to copy link");
+                    }
+                  } finally {
+                    hideLoading();
                   }
-                  
-                  // Show toast notification
-                  toast.success("Link copied to clipboard!");
                 }}
               >
                 <Share2 className="w-4 h-4" />
@@ -949,7 +1049,7 @@ export function ListingCard({
             )}
 
             {/* Action Buttons */}
-            <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-2 right-2 flex space-x-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 md:translate-x-0 md:group-hover:translate-x-0 translate-x-2 group-hover:translate-x-0">
               {listing && <SaveButton listing={listing} className="h-8 w-8" />}
               <Button 
                 size="icon" 
@@ -961,32 +1061,55 @@ export function ListingCard({
                   showLoading();
                   const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
                   
-                  if (navigator.share) {
-                    try {
+                  // Track the share event
+                  try {
+                    await trackAnalyticsEventClient({
+                      event_type: 'share',
+                      listing_id: listing?._id,
+                      metadata: { 
+                        method: navigator.share ? 'native' : 'clipboard',
+                        url: url
+                      }
+                    });
+                  } catch (error) {
+                    console.error('Error tracking share event:', error);
+                  }
+                  
+                  try {
+                    if (navigator.share) {
                       await navigator.share({
-                        title: listing?.title,
-                        text: Array.isArray(listing?.description) 
-                          ? listing.description
-                              .filter((block: any) => block._type === 'block' && block.children)
-                              .map((block: any) => block.children.map((child: any) => child.text || '').join(''))
-                              .join(' ')
-                          : typeof listing?.description === 'string' 
+                        title: listing?.title ? `${listing.title} | RentParLo.pk` : 'Check out this listing on RentParLo.pk',
+                        text: listing?.description 
+                          ? (typeof listing.description === 'string' 
                             ? listing.description 
-                            : '',
+                            : Array.isArray(listing.description) 
+                              ? listing.description.map(block => 
+                                  block.children?.map((child: any) => child.text || '').join('') || ''
+                                ).join(' ')
+                            : 'No description available')
+                          : '',
                         url
                       });
-                    } catch (error) {
-                      console.error('Error sharing:', error);
+                    } else {
                       // Fallback to clipboard
                       await navigator.clipboard.writeText(url);
                     }
-                  } else {
+                    
+                    // Show toast notification
+                    toast.success("Link copied to clipboard!");
+                  } catch (error) {
+                    console.error('Error sharing:', error);
                     // Fallback to clipboard
-                    await navigator.clipboard.writeText(url);
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      toast.success("Link copied to clipboard!");
+                    } catch (clipboardError) {
+                      console.error('Error copying to clipboard:', clipboardError);
+                      toast.error("Unable to copy link");
+                    }
+                  } finally {
+                    hideLoading();
                   }
-                  
-                  // Show toast notification
-                  toast.success("Link copied to clipboard!");
                 }}
               >
                 <Share2 className="h-4 w-4" />

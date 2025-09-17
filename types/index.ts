@@ -51,6 +51,7 @@ export interface User {
   profile_image_url?: string;
   onboarding_completed: boolean; // Add this field
   name?: string; // Add this field
+  seller_profiles?: SellerProfile[]; // Add seller profiles relationship
 }
 
 /**
@@ -770,6 +771,14 @@ export interface Review {
   comment: string;
   images?: ListingImage[];
   status: ReviewStatus;
+  user?: {
+    name?: string;
+    email?: string;
+    profile_image_url?: string;
+    city?: string;
+    is_verified?: boolean;
+  };
+  createdAt: string;
 }
 
 /**

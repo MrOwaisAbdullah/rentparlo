@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trackAnalyticsEventClient } from "@/lib/supabase-queries-client";
+import { toast } from "sonner";
 
 interface SaveButtonProps {
   listing: Listing;
@@ -34,8 +35,10 @@ export function SaveButton({ listing, className }: SaveButtonProps) {
 
     if (isSaved) {
       dispatch({ type: "REMOVE_FROM_SAVED_ITEMS", id: listing._id });
+      toast.success("Removed from saved items");
     } else {
       dispatch({ type: "ADD_TO_SAVED_ITEMS", product: listing });
+      toast.success("Saved to your items!");
     }
   };
 
