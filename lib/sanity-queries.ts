@@ -200,27 +200,7 @@ export const LISTING_BY_SLUG_QUERY = `
     published,
     isFeatured,
     isVerified,
-    supabaseId,
-    "seller": seller->{
-      _id,
-      name,
-      email,
-      phone,
-      image {
-        asset->{
-          url
-        }
-      },
-      seller_profiles {
-        business_name,
-        address_line1,
-        city,
-        phone,
-        is_verified,
-        verification_status,
-        is_top_seller
-      }
-    }
+    supabaseId
   }
 `
 
@@ -329,16 +309,59 @@ export const LISTINGS_BY_SELLER_QUERY = `
   }
 `
 
-// Search listings with filters
-export const SEARCH_LISTINGS_QUERY = `
+// Search listings with filters (without pagination)
+export const SEARCH_LISTINGS_QUERY_NO_PAGINATION = `
   *[_type == "listing" && status == "active" && published == true 
     && ($searchQuery == "" || title match $searchQuery + "*" || description[].children[].text match $searchQuery + "*")
-    && ($category == "" || category._ref == $category)
+    && ($category == "" || category->slug.current == $category || category->slug == $category)
     && ($city == "" || location.city == $city)
     && ($area == "" || location.area == $area)
     && ($condition == "" || condition == $condition)
     && ($minPrice == 0 || price >= $minPrice)
     && ($maxPrice == 0 || price <= $maxPrice)
+    && ($sellerId == "" || supabaseId == $sellerId)
+  ] | order(
+    isFeatured desc,
+    _createdAt desc
+  ) {
+    _id,
+    _createdAt,
+    title,
+    slug,
+    description,
+    price,
+    pricePerHour,
+    category->{
+      _id,
+      title,
+      slug
+    },
+    images[]{
+      asset->{
+        url,
+        metadata {
+          lqip
+        }
+      }
+    },
+    location,
+    condition,
+    isFeatured,
+    supabaseId
+  }
+`
+
+// Search listings with filters (with pagination)
+export const SEARCH_LISTINGS_QUERY = `
+  *[_type == "listing" && status == "active" && published == true 
+    && ($searchQuery == "" || title match $searchQuery + "*" || description[].children[].text match $searchQuery + "*")
+    && ($category == "" || category->slug.current == $category || category->slug == $category)
+    && ($city == "" || location.city == $city)
+    && ($area == "" || location.area == $area)
+    && ($condition == "" || condition == $condition)
+    && ($minPrice == 0 || price >= $minPrice)
+    && ($maxPrice == 0 || price <= $maxPrice)
+    && ($sellerId == "" || supabaseId == $sellerId)
   ] | order(
     isFeatured desc,
     _createdAt desc
@@ -366,15 +389,7 @@ export const SEARCH_LISTINGS_QUERY = `
     location,
     condition,
     isFeatured,
-    "seller": seller->{
-      _id,
-      name,
-      image {
-        asset->{
-          url
-        }
-      }
-    }
+    supabaseId
   }
 `
 
@@ -402,12 +417,13 @@ export const SELLER_LISTINGS_QUERY = `
 export const SEARCH_LISTINGS_COUNT_QUERY = `
   count(*[_type == "listing" && status == "active" && published == true 
     && ($searchQuery == "" || title match $searchQuery + "*" || description[].children[].text match $searchQuery + "*")
-    && ($category == "" || category._ref == $category)
+    && ($category == "" || category->slug.current == $category || category->slug == $category)
     && ($city == "" || location.city == $city)
     && ($area == "" || location.area == $area)
     && ($condition == "" || condition == $condition)
     && ($minPrice == 0 || price >= $minPrice)
     && ($maxPrice == 0 || price <= $maxPrice)
+    && ($sellerId == "" || supabaseId == $sellerId)
   ])
 `
 
@@ -756,33 +772,14 @@ export async function searchListings(params: {
   // Handle condition parameter - ensure it's never null
   const condition = conditionParam ?? '';
 
-  // If sellerId is provided, use a different query
-  if (sellerId) {
-    const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
-        _id,
-        _createdAt,
-        title,
-        slug,
-        description,
-        price,
-        priceType,
-        status,
-        images[]{
-          asset->{
-            url
-          }
-        },
-        isFeatured
-      }`;
-    const queryParams = { sellerId };
-    return await client.fetch(query, queryParams);
-  }
-
+  // If sellerId is provided, still use the main search query but with seller filter
   // Handle condition parameter - if it's an array or comma-separated string, make multiple queries
   if (Array.isArray(condition) || (typeof condition === 'string' && condition.includes(','))) {
     const conditions = Array.isArray(condition) 
       ? condition 
       : condition.split(',').filter(Boolean);
+    
+    console.log('Multiple conditions detected:', conditions);
     
     // Make separate queries for each condition and combine results
     const allResults: Listing[] = [];
@@ -797,11 +794,16 @@ export async function searchListings(params: {
         condition: cond.trim(),
         minPrice,
         maxPrice,
-        offset: 0, // We'll handle pagination after combining
-        limit: offset + limit // Get enough results to handle pagination
+        sellerId,
+        offset: 0,
+        limit: 1000 // Get enough results to handle pagination after combining
       };
       
+      console.log('Executing search query with params:', queryParams);
+      
       const results = await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+      console.log(`Found ${results.length} results for condition: ${cond.trim()}`);
+      
       // Add to unique listings map to avoid duplicates
       results.forEach(listing => {
         uniqueListings.set(listing._id, listing);
@@ -811,6 +813,8 @@ export async function searchListings(params: {
     // Convert map back to array and apply pagination
     const combinedResults = Array.from(uniqueListings.values());
     
+    console.log(`Combined results count: ${combinedResults.length}`);
+    
     // Sort by featured and creation date (same as original query)
     combinedResults.sort((a, b) => {
       if (a.isFeatured && !b.isFeatured) return -1;
@@ -818,8 +822,10 @@ export async function searchListings(params: {
       return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
     });
     
-    // Apply pagination
-    return combinedResults.slice(offset, offset + limit);
+    // Apply pagination with the actual offset and limit
+    const paginatedResults = combinedResults.slice(offset, offset + limit);
+    console.log(`Returning ${paginatedResults.length} paginated results`);
+    return paginatedResults;
   } else {
     // Single condition case - use original query
     const queryParams = {
@@ -830,11 +836,13 @@ export async function searchListings(params: {
       condition: Array.isArray(condition) ? condition[0] : condition,
       minPrice,
       maxPrice,
+      sellerId,
       offset,
       limit
     };
     
-    return await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+    const results = await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
+    return results;
   }
 }
 
@@ -847,6 +855,7 @@ export async function searchListingsCount(params: {
   condition?: string | string[]
   minPrice?: number
   maxPrice?: number
+  sellerId?: string
 }): Promise<number> {
   const {
     query: searchQuery = '',
@@ -855,8 +864,11 @@ export async function searchListingsCount(params: {
     area = '',
     condition: conditionParam = '',
     minPrice = 0,
-    maxPrice = 0
+    maxPrice = 0,
+    sellerId = ''
   } = params
+
+  console.log('searchListingsCount called with params:', params);
 
   // Handle condition parameter - ensure it's never null
   const condition = conditionParam ?? '';
@@ -866,6 +878,8 @@ export async function searchListingsCount(params: {
     const conditions = Array.isArray(condition) 
       ? condition 
       : condition.split(',').filter(Boolean);
+    
+    console.log('Multiple conditions detected in count function:', conditions);
     
     // Make separate queries for each condition and count unique results
     const uniqueListingIds = new Set<string>();
@@ -878,20 +892,24 @@ export async function searchListingsCount(params: {
         area,
         condition: cond.trim(),
         minPrice,
-        maxPrice
+        maxPrice,
+        sellerId
       };
+      
+      console.log('Executing count query with params:', queryParams);
       
       // Get actual listings to count unique ones
       const listings = await client.fetch(SEARCH_LISTINGS_QUERY, {
-        ...queryParams,
-        offset: 0,
-        limit: 1000 // Get a reasonable number of listings to count
+        ...queryParams
       });
+      
+      console.log(`Found ${listings.length} listings for condition: ${cond.trim()}`);
       
       // Add listing IDs to set to ensure uniqueness
       listings.forEach(listing => uniqueListingIds.add(listing._id));
     }
     
+    console.log(`Total unique listings count: ${uniqueListingIds.size}`);
     return uniqueListingIds.size;
   } else {
     // Single condition case - use original query
@@ -902,10 +920,16 @@ export async function searchListingsCount(params: {
       area,
       condition: Array.isArray(condition) ? condition[0] : condition,
       minPrice,
-      maxPrice
+      maxPrice,
+      sellerId
     };
     
-    return await client.fetch(SEARCH_LISTINGS_COUNT_QUERY, queryParams);
+    console.log('Executing single count query with params:', queryParams);
+    console.log('Count query will filter by sellerId:', sellerId, 'with condition ($sellerId == "" || supabaseId == $sellerId)');
+    
+    const count = await client.fetch(SEARCH_LISTINGS_COUNT_QUERY, queryParams);
+    console.log(`Found ${count} listings for single condition`);
+    return count;
   }
 }
 

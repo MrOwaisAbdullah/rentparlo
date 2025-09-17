@@ -341,7 +341,8 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
       area: params.area,
       condition: params.condition,
       minPrice: params.minPrice,
-      maxPrice: params.maxPrice
+      maxPrice: params.maxPrice,
+      sellerId: params.seller || "" // Add sellerId parameter
     });
 
     // Get the paginated results
@@ -354,7 +355,8 @@ export async function searchEnhancedListings(params: SearchParams): Promise<Sear
       minPrice: params.minPrice,
       maxPrice: params.maxPrice,
       offset: params.offset || 0,
-      limit: params.limit || 20
+      limit: params.limit || 20,
+      sellerId: params.seller || "" // Add sellerId parameter
     });
 
     // Enhance listings with seller information (limit concurrent requests)
@@ -966,7 +968,8 @@ export async function getCategoryWithListings(slug: string, filters: any) {
     const searchParams: any = {
       category: slug, // Always include category slug
       offset: filters.offset || 0,
-      limit: filters.limit || 20
+      limit: filters.limit || 20,
+      sellerId: filters.sellerId || "" // Add sellerId parameter
     };
     
     // Only add filters if they have actual values
@@ -988,7 +991,8 @@ export async function getCategoryWithListings(slug: string, filters: any) {
       area: searchParams.area,
       condition: searchParams.condition,
       minPrice: searchParams.minPrice,
-      maxPrice: searchParams.maxPrice
+      maxPrice: searchParams.maxPrice,
+      sellerId: searchParams.sellerId || "" // Add sellerId parameter
     });
     
     // Get subcategories (if any)

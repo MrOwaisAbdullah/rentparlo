@@ -9,13 +9,23 @@ interface SellerBasicInfoProps {
     customer_rating: number;
     total_reviews: number;
     response_time_avg: number;
+    response_time_display?: string;
+    response_time_description?: string;
     total_listings: number;
     active_listings: number;
   };
 }
 
 export function SellerBasicInfo({ seller }: SellerBasicInfoProps) {
-  const responseTimeHours = Math.round(seller.response_time_avg / 60);
+  // Use the display text if provided, otherwise calculate from response_time_avg
+  const responseTimeDisplay = seller.response_time_display || 
+    (seller.response_time_avg > 0 ? 
+      (Math.round(seller.response_time_avg / 60) > 0 ? 
+        `${Math.round(seller.response_time_avg / 60)}h` : 
+        '< 1h') : 
+      '< 1h');
+  
+  const responseTimeDescription = seller.response_time_description || 'Average response time';
   
   const stats = [
     {
@@ -26,9 +36,9 @@ export function SellerBasicInfo({ seller }: SellerBasicInfoProps) {
     },
     {
       title: 'Response Time',
-      value: responseTimeHours > 0 ? `${responseTimeHours}h` : '< 1h',
+      value: responseTimeDisplay,
       icon: Clock,
-      description: 'Average response time'
+      description: responseTimeDescription
     },
     {
       title: 'Active Listings',

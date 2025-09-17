@@ -18,6 +18,7 @@ interface SearchFilters {
   maxPrice: number;
   sortBy: string;
   page: number;
+  seller?: string;
 }
 
 interface UseSearchListingsOptions {
@@ -56,9 +57,15 @@ export function useSearchListings(
       offset: 0,
       limit: 20,
       sortBy: filters.sortBy || "newest",
+      seller: filters.seller || "",
     }),
     [filters]
   );
+
+  console.log('=== USE SEARCH LISTINGS DEBUG ===');
+  console.log('useSearchListings - searchParams:', searchParams);
+  console.log('Seller filter in useSearchListings:', searchParams.seller);
+  console.log('=================================');
 
   // Create cache key that includes all relevant filters (stable dependencies)
   const queryKey = React.useMemo(
@@ -74,6 +81,7 @@ export function useSearchListings(
       searchParams.minPrice || 0,
       searchParams.maxPrice || 0,
       searchParams.sortBy || "newest",
+      searchParams.seller || "",
     ],
     [
       searchParams.query,
@@ -84,6 +92,7 @@ export function useSearchListings(
       searchParams.minPrice,
       searchParams.maxPrice,
       searchParams.sortBy,
+      searchParams.seller,
     ]
   );
 
@@ -91,13 +100,20 @@ export function useSearchListings(
   const query = useInfiniteQuery<SearchResultsPage>({
     queryKey,
     queryFn: async ({ pageParam = 0 }) => {
+      console.log('=== QUERY FUNCTION EXECUTION DEBUG ===');
+      console.log('Query function called with pageParam:', pageParam);
+      console.log('Search params in query function:', searchParams);
+      console.log('=====================================');
+      
       const params = {
         ...searchParams,
         offset: pageParam as number,
         limit: 20,
       };
 
+      console.log('Calling searchEnhancedListingsClient with params:', params);
       const result = await searchEnhancedListingsClient(params);
+      console.log('searchEnhancedListingsClient returned:', result);
 
       // Track search query if it's a new search (offset 0) - throttled
       if (pageParam === 0 && searchParams.query && Math.random() < 0.1) {
@@ -109,15 +125,21 @@ export function useSearchListings(
         }
       }
 
-      return {
+      const searchResultsPage: SearchResultsPage = {
         results: result.results,
         total: result.total,
         hasMore: result.results.length === params.limit,
         nextOffset: (pageParam as number) + params.limit,
       };
+      
+      console.log('Returning search results page:', searchResultsPage);
+      return searchResultsPage;
     },
     getNextPageParam: (lastPage: SearchResultsPage) => {
-      return lastPage.hasMore ? lastPage.nextOffset : undefined;
+      console.log('getNextPageParam called with lastPage:', lastPage);
+      const nextParam = lastPage.hasMore ? lastPage.nextOffset : undefined;
+      console.log('getNextPageParam returning:', nextParam);
+      return nextParam;
     },
     initialPageParam: 0,
     enabled,
@@ -128,12 +150,21 @@ export function useSearchListings(
 
   // Flatten paginated results
   const listings = React.useMemo(() => {
-    return query.data?.pages.flatMap((page) => page.results) || [];
+    console.log('=== FLATTEN PAGINATED RESULTS DEBUG ===');
+    console.log('Query data pages:', query.data?.pages);
+    const flattened = query.data?.pages.flatMap((page) => page.results) || [];
+    console.log('Flattened results count:', flattened.length);
+    console.log('======================================');
+    return flattened;
   }, [query.data]);
 
   // Get total count from first page
   const totalResults = React.useMemo(() => {
-    return query.data?.pages[0]?.total || 0;
+    const total = query.data?.pages[0]?.total || 0;
+    console.log('=== TOTAL RESULTS DEBUG ===');
+    console.log('Total results:', total);
+    console.log('===========================');
+    return total;
   }, [query.data?.pages?.[0]?.total]);
 
   // Calculate pagination info
@@ -198,6 +229,7 @@ export function useSimpleSearch(
       offset: ((filters.page || 1) - 1) * 20,
       limit: 20,
       sortBy: filters.sortBy || "newest",
+      seller: filters.seller || "",
     }),
     [filters]
   );

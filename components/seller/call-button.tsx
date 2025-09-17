@@ -49,7 +49,7 @@ export function CallButton({
     <>
       <button
         onClick={handleButtonClick}
-        className={`flex items-center justify-center gap-2 w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 min-h-[48px] ${className}`}
+        className={`flex items-center justify-center gap-2 w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 min-h-[48px] ${className}`}
       >
         <Phone className="w-4 h-4" />
         Call Seller

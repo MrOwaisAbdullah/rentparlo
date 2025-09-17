@@ -34,7 +34,9 @@ export default async function ListingsPage() {
 
   // Fetch listings for the current seller
   const listings: Listing[] = await searchListings({
-    sellerId: user.id
+    sellerId: user.id,
+    offset: 0,
+    limit: 1000 // Get all listings for the seller
   });
 
   const formatPrice = (price: number, priceType: string) => {

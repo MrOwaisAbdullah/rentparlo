@@ -31,6 +31,12 @@ import { trackAnalyticsEventClient } from './supabase-queries-client'
 // Search listings (client-side version)
 export async function searchEnhancedListingsClient(params: SearchParams): Promise<SearchResults> {
   try {
+    console.log('=== SEARCH ENHANCED LISTINGS CLIENT DEBUG ===');
+    console.log('searchEnhancedListingsClient called with params:', params);
+    console.log('Seller param in client:', params.seller);
+    console.log('============================================');
+    
+    // Get the listings for the current page
     const listings = await searchListings({
       query: params.query,
       category: params.category,
@@ -40,17 +46,32 @@ export async function searchEnhancedListingsClient(params: SearchParams): Promis
       minPrice: params.minPrice,
       maxPrice: params.maxPrice,
       offset: params.offset || 0,
-      limit: params.limit || 20
+      limit: params.limit || 20,
+      sellerId: params.seller || "", // Fix: map seller to sellerId
     })
+
+    // Get the total count of matching listings
+    const { searchListingsCount } = await import('./sanity-queries');
+    const total = await searchListingsCount({
+      query: params.query,
+      category: params.category,
+      city: params.city,
+      area: params.area,
+      condition: params.condition,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice,
+      sellerId: params.seller || "", // Fix: map seller to sellerId
+    });
 
     // For client-side, we'll return listings without enhanced seller data
     // to avoid server-side dependencies
     const result: SearchResults = {
       results: listings,
       filters: params,
-      total: listings.length // This is just for the current page, not the total
+      total: total // Use the actual total count, not just the current page count
     };
 
+    console.log(`searchEnhancedListingsClient returning ${listings.length} results out of ${total} total`);
     return result;
   } catch (error) {
     console.error('Error searching listings:', error)

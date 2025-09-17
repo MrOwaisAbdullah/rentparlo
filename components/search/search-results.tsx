@@ -16,9 +16,9 @@ interface Listing {
   description?: string;
   price: number;
   priceType: "hourly" | "daily" | "weekly" | "monthly";
+  pricePerHour?: number;
   images: (string | ListingImage)[];
   condition: string;
-  availability: "available" | "rented" | "maintenance";
   location: {
     city: string;
     area: string;
@@ -27,21 +27,13 @@ interface Listing {
     title: string;
     slug: string;
   };
-  seller: {
-    id: string;
-    username: string;
-    business_name?: string;
-    tier: "basic" | "premium" | "gold";
-    isVerified: boolean;
-    profile?: {
-      city?: string;
-    };
-  };
   slug?: {
     current: string;
   };
-  _createdAt?: string; // Add _createdAt field
+  _createdAt?: string;
   createdAt: string;
+  isFeatured?: boolean;
+  supabaseId?: string;
   views?: number;
   contactClicks?: number;
 }
@@ -118,26 +110,26 @@ const transformToListingType = (listing: Listing): FullListing => {
     description: listing.description || "", // Keep as simple string, not array
     price: listing.price,
     priceType: mapPriceType(listing.priceType),
-    pricePerHour: listing.price,
+    pricePerHour: listing.pricePerHour || listing.price,
     priceWeekly: listing.price,
     priceMonthly: listing.price,
     category: {
-      _id: listing.category.slug,
-      title: listing.category.title,
-      slug: listing.category.slug,
+      _id: listing.category?.slug || "",
+      title: listing.category?.title || "",
+      slug: listing.category?.slug || "",
     },
     images: transformedImages,
     location: listing.location,
     condition: listing.condition as any, // Type assertion since the values should align
     availability: {
-      isAvailable: listing.availability === "available",
+      isAvailable: true, // Default to available since we don't have this field
       availableFrom: new Date().toISOString(),
     },
     specifications: [],
     rentalRules: [],
     status: "active",
-    supabaseId: listing.seller?.id || "", // Add safety check for seller object
-    isFeatured: false,
+    supabaseId: listing.supabaseId || "", // Use the actual supabaseId field
+    isFeatured: listing.isFeatured || false,
     featuredPriority: 0,
     created_at: createdAt,
     createdAt: createdAt,
@@ -158,6 +150,11 @@ export function SearchResults({
   onViewModeChange,
   className,
 }: SearchResultsProps) {
+  console.log('=== SEARCH RESULTS COMPONENT DEBUG ===');
+  console.log('SearchResults received listings:', listings.length);
+  console.log('SearchResults received totalResults:', totalResults);
+  console.log('SearchResults isLoading:', isLoading);
+  console.log('==============================');
   const formatResultsText = () => {
     if (totalResults === 0) return "No results found";
     if (totalResults === 1) return "1 result found";

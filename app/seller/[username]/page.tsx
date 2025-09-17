@@ -4,18 +4,29 @@ import { SellerProfileHeader } from '@/components/seller/seller-profile-header';
 import { SellerProfileTabs, SellerProfileTabContent } from '@/components/seller/seller-profile-tabs';
 import { SellerBasicInfo } from '@/components/seller/seller-basic-info';
 import { AdBanner } from '@/components/ads/ad-banner';
-import { ClientProductListingSection } from '@/components/seller/client-product-listing-section';
 import { SellerProfileActions } from '@/components/seller/seller-profile-actions';
 import { ListingCard } from '@/components/cards/listing-card';
 import { getCompleteSellerProfile } from '@/lib/data-integration';
 import { trackAnalyticsEvent } from '@/lib/supabase-queries';
 import { headers } from 'next/headers';
-import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Listing } from '@/types';
+import { STATIC_CATEGORIES } from '@/lib/static-categories';
+import { calculateResponseTime } from '@/lib/seller-utils';
 
 interface SellerPageProps {
   params: Promise<{
     username: string;
   }>;
+}
+
+// Define the type for the complete seller profile
+interface CompleteSellerProfile {
+  seller: any; // You might want to import and use the actual Seller type
+  listings: Listing[];
+  analytics: any;
+  subscription: any;
 }
 
 export async function generateMetadata({ params }: SellerPageProps): Promise<Metadata> {
@@ -75,7 +86,7 @@ export default async function SellerPage({ params }: SellerPageProps) {
   const { username } = await params;
   
   // Fetch actual seller data based on username
-  const seller = await getCompleteSellerProfile(username);
+  const seller: CompleteSellerProfile | null = await getCompleteSellerProfile(username);
   
   if (!seller) {
     notFound();
@@ -84,22 +95,39 @@ export default async function SellerPage({ params }: SellerPageProps) {
   // Track profile view (fire and forget)
   trackProfileView(seller.seller.id);
 
+  // Calculate response time using our unified function
+  const responseTimeInfo = calculateResponseTime(seller.seller);
+  
   const sellerData = {
     customer_rating: seller.seller.profile.customer_rating || 0,
     total_reviews: seller.seller.profile.total_reviews || 0,
-    response_time_avg: seller.seller.profile.response_time_avg || 0,
+    response_time_avg: responseTimeInfo.hours * 60, // Convert hours to minutes for compatibility
+    response_time_display: responseTimeInfo.displayText,
+    response_time_description: responseTimeInfo.description,
     total_listings: seller.listings.length || 0,
-    active_listings: seller.listings.filter(l => l.status === 'active').length || 0
+    active_listings: seller.listings.filter((l: Listing) => l.status === 'active').length || 0
   };
 
-  const featuredListings = seller.listings.filter(l => l.isFeatured);
-  const categories: string[] = [...new Set(seller.listings.map(l => l.category?.title))].filter(Boolean) as string[];
+  const featuredListings = seller.listings.filter((l: Listing) => l.isFeatured);
+  const listingsByCategory = seller.listings.reduce((acc: Record<string, Listing[]>, listing: Listing) => {
+    // Use category slug instead of title for better URL compatibility
+    const category = listing.category?.slug?.current || 
+                     listing.category?.slug || 
+                     listing.category?.title || 
+                     'Uncategorized';
+                     
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(listing);
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 space-y-8">
         {/* Seller Profile Header */}
-        <SellerProfileHeader seller={seller.seller} />
+        <SellerProfileHeader seller={seller.seller} listingCount={seller.listings.length} />
 
         {/* Profile Tabs */}
         <SellerProfileTabs defaultTab="products">
@@ -113,7 +141,7 @@ export default async function SellerPage({ params }: SellerPageProps) {
                   <h2 className="text-2xl font-bold">Featured Listings</h2>
                   {featuredListings.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                      {featuredListings.map((listing) => (
+                      {featuredListings.map((listing: Listing) => (
                         <ListingCard
                           key={listing._id}
                           listing={listing}
@@ -130,31 +158,39 @@ export default async function SellerPage({ params }: SellerPageProps) {
                   )}
                 </div>
 
-                {/* Categories Section */}
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold">Categories</h2>
-                  <div className="flex flex-wrap gap-4">
-                    {categories.map((category, index) => (
-                      <Badge key={index} variant="outline">{category}</Badge>
-                    ))}
+                {/* Listings by Category Section */}
+                {Object.entries(listingsByCategory).map(([categorySlug, listings]) => (
+                  <div key={categorySlug} className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-2xl font-bold">
+                        {STATIC_CATEGORIES.find(cat => 
+                          (typeof cat.slug === 'string' ? cat.slug : cat.slug.current) === categorySlug
+                        )?.title || 
+                        categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, ' ')}
+                      </h2>
+                      <Link href={`/search?category=${encodeURIComponent(categorySlug)}&seller=${encodeURIComponent(seller.seller.id)}`}>
+                        <Button variant="outline">View All</Button>
+                      </Link>
+                    </div>
+                    {listings.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                        {listings.map((listing: Listing) => (
+                          <ListingCard
+                            key={listing._id}
+                            listing={listing}
+                            variant="category"
+                            showSellerInfo={false}
+                            className="h-full"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>No listings in this category.</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                {/* All Listings Section */}
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold">All Listings</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {seller.listings.map((listing) => (
-                      <ListingCard
-                        key={listing._id}
-                        listing={listing}
-                        variant="category"
-                        showSellerInfo={false}
-                        className="h-full"
-                      />
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Advertisement Banner */}
@@ -176,7 +212,7 @@ export default async function SellerPage({ params }: SellerPageProps) {
                 <div className="space-y-4 text-muted-foreground">
                   <p>
                     Welcome to our rental service! We specialize in providing high-quality electronics 
-                    and equipment for rent in {seller.city} and surrounding areas.
+                    and equipment for rent in {seller.seller.city} and surrounding areas.
                   </p>
                   <p>
                     With over {Math.floor((Date.now() - new Date(seller.seller.profile.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30))} months 

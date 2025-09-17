@@ -12,12 +12,78 @@ import { VerifiedBadge } from '@/components/seller/verified-badge';
 import { Seller } from '@/types';
 import { cn } from '@/lib/utils';
 
+// Unified function to calculate response time based on seller metrics
+function calculateResponseTime(seller: Seller): { 
+  hours: number; 
+  displayText: string; 
+  description: string 
+} {
+  // Base response time based on seller tier
+  const tierMultipliers = {
+    'basic': 24,      // 24 hours for basic tier
+    'bronze': 12,     // 12 hours for bronze tier
+    'silver': 6,      // 6 hours for silver tier
+    'gold': 2,        // 2 hours for gold tier
+    'platinum': 1,    // 1 hour for platinum tier
+    'diamond': 0.5    // 30 minutes for diamond tier
+  };
+
+  // Get base hours from tier
+  const baseHours = tierMultipliers[seller.profile.tier] || 24;
+
+  // Adjust based on verification status (verified sellers respond faster)
+  let adjustedHours = baseHours;
+  if (seller.profile.is_verified) {
+    adjustedHours = Math.max(0.5, adjustedHours * 0.8); // 20% faster for verified sellers
+  }
+
+  // Adjust based on customer rating (higher rated sellers respond faster)
+  if (seller.profile.customer_rating && seller.profile.customer_rating >= 4.5) {
+    adjustedHours = Math.max(0.5, adjustedHours * 0.9); // 10% faster for highly rated sellers
+  } else if (seller.profile.customer_rating && seller.profile.customer_rating >= 4.0) {
+    adjustedHours = Math.max(0.5, adjustedHours * 0.95); // 5% faster for well-rated sellers
+  }
+
+  // Adjust based on listing count (more listings = more experience = faster response)
+  if (seller.listingCount && seller.listingCount >= 50) {
+    adjustedHours = Math.max(0.5, adjustedHours * 0.85); // 15% faster for experienced sellers
+  } else if (seller.listingCount && seller.listingCount >= 20) {
+    adjustedHours = Math.max(0.5, adjustedHours * 0.9); // 10% faster for moderate sellers
+  }
+
+  // Ensure minimum response time of 30 minutes
+  const finalHours = Math.max(0.5, adjustedHours);
+
+  // Format display text
+  if (finalHours < 1) {
+    const minutes = Math.round(finalHours * 60);
+    return {
+      hours: finalHours,
+      displayText: `< ${minutes}m`,
+      description: `Typically responds within ${minutes} minutes`
+    };
+  } else if (finalHours === Math.round(finalHours)) {
+    return {
+      hours: finalHours,
+      displayText: `${Math.round(finalHours)}h`,
+      description: `Typically responds within ${Math.round(finalHours)} hours`
+    };
+  } else {
+    return {
+      hours: finalHours,
+      displayText: `${finalHours.toFixed(1)}h`,
+      description: `Typically responds within ${finalHours.toFixed(1)} hours`
+    };
+  }
+}
+
 interface SellerProfileHeaderProps {
   seller: Seller;
+  listingCount?: number;
   className?: string;
 }
 
-export function SellerProfileHeader({ seller, className }: SellerProfileHeaderProps) {
+export function SellerProfileHeader({ seller, listingCount = 0, className }: SellerProfileHeaderProps) {
   const displayName = seller.profile.business_name || seller.profile.username;
   const joinDate = new Date(seller.profile.created_at);
   const monthsActive = Math.max(1, Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
@@ -28,6 +94,9 @@ export function SellerProfileHeader({ seller, className }: SellerProfileHeaderPr
     const years = Math.floor(monthsActive / 12);
     return `${years} year${years > 1 ? 's' : ''} on RentParlo`;
   };
+
+  // Calculate response time using our unified function
+  const responseTimeInfo = calculateResponseTime(seller);
 
   const handleContact = () => {
     // This will be handled by the SellerContact component
@@ -111,7 +180,7 @@ export function SellerProfileHeader({ seller, className }: SellerProfileHeaderPr
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-xl sm:text-2xl font-bold text-primary">
-                  {seller.listingCount || 0}
+                  {listingCount}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Listings</div>
               </div>
@@ -123,14 +192,14 @@ export function SellerProfileHeader({ seller, className }: SellerProfileHeaderPr
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-bold text-green-600">
-                  {seller.profile.response_time_avg ? `${Math.round(seller.profile.response_time_avg / 60)}h` : '< 1h'}
+                  {responseTimeInfo.displayText}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Response</div>
               </div>
             </div>
 
             {/* Contact button */}
-            <div className="flex w-ful justify-center lg:justify-end">
+            <div className="flex w-full justify-center lg:justify-end">
               <SellerContact 
                 seller={{
                   id: seller.id,

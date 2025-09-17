@@ -25,6 +25,7 @@ interface CategoryPageProps {
     priceType?: string;
     area?: string;
     q?: string;
+    seller?: string;
   };
 }
 
@@ -137,6 +138,7 @@ async function CategoryContent({
       priceType: searchParams.priceType || "",
       sortBy: searchParams.sort || "newest",
       category: formattedCategory._id, // Use category ID for proper filtering
+      seller: searchParams.seller || "",
     };
 
     // Page context for sidebar
@@ -227,6 +229,7 @@ export default async function CategoryPage({
     priceType: resolvedSearchParams.priceType,
     area: resolvedSearchParams.area,
     q: resolvedSearchParams.q,
+    seller: resolvedSearchParams.seller,
   };
 
   return (

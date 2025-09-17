@@ -21,6 +21,7 @@ interface SearchPageProps {
     maxPrice?: string;
     availability?: string;
     sortBy?: string;
+    seller?: string;
     page?: string;
   }>;
 }
@@ -32,6 +33,8 @@ export async function generateMetadata({
   const query = params.q || "";
   const category = params.category || "";
   const city = params.city || "";
+  const seller = params.seller || "";
+
 
   let title = "Search Rental Items | RentParLo.pk";
   let description =
@@ -45,6 +48,11 @@ export async function generateMetadata({
   if (category && !query) {
     title = `${category} Rentals | RentParLo.pk`;
     description = `Rent ${category.toLowerCase()} items in Pakistan. Verified sellers, competitive prices, secure transactions.`;
+  }
+
+  if (seller) {
+    title = `Listings from ${seller} | RentParLo.pk`;
+    description = `Browse rental items from ${seller} on RentParLo.pk.`;
   }
 
   if (city) {
@@ -85,11 +93,24 @@ export async function generateMetadata({
 async function SearchPageContent({ searchParams }: SearchPageProps) {
   try {
     const params = await searchParams;
+    // Debug logging to see what parameters we're receiving
+    console.log('=== SEARCH PAGE DEBUG ===');
+    console.log('Search page params:', params);
+    console.log('Seller param in search page:', params.seller);
+    console.log('========================');
+    
     // Fetch initial data for filters
     const [categories, cities] = await Promise.all([
       getCategories(),
       getCities(),
     ]);
+
+    // Debug logging to see what categories we're getting
+    console.log('Categories from Sanity:', categories.map(cat => ({
+      title: cat.title,
+      slug: typeof cat.slug === 'string' ? cat.slug : cat.slug.current,
+      _id: cat._id
+    })));
 
     // Transform categories to match expected interface
     const transformedCategories = categories.map((category) => ({
@@ -103,23 +124,32 @@ async function SearchPageContent({ searchParams }: SearchPageProps) {
       itemCount: category.itemCount,
     }));
 
+    // Debug logging to see transformed categories
+    console.log('Transformed categories:', transformedCategories);
+
     // Define limited filters for search page (simplified set)
     const searchPageFilters = {
       query: params.q || "",
+      category: params.category || "",
+      city: params.city || "",
+      area: params.area || "",
+      condition: params.condition || "",
+      minPrice: params.minPrice ? parseInt(params.minPrice) : 0,
+      maxPrice: params.maxPrice ? parseInt(params.maxPrice) : 0,
+      availability: params.availability || "",
       sortBy: params.sortBy || "newest",
-      minPrice: 0,
-      maxPrice: 0,
-      condition: "",
-      area: "",
-      availability: "",
+      seller: params.seller || "",
     };
+
+    // Debug logging to see search filters
+    console.log('Search page filters:', searchPageFilters);
 
     // Page context for sidebar content - exclude filters to prevent them from showing
     const pageContext = {
       searchQuery: params.q || "",
       filters: searchPageFilters,
       categories: transformedCategories,
-      hasActiveSearch: !!(params.q),
+      hasActiveSearch: !!(params.q || params.category || params.seller),
       hideFilters: true, // Flag to hide filters in the sidebar
     };
 
