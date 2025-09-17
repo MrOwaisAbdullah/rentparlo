@@ -43,6 +43,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
+import { getAllListingsBySeller } from "@/lib/sanity-queries";
 import { Listing } from "@/types";
 import { ListingActions } from "./listing-actions";
 
@@ -160,7 +161,7 @@ export function ListingManagementIntegration({
   const refreshListings = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/listings?sellerId=${sellerId}`);
+      const response = await fetch(`/api/seller-listings?sellerId=${sellerId}`);
       if (response.ok) {
         const data = await response.json();
         const listingsWithAnalytics = data.data.listings.map(

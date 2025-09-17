@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import { safeDOM } from './safe-dom';
 
 // Screen reader announcement utilities
 export class ScreenReaderAnnouncer {
@@ -42,7 +43,7 @@ export class ScreenReaderAnnouncer {
       border: 0 !important;
     `;
 
-    document.body.appendChild(this.announceElement);
+    safeDOM.appendChild(document.body, this.announceElement);
   }
 
   announce(message: string, priority: "polite" | "assertive" = "polite") {

@@ -22,6 +22,7 @@ import { updateUserProfile, updateSellerProfile } from '@/lib/supabase-queries-c
 import Link from 'next/link';
 import { CityAreaCombobox } from '@/components/search/city-area-combobox';
 import { ProfileImageUpload } from '@/components/forms/profile-image-upload';
+import { Badge } from '@/components/ui/badge';
 
 const profileFormSchema = z.object({
   name: z
@@ -64,6 +65,42 @@ interface UserProfileFormProps {
   initialData: any;
   sellerProfile?: any;
 }
+
+// Helper function to get badge variant based on verification status
+const getVerificationBadgeVariant = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'approved':
+      return 'default'; // Green badge
+    case 'pending':
+      return 'secondary'; // Yellow badge
+    case 'under_review':
+      return 'secondary'; // Yellow badge
+    case 'rejected':
+      return 'destructive'; // Red badge
+    case 'resubmit_required':
+      return 'destructive'; // Red badge
+    default:
+      return 'outline'; // Gray badge
+  }
+};
+
+// Helper function to get badge variant based on tier
+const getTierBadgeVariant = (tier: string) => {
+  switch (tier?.toLowerCase()) {
+    case 'platinum':
+      return 'default'; // Primary color (typically blue/purple)
+    case 'gold':
+      return 'default'; // Gold/yellow
+    case 'silver':
+      return 'secondary'; // Silver/gray
+    case 'bronze':
+      return 'secondary'; // Bronze/orange
+    case 'basic':
+      return 'outline'; // Outline
+    default:
+      return 'outline'; // Gray badge
+  }
+};
 
 export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -302,11 +339,21 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Verification Status</p>
-                <p className="capitalize">{sellerProfile.verification_status || 'Not set'}</p>
+                <Badge variant={getVerificationBadgeVariant(sellerProfile.verification_status)}>
+                  {sellerProfile.verification_status ? 
+                    sellerProfile.verification_status.charAt(0).toUpperCase() + 
+                    sellerProfile.verification_status.slice(1).replace('_', ' ') : 
+                    'Not set'}
+                </Badge>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Tier</p>
-                <p className="capitalize">{sellerProfile.tier || 'Not set'}</p>
+                <Badge variant={getTierBadgeVariant(sellerProfile.tier)}>
+                  {sellerProfile.tier ? 
+                    sellerProfile.tier.charAt(0).toUpperCase() + 
+                    sellerProfile.tier.slice(1) : 
+                    'Not set'}
+                </Badge>
               </div>
             </div>
             <Button 

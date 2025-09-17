@@ -198,9 +198,12 @@ export function PDFReportGenerator({
       const link = document.createElement("a");
       link.href = url;
       link.download = `${filename}.pdf`;
-      document.body.appendChild(link);
+      
+      // Use safeDOM operations to prevent runtime errors
+      safeDOM.appendChild(document.body, link);
       link.click();
-      document.body.removeChild(link);
+      safeDOM.removeChild(document.body, link);
+      
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Report generation failed:", error);

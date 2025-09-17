@@ -112,6 +112,13 @@ export function UnifiedListingSearch({
   initialListings = [],
   initialTotalResults = 0,
 }: UnifiedListingSearchProps) {
+  console.log('=== UNIFIED LISTING SEARCH MOUNT DEBUG ===');
+  console.log('Component mounting with props:', {
+    initialFilters,
+    externalSearchParams,
+    manageURL
+  });
+  
   const router = useRouter();
   const currentSearchParams = useSearchParams();
 
@@ -121,6 +128,15 @@ export function UnifiedListingSearch({
     console.log('UnifiedListingSearch - Current search params:', Object.fromEntries(currentSearchParams.entries()));
     console.log('====================================');
   }, [currentSearchParams]);
+
+  // Log when component unmounts
+  React.useEffect(() => {
+    return () => {
+      console.log('=== UNIFIED LISTING SEARCH UNMOUNT DEBUG ===');
+      console.log('Component unmounting');
+      console.log('========================================');
+    };
+  }, []);
 
   // Determine search params source
   const searchParams = externalSearchParams || {
@@ -173,6 +189,14 @@ export function UnifiedListingSearch({
 
   // Debounced search query
   const debouncedQuery = useDebounce(searchQuery, 300);
+  
+  // Debug logging for debounced query
+  React.useEffect(() => {
+    console.log('=== DEBOUNCED QUERY DEBUG ===');
+    console.log('searchQuery:', searchQuery);
+    console.log('debouncedQuery:', debouncedQuery);
+    console.log('=============================');
+  }, [searchQuery, debouncedQuery]);
 
   // Debounced filter change handler
   const debouncedFilterChange = useDebouncedCallback(
@@ -208,9 +232,13 @@ export function UnifiedListingSearch({
       };
       
       console.log('=== CURRENT FILTERS DEBUG ===');
-      console.log('UnifiedListingSearch - Current filters:', filters);
-      console.log('Seller filter value:', filters.seller);
+      console.log('Current filters computed:', filters);
+      console.log('searchParams.q:', searchParams.q);
+      console.log('initialFilters.query:', initialFilters.query);
+      console.log('searchParams.seller:', searchParams.seller);
+      console.log('initialFilters.seller:', initialFilters.seller);
       console.log('=============================');
+      
       return filters;
     },
     [searchParams, initialFilters]
@@ -279,10 +307,12 @@ export function UnifiedListingSearch({
   // Update URL with new search parameters
   const updateSearchParams = React.useCallback(
     (newParams: Partial<ListingFilters>) => {
-      console.log('=== UPDATE SEARCH PARAMS CALLED ===');
+      console.log('=== UPDATE SEARCH PARAMS DEBUG ===');
       console.log('updateSearchParams called with:', newParams);
-      console.log('Current search params:', Object.fromEntries(currentSearchParams.entries()));
+      console.log('Current search params (useSearchParams):', Object.fromEntries(currentSearchParams.entries()));
       console.log('Current filters:', currentFilters);
+      console.log('External search params:', externalSearchParams);
+      console.log('Current seller in currentFilters:', currentFilters.seller);
       
       if (!manageURL) {
         // If not managing URL, call external handler
@@ -302,6 +332,7 @@ export function UnifiedListingSearch({
         // Map 'query' to 'q' for URL
         const urlKey = key === "query" ? "q" : key;
         console.log(`Processing param: ${key} -> ${urlKey} = ${value}`);
+        console.log(`Value type: ${typeof value}, Value:`, value);
 
         if (value !== "" && value !== 0 && value !== null && value !== undefined && 
             !(key === "page" && value === 1)) {
@@ -309,14 +340,9 @@ export function UnifiedListingSearch({
           console.log(`Setting ${urlKey} = ${value}`);
         } else {
           // Only delete if explicitly setting to empty/null
-          // BUT preserve seller parameter if it was previously set
-          if (key in newParams && key !== "seller") {
+          if (key in newParams) {
             params.delete(urlKey);
             console.log(`Deleting ${urlKey}`);
-          } else if (key === "seller" && currentFilters.seller) {
-            // Preserve seller parameter if it was previously set
-            params.set(urlKey, currentFilters.seller);
-            console.log(`Preserving seller parameter: ${urlKey} = ${currentFilters.seller}`);
           }
         }
       });
@@ -328,17 +354,23 @@ export function UnifiedListingSearch({
       }
 
       const newUrl = params.toString() ? `?${params.toString()}` : "";
+      console.log('Final params.toString():', params.toString());
       console.log('New URL:', newUrl);
       console.log('=== UPDATE SEARCH PARAMS FINISHED ===');
       router.push(newUrl, { scroll: false });
     },
-    [currentSearchParams, router, manageURL, onFiltersChange, currentFilters]
+    [currentSearchParams, router, manageURL, onFiltersChange, currentFilters, externalSearchParams]
   );
 
   // Handle search input with accessibility announcements
   const handleSearchSubmit = React.useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+      console.log('=== SEARCH FORM SUBMIT DEBUG ===');
+      console.log('Search form submitted with searchQuery:', searchQuery);
+      console.log('Current filters:', currentFilters);
+      console.log('Current search params:', Object.fromEntries(currentSearchParams.entries()));
+      
       setIsSearching(true);
 
       // Announce search initiation
@@ -348,7 +380,9 @@ export function UnifiedListingSearch({
         announcer.announce("Starting search", "polite");
       }
 
-      updateSearchParams({ query: searchQuery });
+      console.log('Calling updateSearchParams with:', { query: searchQuery });
+      // Preserve the seller parameter when submitting the search form
+      updateSearchParams({ query: searchQuery, seller: currentFilters.seller });
       onSearch?.(searchQuery);
 
       // Track search query
@@ -357,6 +391,7 @@ export function UnifiedListingSearch({
       }
 
       setTimeout(() => setIsSearching(false), 1000);
+      console.log('=== SEARCH FORM SUBMIT FINISHED ===');
     },
     [searchQuery, updateSearchParams, onSearch, currentFilters, announcer]
   );
@@ -402,17 +437,34 @@ export function UnifiedListingSearch({
 
   // Auto-search when debounced query changes
   React.useEffect(() => {
+    console.log('=== DEBOUNCED QUERY EFFECT DEBUG ===');
     console.log('Debounced query effect triggered');
     console.log('debouncedQuery:', debouncedQuery);
     console.log('currentFilters.query:', currentFilters.query);
     console.log('searchParams.seller:', searchParams.seller);
+    console.log('currentFilters.seller:', currentFilters.seller);
     console.log('currentSearchParams:', Object.fromEntries(currentSearchParams.entries()));
+    console.log('searchQuery:', searchQuery);
+    console.log('initialFilters:', initialFilters);
+    console.log('externalSearchParams:', externalSearchParams);
+    console.log('Comparison result (debouncedQuery !== currentFilters.query):', debouncedQuery !== currentFilters.query);
     
     if (debouncedQuery !== currentFilters.query) {
       console.log('Query changed, updating search params with:', { query: debouncedQuery });
-      updateSearchParams({ query: debouncedQuery });
+      console.log('BEFORE updateSearchParams - currentSearchParams:', Object.fromEntries(currentSearchParams.entries()));
+      // Preserve the seller parameter when updating the query
+      const updateParams = { 
+        query: debouncedQuery,
+        seller: currentFilters.seller // Preserve seller parameter
+      };
+      console.log('Update params with seller preserved:', updateParams);
+      updateSearchParams(updateParams);
+      console.log('AFTER updateSearchParams - currentSearchParams:', Object.fromEntries(currentSearchParams.entries()));
+    } else {
+      console.log('Query did not change, not updating search params');
     }
-  }, [debouncedQuery, currentFilters.query, updateSearchParams, searchParams.seller, currentSearchParams]);
+    console.log('====================================');
+  }, [debouncedQuery, currentFilters.query, currentFilters.seller, updateSearchParams, searchParams.seller, currentSearchParams, searchQuery, initialFilters, externalSearchParams]);
 
   // Trigger initial search when component mounts with existing filters
   React.useEffect(() => {

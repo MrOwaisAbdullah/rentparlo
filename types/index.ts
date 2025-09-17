@@ -1111,6 +1111,7 @@ export interface SearchParams {
   sort?: "featured" | "price-low" | "price-high" | "newest";
   offset?: number;
   limit?: number;
+  seller?: string;
 }
 
 /**
@@ -1125,6 +1126,7 @@ export interface SearchFilters {
   maxPrice?: number;
   condition?: ItemCondition | ItemCondition[];
   sort?: "featured" | "price-low" | "price-high" | "newest";
+  seller?: string;
 }
 
 /**

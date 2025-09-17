@@ -384,9 +384,12 @@ export function ListingExport({ listings, onExport }: ListingExportProps) {
       link.setAttribute("href", url);
       link.setAttribute("download", `${filename}.csv`);
       link.style.visibility = "hidden";
-      document.body.appendChild(link);
+      
+      // Use safeDOM operations to prevent runtime errors
+      safeDOM.appendChild(document.body, link);
       link.click();
-      document.body.removeChild(link);
+      safeDOM.removeChild(document.body, link);
+      
       URL.revokeObjectURL(url);
     }
   };

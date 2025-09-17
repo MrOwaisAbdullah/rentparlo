@@ -8,6 +8,7 @@ import { ListingDetailSkeleton } from '@/components/listing/listing-detail-skele
 import { ClientRetryButton } from '@/components/listing/client-retry-button';
 import { headers } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -171,14 +172,16 @@ export default async function ListingPage({ params }: ListingPageProps) {
 
     return (
       <div className="min-h-screen bg-gray-50">
-        <Suspense fallback={<ListingDetailSkeleton />}>
-          <ListingDetailContent 
-            listing={listing} 
-            similarListings={similarListings} 
-            reviews={reviews}
-            currentUser={user}
-          />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<ListingDetailSkeleton />}>
+            <ListingDetailContent 
+              listing={listing} 
+              similarListings={similarListings} 
+              reviews={reviews}
+              currentUser={user}
+            />
+          </Suspense>
+        </ErrorBoundary>
       </div>
     );
   } catch (error) {

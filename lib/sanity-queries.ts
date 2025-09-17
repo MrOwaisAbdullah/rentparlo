@@ -393,9 +393,29 @@ export const SEARCH_LISTINGS_QUERY = `
   }
 `
 
+// Get all listings by seller ID (regardless of status)
+export const ALL_SELLER_LISTINGS_QUERY = `
+  *[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+    _id,
+    _createdAt,
+    title,
+    slug,
+    description,
+    price,
+    priceType,
+    status,
+    images[]{
+      asset->{
+        url
+      }
+    },
+    isFeatured
+  }
+`
+
 // Get listings by seller ID
 export const SELLER_LISTINGS_QUERY = `
-  *[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+  *[_type == "listing" && supabaseId == $sellerId && status == "active" && published == true] | order(_createdAt desc) {
     _id,
     _createdAt,
     title,
@@ -1064,6 +1084,29 @@ export async function getListingsBySeller(sellerId: string): Promise<Listing[]> 
         status,
         badges,
         "imageUrl": images[0].asset->url
+    }`;
+    const params = { sellerId };
+    const listings = await client.fetch(query, params);
+    return listings;
+}
+
+// Get all listings by seller ID (including pending, active, expired, etc.)
+export async function getAllListingsBySeller(sellerId: string): Promise<Listing[]> {
+    const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+        _id,
+        _createdAt,
+        title,
+        slug,
+        description,
+        price,
+        priceType,
+        status,
+        images[]{
+            asset->{
+                url
+            }
+        },
+        isFeatured
     }`;
     const params = { sellerId };
     const listings = await client.fetch(query, params);

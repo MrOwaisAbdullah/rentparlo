@@ -714,107 +714,53 @@ export function CreateListingForm({
     <div className="space-y-8">
       {/* Progress Steps */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          {/* Mobile: Horizontal scroll with peeking */}
-          <div className="sm:hidden flex items-center overflow-x-auto px-4 py-2 snap-x snap-mandatory scroll-smooth no-scrollbar">
-            <div className="flex items-center space-x-4 min-w-max px-4">
-              {steps.map((step, index) => {
-                const { hasErrors, isComplete } = getStepValidation(index);
-                const isActive = index === currentStep;
-                const isPast = index < currentStep;
-
-                return (
-                  <div key={index}
-                       className={`flex flex-col items-center transition-all duration-300 snap-center
-                                   ${isActive
-                                     ? 'opacity-100 scale-100'
-                                     : 'opacity-40 scale-90 blur-sm'}`}>
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center
-                                 text-sm font-bold shrink-0 transition-all duration-300
-                                 ${isPast ? "bg-green-500 text-white"
-                                   : isActive ? "bg-blue-500 text-white scale-110 shadow-lg shadow-blue-500/30"
-                                   : hasErrors ? "bg-red-100 text-red-600"
-                                   : isComplete ? "bg-green-100 text-green-600"
-                                   : "bg-gray-100 text-gray-600"}`}
-                    >
-                      {isPast ? "✓" : index + 1}
-                    </div>
-
-                    <div className="mt-2 text-center">
-                      <div className={`text-xs font-bold transition-colors duration-300
-                                     ${isActive ? "text-blue-600" : "text-gray-700"}`}>
-                        {step.title}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* Desktop: Original horizontal layout */}
-          <div className="hidden sm:flex items-center justify-between w-full">
+        <div className="flex items-center justify-center sm:justify-between mb-4 
+                    overflow-x-auto px-4 sm:px-0 py-2">
+          <div className="flex items-center space-x-2 sm:space-x-0 
+                        justify-center sm:justify-between w-full">
             {steps.map((step, index) => {
               const { hasErrors, isComplete } = getStepValidation(index);
               const isActive = index === currentStep;
               const isPast = index < currentStep;
-          
+        
               return (
-                <div key={index} className="flex items-center flex-1">
-                  <div className="flex items-center">
+                <div key={index} className="flex items-center">
+                  <div className={`flex flex-col sm:flex-row items-center transition-all duration-300 
+                             ${isActive 
+                               ? 'opacity-100 scale-100' 
+                               : 'opacity-40 scale-90 blur-sm hover:blur-none'}`}>
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
-                        isPast
-                          ? "bg-green-500 text-white"
-                          : isActive
-                            ? "bg-blue-500 text-white"
-                            : hasErrors
-                              ? "bg-red-100 text-red-600"
-                              : isComplete
-                                ? "bg-green-100 text-green-600"
-                                : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full flex items-center justify-center 
+                               text-sm font-bold shrink-0 transition-all duration-300 
+                               ${isPast ? "bg-green-500 text-white"
+                                 : isActive ? "bg-blue-500 text-white scale-110 shadow-lg"
+                                 : hasErrors ? "bg-red-100 text-red-600"
+                                 : isComplete ? "bg-green-100 text-green-600"
+                                 : "bg-gray-100 text-gray-600"}`}
                     >
                       {isPast ? "✓" : index + 1}
                     </div>
                     
-                    <div className="ml-3 text-left">
-                      <div
-                        className={`text-sm font-medium ${
-                          isActive ? "text-blue-600" : "text-gray-900"
-                        }`}
-                      >
+                    <div className="mt-2 sm:mt-0 sm:ml-3 text-center sm:text-left">
+                      <div className={`text-xs font-bold ${isActive ? "text-blue-600" : "text-gray-900"}`}>
                         {step.title}
                       </div>
-                      <div className="text-xs text-gray-500 lg:w-[80%]">
+                      <div className="text-[10px] text-gray-500 hidden sm:block">
                         {step.description}
                       </div>
                     </div>
-                    
-                    {index < steps.length - 1 && (
-                      <div
-                        className={`h-1 flex-1 mx-2 ${
-                          isPast ? "bg-green-500" : "bg-gray-200"
-                        }`}
-                      />
-                    )}
                   </div>
+                  
+                  {index < steps.length - 1 && (
+                    <div className={`hidden sm:block h-1 w-8 mx-1 transition-all duration-300 
+                               ${isPast ? "bg-green-500" : "bg-gray-200"}`}
+                    />
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
-        
-        <style jsx>{`
-          .no-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-          .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}</style>
       </div>
 
       {/* Step Content */}

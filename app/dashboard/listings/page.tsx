@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
-import { searchListings } from '@/lib/sanity-queries';
+import { getAllListingsBySeller } from '@/lib/sanity-queries';
 import { redirect } from 'next/navigation';
 import {
   Table,
@@ -32,12 +32,8 @@ export default async function ListingsPage() {
     redirect('/auth/login');
   }
 
-  // Fetch listings for the current seller
-  const listings: Listing[] = await searchListings({
-    sellerId: user.id,
-    offset: 0,
-    limit: 1000 // Get all listings for the seller
-  });
+  // Fetch all listings for the current seller (including pending)
+  const listings: Listing[] = await getAllListingsBySeller(user.id);
 
   const formatPrice = (price: number, priceType: string) => {
     const formatted = new Intl.NumberFormat('en-PK', {

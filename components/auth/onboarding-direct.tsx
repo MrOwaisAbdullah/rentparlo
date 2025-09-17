@@ -280,12 +280,20 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       // Explicitly check terms acceptance
       if (!data.terms) {
         setError('You must accept the terms and conditions to complete setup.');
-        toast.error('You must accept the terms and conditions to complete setup.');
+        toast.error('❌ Terms Required', {
+          description: 'Please accept the Terms of Service and Privacy Policy to continue.'
+        });
         return;
       }
       
       const isValid = await trigger();
       if (!isValid) {
+        const errorMessages = Object.values(errors).map(error => error.message).filter(Boolean);
+        if (errorMessages.length > 0) {
+          toast.error('Please fix the errors before submitting.', {
+            description: errorMessages.join('\n'),
+          });
+        }
         return;
       }
       
@@ -358,13 +366,19 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
       // Scroll to top after completion
       window.scrollTo({ top: 0, behavior: 'smooth' });
       
-      toast.success('Welcome to RentParLo.pk! Your profile has been completed.');
+      toast.success('🎉 Welcome to RentParLo.pk!', {
+        description: 'Your profile has been successfully completed. Let\'s get started!',
+        duration: 5000
+      });
       onComplete();
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
-      toast.error(`Error: ${errorMessage}`);
+      toast.error('❌ Setup Failed', {
+        description: errorMessage,
+        duration: 5000
+      });
     } finally {
       setIsLoading(false);
     }
@@ -374,9 +388,79 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Add function to show validation errors in a user-friendly way
+  const showValidationErrors = () => {
+    const fieldLabels = {
+      name: 'Full Name',
+      phone: 'Phone Number',
+      city: 'City',
+      area: 'Area',
+      role: 'Account Type',
+      businessName: 'Business Name',
+      cnic: 'CNIC Number',
+      address: 'Business Address',
+      whatsapp: 'WhatsApp Number',
+      referralCode: 'Referral Code',
+      terms: 'Terms & Conditions'
+    };
+
+    const validationErrors = Object.entries(errors).map(([field, error]) => ({
+      field,
+      label: fieldLabels[field as keyof typeof fieldLabels] || field,
+      message: error?.message
+    }));
+
+    if (validationErrors.length === 0) return;
+
+    // Show first error as toast
+    const firstError = validationErrors[0];
+    toast.error(`❌ ${firstError.label} Required`, {
+      description: firstError.message,
+      duration: 4000
+    });
+
+    // Scroll to first error field
+    const firstErrorField = document.querySelector(`[id="${firstError.field}"]`) || 
+                            document.querySelector(`[name="${firstError.field}"]`);
+    if (firstErrorField) {
+      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (firstErrorField as HTMLElement).focus();
+    }
+  };
   
   // Update handleNext function
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Define which fields to validate for each step
+    const stepFields = {
+      'role': ['role'],
+      'profile': ['name', 'phone', 'city', 'area'],
+      'business': ['businessName', 'cnic', 'address', 'whatsapp'],
+      'verification': [], // No form fields, just document uploads
+      'review': ['terms']
+    };
+
+    const currentStepId = filteredSteps[currentStep]?.id;
+    const fieldsToValidate = stepFields[currentStepId as keyof typeof stepFields] || [];
+
+    if (fieldsToValidate.length > 0) {
+      const isValid = await trigger(fieldsToValidate as any);
+
+      if (!isValid) {
+        const validationErrors = Object.keys(errors)
+          .filter(field => fieldsToValidate.includes(field))
+          .map(field => errors[field as keyof OnboardingFormData]?.message)
+          .filter(Boolean);
+
+        if (validationErrors.length > 0) {
+          toast.error('Please fix the errors before proceeding.', {
+            description: validationErrors.join('\n'),
+          });
+        }
+        return;
+      }
+    }
+
     if (currentStep < filteredSteps.length - 1) {
       setCurrentStep(currentStep + 1);
       scrollToTop();
@@ -512,8 +596,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 id="name"
                 {...register('name')}
                 placeholder="Enter your full name"
+                className={errors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               />
-              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
+              {errors.name && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.name.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -523,8 +615,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 {...register('phone')}
                 placeholder="03XX XXXXXXX"
                 type="tel"
+                className={errors.phone ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               />
-              {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
+              {errors.phone && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.phone.message}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Pakistani mobile number format</p>
             </div>
 
@@ -540,9 +640,24 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 onAreaChange={setLocalArea}
                 cityPlaceholder="Select a city"
                 areaPlaceholder="Select an area"
+                className={(errors.city || errors.area) ? 'border-red-500' : ''}
               />
-              {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
-              {errors.area && <p className="text-sm text-destructive mt-1">{errors.area.message}</p>}
+              {errors.city && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.city.message}
+                </p>
+              )}
+              {errors.area && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.area.message}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -556,8 +671,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 id="businessName"
                 {...register('businessName')}
                 placeholder="Enter your business name"
+                className={errors.businessName ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               />
-              {errors.businessName && <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>}
+              {errors.businessName && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.businessName.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -566,8 +689,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 id="cnic"
                 {...register('cnic')}
                 placeholder="XXXXX-XXXXXXX-X"
+                className={errors.cnic ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               />
-              {errors.cnic && <p className="text-sm text-destructive mt-1">{errors.cnic.message}</p>}
+              {errors.cnic && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.cnic.message}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Required for verification</p>
             </div>
 
@@ -577,8 +708,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 id="address"
                 {...register('address')}
                 placeholder="Enter your business address"
+                className={errors.address ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               />
-              {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
+              {errors.address && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.address.message}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Full address for verification</p>
             </div>
 
@@ -589,8 +728,16 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
                 {...register('whatsapp')}
                 placeholder="03XX XXXXXXX"
                 type="tel"
+                className={errors.whatsapp ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               />
-              {errors.whatsapp && <p className="text-sm text-destructive mt-1">{errors.whatsapp.message}</p>}
+              {errors.whatsapp && (
+                <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {errors.whatsapp.message}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">For customer communication</p>
             </div>
           </div>
@@ -647,20 +794,29 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
               />
             </div>
 
-            <div className={`flex items-start space-x-2 ${!terms && error ? 'animate-pulse' : ''}`}>
+            <div className={`flex items-start space-x-2 ${(!terms && error) || errors.terms ? 'animate-pulse' : ''}`}>
               <div className="flex items-center h-5">
                 <input
                   id="terms"
                   type="checkbox"
                   {...register('terms')}
-                  className="h-4 w-4 rounded border-muted-foreground text-primary focus:ring-primary"
+                  className={`h-4 w-4 rounded border-muted-foreground text-primary focus:ring-primary ${
+                    errors.terms ? 'border-red-500 focus:ring-red-500' : ''
+                  }`}
                 />
               </div>
               <Label htmlFor="terms" className="text-sm font-medium leading-none">
                 I agree to the <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>
               </Label>
             </div>
-            {errors.terms && <p className="text-sm text-destructive">{errors.terms.message}</p>}
+            {errors.terms && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {errors.terms.message}
+              </p>
+            )}
           </div>
         );
 
@@ -706,8 +862,21 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-              <p className="text-xs text-destructive">{error}</p>
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg animate-pulse">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800 mb-1">Setup Incomplete</h3>
+                  <div className="text-sm text-red-700 whitespace-pre-line">{error}</div>
+                  <p className="text-xs text-red-600 mt-2">
+                    Please review the highlighted fields above and make the necessary corrections.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -718,13 +887,13 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
             </div>
 
             {/* Navigation */}
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-2 sm:gap-4">
               <Button
                 type="button"
                 variant="outline"
+                size="md"
                 onClick={handlePrevious}
                 disabled={currentStep === 0 || isLoading}
-                size="sm"
               >
                 Previous
               </Button>
@@ -732,9 +901,8 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
               {currentStep === filteredSteps.length - 1 ? (
                 <Button
                   type="submit"
+                  size="md"
                   disabled={isLoading || !terms}
-                  size="sm"
-                  className="min-w-[100px]"
                 >
                   {isLoading ? (
                     <>
@@ -748,10 +916,9 @@ export function OnboardingDirect({ user, onComplete }: OnboardingDirectProps) {
               ) : (
                 <Button
                   type="button"
+                  size="md"
                   onClick={handleNext}
                   disabled={isLoading}
-                  size="sm"
-                  className="min-w-[100px]"
                 >
                   Continue
                 </Button>

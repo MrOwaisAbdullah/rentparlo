@@ -116,7 +116,7 @@ export function AnalyticsDashboard({
           </p>
         </div>
 
-        <div className={`flex gap-2 ${isMobile ? "flex-col" : "items-center"}`}>
+        <div className={`flex gap-2 ${isMobile ? "flex-col w-full" : "items-center"}`}>
           <Select
             value={timeRange.preset}
             onValueChange={handleTimeRangePresetChange}
@@ -171,7 +171,7 @@ export function AnalyticsDashboard({
 
       {/* Key Metrics Overview */}
       <div
-        className={`grid gap-4 ${isMobile ? "grid-cols-1 sm:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-4"}`}
+        className={`grid gap-4 ${isMobile ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-4"}`}
         role="region"
         aria-label="Key performance metrics"
       >
@@ -220,7 +220,7 @@ export function AnalyticsDashboard({
         aria-describedby="dashboard-description"
       >
         <TabsList
-          className={`grid w-full ${isMobile ? "grid-cols-2" : "grid-cols-3"}`}
+          className={`grid w-full ${isMobile ? "grid-cols-3" : "grid-cols-3"}`}
           role="tablist"
           aria-label="Analytics dashboard sections"
         >
@@ -233,7 +233,7 @@ export function AnalyticsDashboard({
             id="overview-tab"
           >
             <BarChart3 className="h-4 w-4" aria-hidden="true" />
-            <span className={isMobile ? "text-xs" : "hidden sm:inline"}>
+            <span className={isMobile ? "text-xs" : "text-sm"}>
               Overview
             </span>
           </TabsTrigger>
@@ -246,7 +246,7 @@ export function AnalyticsDashboard({
             id="listings-tab"
           >
             <LineChart className="h-4 w-4" aria-hidden="true" />
-            <span className={isMobile ? "text-xs" : "hidden sm:inline"}>
+            <span className={isMobile ? "text-xs" : "text-sm"}>
               Listings
             </span>
           </TabsTrigger>
@@ -259,7 +259,7 @@ export function AnalyticsDashboard({
             id="devices-tab"
           >
             <Smartphone className="h-4 w-4" aria-hidden="true" />
-            <span className={isMobile ? "text-xs" : "hidden sm:inline"}>
+            <span className={isMobile ? "text-xs" : "text-sm"}>
               Devices
             </span>
           </TabsTrigger>
@@ -274,7 +274,7 @@ export function AnalyticsDashboard({
           aria-labelledby="overview-tab"
         >
           <div
-            className={`grid gap-6 ${isMobile ? "grid-cols-1" : "lg:grid-cols-2"}`}
+            className={`grid gap-4 ${isMobile ? "grid-cols-1" : "lg:grid-cols-2"}`}
           >
             {/* Performance Trends Chart - Only the chart should zoom/pan, not the entire card */}
             <Card>
@@ -325,7 +325,7 @@ export function AnalyticsDashboard({
 
           {/* Additional Metrics */}
           <div
-            className={`grid gap-4 ${isMobile ? "grid-cols-1 sm:grid-cols-2" : "md:grid-cols-3"}`}
+            className={`grid gap-4 ${isMobile ? "grid-cols-1" : "md:grid-cols-3"}`}
             role="region"
             aria-label="Additional performance metrics"
           >

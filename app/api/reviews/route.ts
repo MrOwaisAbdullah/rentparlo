@@ -5,10 +5,10 @@ import { sanityWriteClient } from '@/lib/sanity';
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (error || !user) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 

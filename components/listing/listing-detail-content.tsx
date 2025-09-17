@@ -27,6 +27,15 @@ import { PriceInfoCard } from '@/components/listing/price-info-card';
 import { cn } from '@/lib/utils';
 import { Listing as SanityListing, Seller, SellerProfile } from '@/types';
 import { SaveButton } from '@/components/ui/save-button';
+import { useSafeDOM } from '@/hooks/use-safe-dom';
+import { safeDOM } from '@/lib/safe-dom';
+
+interface ListingDetailContentProps {
+  listing: SanityListing;
+  similarListings?: SanityListing[];
+  reviews?: any[];
+  currentUser?: any;
+}
 
 interface ListingDetailContentProps {
   listing: SanityListing;
@@ -357,7 +366,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
             <div className="relative">
-              <div className="aspect-[4/3] h-96 sm:h-auto sm:aspect-[21/9] relative overflow-hidden rounded-lg bg-muted">
+              <div className="aspect-[4/3] w-full relative overflow-hidden rounded-lg bg-muted">
                 {listing.images && listing.images.length > 0 ? (
                   <Image
                     src={listing.images[currentImageIndex]?.asset?.url || "/placeholder.svg"}
@@ -378,18 +387,18 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 p-0 bg-white/90 hover:bg-white"
                       onClick={previousImage}
                     >
-                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <ChevronLeft className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 p-0 bg-white/90 hover:bg-white"
                       onClick={nextImage}
                     >
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <ChevronRight className="w-4 h-4" />
                     </Button>
                     
                     {/* Image Indicators */}
@@ -409,23 +418,23 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                 )}
 
                 {/* Action Buttons */}
-                <div className="absolute top-4 right-4 flex md:flex-col gap-2">
-                  <SaveButton listing={listing} className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white" />
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <SaveButton listing={listing} className="w-8 h-8 p-0 bg-white/90 hover:bg-white" />
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
+                    className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
                     onClick={handleShare}
                   >
-                    <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Share2 className="w-4 h-4" />
                   </Button>
                   {/* Temporary Disabled */}
                   {/* <Button
                     size="sm"
                     variant="secondary"
-                    className="w-8 h-8 sm:w-10 sm:h-10 p-0 bg-white/90 hover:bg-white"
+                    className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
                   >
-                    <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Flag className="w-4 h-4" />
                   </Button> */}
                 </div>
 
@@ -449,7 +458,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     <button
                       key={index}
                       className={cn(
-                        "flex-shrink-0 w-20 h-20 relative overflow-hidden rounded border-2 transition-colors",
+                        "flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 relative overflow-hidden rounded border-2 transition-colors",
                         index === currentImageIndex ? "border-primary" : "border-transparent hover:border-muted-foreground"
                       )}
                       onClick={() => setCurrentImageIndex(index)}

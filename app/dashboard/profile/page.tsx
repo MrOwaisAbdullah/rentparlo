@@ -62,29 +62,51 @@ export default function DashboardProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchProfile = async () => {
+    if (authLoading) return;
+    
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const data = await getUserProfile();
+      setProfileData(data);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (authLoading) return;
-      
-      if (!user) {
-        router.push('/auth/login');
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const data = await getUserProfile();
-        setProfileData(data);
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError('Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, [user, authLoading, router]);
+
+  // Add event listener for profile image updates
+  useEffect(() => {
+    const handleProfileImageUpdate = () => {
+      fetchProfile();
+    };
+
+    // Listen for profile image updates
+    window.addEventListener('profileImageUpdated', handleProfileImageUpdate);
+    
+    // Also listen for focus events to refresh when user returns to tab
+    const handleFocus = () => {
+      fetchProfile();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('profileImageUpdated', handleProfileImageUpdate);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   if (authLoading || loading) {
     return <ProfilePageSkeleton />;

@@ -98,6 +98,7 @@ export class URLStateManager {
       "language",
       "featured",
       "dateRange",
+      "seller", // Add seller parameter to be parsed from URL
     ];
 
     filterKeys.forEach((key) => {
@@ -182,6 +183,16 @@ export class URLStateManager {
       const featured = params.get("featured");
       if (featured && !["true", "false"].includes(featured)) {
         return false;
+      }
+
+      // Validate seller parameter (should be a valid UUID)
+      const seller = params.get("seller");
+      if (seller) {
+        // Basic UUID validation pattern
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(seller)) {
+          return false;
+        }
       }
 
       return true;

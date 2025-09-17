@@ -12,6 +12,7 @@ import { Listing, ListingImage, ListingBadge } from "@/types"
 import { WhatsAppButton } from "@/components/seller/whatsapp-button"
 import { SaveButton } from "@/components/ui/save-button"
 import { trackAnalyticsEventClient } from "@/lib/supabase-queries-client"
+import { useLoading } from "@/contexts/loading-context"
 
 interface ListingCardProps {
   // Original individual props
@@ -175,6 +176,8 @@ export function ListingCard({
   overlayActions, // Overlay actions for featured variant
   isMobile = false,
 }: ListingCardProps) {
+  const { showLoading, hideLoading } = useLoading();
+  
   // If listing prop is provided, extract values from it
   const effectiveId = listing?._id || id || ''
   const effectiveTitle = listing?.title || title || ''
@@ -264,6 +267,9 @@ export function ListingCard({
     return (
       <Link href={`/listing/${listing?.slug?.current || listing?._id}`} className="flex-shrink-0 block transform transition-transform duration-300 hover:-translate-y-1"
         onClick={async (e) => {
+          // Show loading indicator immediately
+          showLoading();
+          
           // Track listing click
           if (listing?._id) {
             try {
@@ -435,6 +441,7 @@ export function ListingCard({
                   onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    showLoading();
                     const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
                     
                     // Track the share event
@@ -597,6 +604,7 @@ export function ListingCard({
                 className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
                 onClick={async (e) => {
                   e.preventDefault();
+                  showLoading();
                   const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
                   
                   if (navigator.share) {
@@ -950,6 +958,7 @@ export function ListingCard({
                 onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  showLoading();
                   const url = `${window.location.origin}/listing/${listing?.slug?.current || listing?._id}`;
                   
                   if (navigator.share) {

@@ -52,9 +52,12 @@ export function PerformancePanel({
     const a = document.createElement("a");
     a.href = url;
     a.download = `search-performance-${Date.now()}.json`;
-    document.body.appendChild(a);
+    
+    // Use safeDOM operations to prevent runtime errors
+    safeDOM.appendChild(document.body, a);
     a.click();
-    document.body.removeChild(a);
+    safeDOM.removeChild(document.body, a);
+    
     URL.revokeObjectURL(url);
   };
 

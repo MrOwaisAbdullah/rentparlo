@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Trash2, Eye, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -227,50 +227,34 @@ export function VerificationUpload({
   };
 
   return (
-    <div className={cn("space-y-6", className)}>
-      {/* Instructions */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md verification-upload-card" role="alert">
-        <p className="font-bold">Document Submission Guidelines</p>
-        <ul className="mt-2 list-disc list-inside text-sm space-y-1">
+    <div className={cn("space-y-4 sm:space-y-6", className)}>
+      {/* Instructions - Compact version without separate progress card */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 sm:p-4 rounded-md" role="alert">
+        <p className="font-bold text-sm sm:text-base">Document Submission Guidelines</p>
+        <ul className="mt-2 list-disc list-inside text-xs sm:text-sm space-y-1">
           <li>
             <strong>Required:</strong> Clear photos of the front and back of your CNIC are mandatory for verification.
           </li>
           <li>
-            <strong>Optional (Recommended):</strong> Submitting a business license can significantly speed up your verification process.
+            <strong>Optional:</strong> Business license can speed up verification.
           </li>
-          <li>Ensure all documents are clear, well-lit, and all text is readable.</li>
-          <li>Upload colored scans or photos; black & white are not accepted.</li>
-          <li>Documents must be current and not expired.</li>
-          <li>Supported formats: JPG, PNG, PDF.</li>
-          <li>Maximum file size: 10MB per document.</li>
-          <li>Verification typically takes 24-48 hours.</li>
+          <li>Ensure all documents are clear, well-lit, and readable.</li>
+          <li>Upload colored scans; black & white not accepted.</li>
+          <li>Supported formats: JPG, PNG, PDF (max 10MB each).</li>
         </ul>
+        
+        {verificationStatus === 'approved' && (
+          <Alert className="mt-3 bg-green-50 border-green-200 text-xs">
+            <CheckCircle className="h-3 w-3 text-green-600" />
+            <AlertDescription className="text-green-700 text-xs">
+              Your seller account has been verified! You can now create listings and start selling.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
-      {/* Overall Progress */}
-      <Card className="verification-upload-card">
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <span>Required documents submitted</span>
-              <span className="font-medium">{getCompletionPercentage()}%</span>
-            </div>
-            <Progress value={getCompletionPercentage()} className="w-full" />
-            
-            {verificationStatus === 'approved' && (
-              <Alert className="bg-green-50 border-green-200">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-700">
-                  Your seller account has been verified! You can now create listings and start selling.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Document Upload Sections */}
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {documentRequirements.map((requirement) => {
           const existingDoc = getDocumentByType(requirement.type);
           const isUploading = uploadProgress[requirement.type] > 0;
@@ -283,16 +267,17 @@ export function VerificationUpload({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="w-full"
             >
               <Card className={cn(
-                "transition-all duration-200 verification-upload-card",
+                "transition-all duration-200 w-full overflow-hidden",
                 config && `${config.borderColor} ${config.bgColor}`,
                 dragOver === requirement.type && "border-primary border-dashed"
               )}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center justify-between flex-wrap gap-2 text-sm sm:text-base">
                     <div className="flex items-center space-x-2 flex-wrap gap-1">
-                      <span className="text-base">{requirement.label}</span>
+                      <span className="text-sm sm:text-base">{requirement.label}</span>
                       {requirement.required && (
                         <Badge variant="secondary" className="text-xs">Required</Badge>
                       )}
@@ -304,7 +289,7 @@ export function VerificationUpload({
                       </Badge>
                     )}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">{requirement.description}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{requirement.description}</p>
                   {requirement.example && (
                     <p className="text-xs text-muted-foreground italic">
                       Example: {requirement.example}
@@ -312,33 +297,34 @@ export function VerificationUpload({
                   )}
                 </CardHeader>
                 
-                <CardContent>
+                <CardContent className="pt-0">
                   {existingDoc ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {/* Existing Document */}
                       <div className={cn(
-                        "p-4 rounded-lg border-2 border-dashed verification-document-container",
+                        "p-3 sm:p-4 rounded-lg border-2 border-dashed w-full max-w-full overflow-hidden",
                         config?.borderColor || "border-gray-200"
                       )}>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 verification-document-info">
-                          <div className="flex items-start space-x-3">
-                            <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">{existingDoc.fileName}</p>
-                              <p className="text-xs text-muted-foreground truncate">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 w-full">
+                          <div className="flex items-start space-x-2 sm:space-x-3 min-w-0 flex-1">
+                            <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-xs sm:text-sm break-words">{existingDoc.fileName}</p>
+                              <p className="text-xs text-muted-foreground break-words">
                                 Uploaded {formatDate(existingDoc.uploadedAt)}
                                 {existingDoc.fileSize && ` • ${formatFileSize(existingDoc.fileSize)}`}
                               </p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => window.open(existingDoc.fileUrl, '_blank')}
+                              className="h-8 sm:h-9 px-2 sm:px-3 text-xs"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                             {existingDoc.status !== 'approved' && (
                               <Button
@@ -346,8 +332,9 @@ export function VerificationUpload({
                                 size="sm"
                                 onClick={() => onDelete(existingDoc.id, existingDoc.documentType)}
                                 disabled={isLoading}
+                                className="h-8 sm:h-9 px-2 sm:px-3 text-xs"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                               </Button>
                             )}
                           </div>
@@ -366,7 +353,7 @@ export function VerificationUpload({
                       {/* Allow reupload if rejected */}
                       {['rejected', 'resubmit_required'].includes(existingDoc.status) && (
                         <div className="text-center">
-                          <p className="text-sm text-muted-foreground mb-3">
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">
                             Please upload a new document addressing the feedback above
                           </p>
                         </div>
@@ -375,7 +362,7 @@ export function VerificationUpload({
                   ) : (
                     <div
                       className={cn(
-                        "border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors",
+                        "border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center transition-colors",
                         dragOver === requirement.type && "border-primary bg-primary/5",
                         "hover:border-gray-400"
                       )}
@@ -384,9 +371,9 @@ export function VerificationUpload({
                       onDragEnter={() => setDragOver(requirement.type)}
                       onDragLeave={() => setDragOver(null)}
                     >
-                      <Upload className="mx-auto h-10 w-10 text-gray-400 mb-3" />
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
+                      <Upload className="mx-auto h-8 w-8 sm:h-10 sm:w-10 text-gray-400 mb-2 sm:mb-3" />
+                      <div className="space-y-1 sm:space-y-2">
+                        <p className="text-xs sm:text-sm font-medium">
                           Drop your {requirement.label.toLowerCase()} here, or{' '}
                           <button
                             className="text-primary hover:text-primary/80 underline"
