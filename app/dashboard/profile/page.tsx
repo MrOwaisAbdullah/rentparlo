@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { getUserProfile } from '@/lib/supabase-queries-client';
@@ -61,50 +61,52 @@ export default function DashboardProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = React.useRef(false);
 
-  const fetchProfile = async () => {
-    if (authLoading) return;
+  useEffect(() => {
+    // Only fetch profile data once when component mounts and user is available
+    if (authLoading || hasFetchedRef.current) {
+      return;
+    }
     
     if (!user) {
       router.push('/auth/login');
       return;
     }
 
-    try {
-      setLoading(true);
-      const data = await getUserProfile();
-      setProfileData(data);
-    } catch (err) {
-      console.error('Error fetching profile:', err);
-      setError('Failed to load profile data');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const data = await getUserProfile();
+        setProfileData(data);
+        hasFetchedRef.current = true;
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
     fetchProfile();
   }, [user, authLoading, router]);
 
-  // Add event listener for profile image updates
+  // Add event listener for profile image updates (only when user explicitly saves changes)
   useEffect(() => {
-    const handleProfileImageUpdate = () => {
-      fetchProfile();
+    const handleProfileImageUpdate = async () => {
+      try {
+        const data = await getUserProfile();
+        setProfileData(data);
+      } catch (err) {
+        console.error('Error refetching profile after image update:', err);
+      }
     };
 
     // Listen for profile image updates
     window.addEventListener('profileImageUpdated', handleProfileImageUpdate);
-    
-    // Also listen for focus events to refresh when user returns to tab
-    const handleFocus = () => {
-      fetchProfile();
-    };
-    
-    window.addEventListener('focus', handleFocus);
 
     return () => {
       window.removeEventListener('profileImageUpdated', handleProfileImageUpdate);
-      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 

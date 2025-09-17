@@ -40,7 +40,7 @@ const profileFormSchema = z.object({
     .email(),
   phone: z
     .string()
-    .regex(/^(\+92|0)?[0-9]{10}$/, 'Invalid Pakistani phone number format')
+    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani phone number format')
     .optional()
     .or(z.literal('')),
   city: z.string().optional(),
@@ -57,6 +57,16 @@ const profileFormSchema = z.object({
         message: 'Address must not be longer than 200 characters.',
     })
     .optional(),
+  whatsapp: z
+    .string()
+    .regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani WhatsApp number format')
+    .optional()
+    .or(z.literal('')),
+  mapUrl: z
+    .string()
+    .url('Please enter a valid URL')
+    .optional()
+    .or(z.literal('')),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -118,8 +128,29 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
       area: initialData?.area || '',
       bio: initialData?.bio || '',
       address: sellerProfile?.address_line1 || '',
+      whatsapp: sellerProfile?.whatsapp || '',
+      mapUrl: sellerProfile?.map_url || '',
     },
   });
+
+  // Update profile image URL when initial data changes
+  useEffect(() => {
+    setProfileImageUrl(initialData?.profile_image_url || null);
+  }, [initialData?.profile_image_url]);
+
+  // Listen for profile image updates
+  useEffect(() => {
+    const handleProfileImageUpdate = () => {
+      // Refresh the profile image URL from initial data
+      setProfileImageUrl(initialData?.profile_image_url || null);
+    };
+
+    window.addEventListener('profileImageUpdated', handleProfileImageUpdate);
+    
+    return () => {
+      window.removeEventListener('profileImageUpdated', handleProfileImageUpdate);
+    };
+  }, [initialData?.profile_image_url]);
 
   useEffect(() => {
     form.setValue('city', localCity);
@@ -144,6 +175,10 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
     }
 
     const result = await response.json();
+    
+    // Update the profile image URL state immediately
+    setProfileImageUrl(result.imageUrl);
+    
     return result.imageUrl;
   };
 
@@ -164,6 +199,8 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
         address_line1: data.address || null,
         city: data.city || null,
         area: data.area || null,
+        whatsapp: data.whatsapp || null,
+        map_url: data.mapUrl || null,
       }) : Promise.resolve({ success: true });
 
       const [userResult, sellerResult] = await Promise.all([userUpdatePromise, sellerUpdatePromise]);
@@ -295,7 +332,7 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
           )}
         />
 
-        {sellerProfile && (
+                {sellerProfile && (
             <FormField
                 control={form.control}
                 name="address"
@@ -318,12 +355,49 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
             />
         )}
         
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Update Profile
-          </Button>
-        </div>
+        {sellerProfile && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="whatsapp"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>WhatsApp Number</FormLabel>
+                        <FormControl>
+                        <Input
+                            placeholder="03001234567"
+                            {...field}
+                        />
+                        </FormControl>
+                        <FormDescription>
+                            Your WhatsApp number for customer communication.
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                
+                <FormField
+                    control={form.control}
+                    name="mapUrl"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Map URL</FormLabel>
+                        <FormControl>
+                        <Input
+                            placeholder="https://maps.google.com/..."
+                            {...field}
+                        />
+                        </FormControl>
+                        <FormDescription>
+                            Link to your business location on Google Maps or other map service.
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+        )}
         
         {sellerProfile && (
           <div className="border-t pt-6 mt-6">
@@ -355,6 +429,25 @@ export function UserProfileForm({ initialData, sellerProfile }: UserProfileFormP
                     'Not set'}
                 </Badge>
               </div>
+              {sellerProfile.whatsapp && (
+                <div>
+                  <p className="text-sm text-muted-foreground">WhatsApp</p>
+                  <p>{sellerProfile.whatsapp}</p>
+                </div>
+              )}
+              {sellerProfile.map_url && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Map URL</p>
+                  <a 
+                    href={sellerProfile.map_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    View Location
+                  </a>
+                </div>
+              )}
             </div>
             <Button 
               variant="outline" 

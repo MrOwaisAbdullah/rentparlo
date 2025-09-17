@@ -131,7 +131,7 @@ export function PerformanceRecommendationsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
             Performance Recommendations

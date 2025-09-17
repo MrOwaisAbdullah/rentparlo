@@ -26,7 +26,7 @@ const onboardingSchema = z.object({
   area: z.string().optional(),
   role: z.enum(['user', 'seller']),
   businessName: z.string().min(2, 'Business name must be at least 2 characters').optional().or(z.string().length(0)),
-  cnic: z.string().regex(/^\d{5}-\d{7}-\d{1}$/, 'CNIC must be in format XXXXX-XXXXXXX-X').optional().or(z.string().length(0)),
+  cnic: z.string().regex(/^(\d{5}-\d{7}-\d{1}|\d{13})$/, 'CNIC must be in format XXXXX-XXXXXXX-X or XXXXXXXXXXXXX').optional().or(z.string().length(0)),
   address: z.string().min(10, 'Address must be at least 10 characters').optional().or(z.string().length(0)),
   whatsapp: z.string().regex(/^(\+92|0)?3[0-9]{9}$/, 'Invalid Pakistani WhatsApp number').optional().or(z.string().length(0)),
   referralCode: z.string().optional(),

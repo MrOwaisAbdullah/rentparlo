@@ -91,6 +91,8 @@ CREATE TABLE public.seller_profiles (
   phone TEXT,
   email TEXT,
   avatar_url TEXT,
+  whatsapp TEXT,
+  map_url TEXT,
   is_verified BOOLEAN DEFAULT false,
   is_top_seller BOOLEAN DEFAULT false,
   tier TEXT DEFAULT 'basic' CHECK (tier IN ('basic', 'bronze', 'silver', 'gold', 'platinum')),
@@ -1442,7 +1444,7 @@ This setup addresses previous RLS challenges by using SECURITY DEFINER functions
 
 -- 5. Add validation constraints for seller_profiles phone format
 ALTER TABLE public.seller_profiles DROP CONSTRAINT IF EXISTS valid_seller_phone_format;
-ALTER TABLE public.seller_profiles ADD CONSTRAINT valid_seller_phone_format CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+ALTER TABLE public.seller_profiles ADD CONSTRAINT valid_seller_phone_format CHECK (phone IS NULL OR phone ~ '^(\+92|0)?3[0-9]{9}
 
 -- Comments for documentation
 COMMENT ON TABLE public.users IS 'Core user management with authentication';
@@ -1543,6 +1545,2586 @@ COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email for
 COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
 COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
 COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Add validation constraints for seller_profiles WhatsApp format
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT valid_seller_whatsapp_format 
+CHECK (whatsapp IS NULL OR whatsapp ~ '^03[0-9]{2}[0-9]{7}
+CREATE OR REPLACE FUNCTION public.check_user_uniqueness(
+    p_email TEXT DEFAULT NULL,
+    p_phone TEXT DEFAULT NULL,
+    p_existing_user_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if email is already taken by another user
+    IF p_email IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE email = p_email 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Email address is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if phone is already taken by another user
+    IF p_phone IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE phone = p_phone 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Phone number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if CNIC is already taken by another seller
+    -- This would be called separately for seller registration
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 10. Create helper function for checking seller uniqueness
+CREATE OR REPLACE FUNCTION public.check_seller_uniqueness(
+    p_username TEXT,
+    p_cnic TEXT,
+    p_existing_seller_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if username is already taken
+    IF EXISTS (
+        SELECT 1 FROM public.seller_profiles 
+        WHERE username = p_username 
+        AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+    ) THEN
+        RETURN QUERY SELECT FALSE, 'Username is already taken';
+        RETURN;
+    END IF;
+    
+    -- Check if CNIC is already registered
+    IF p_cnic IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.seller_profiles 
+            WHERE owner_cnic = p_cnic 
+            AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'CNIC number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 11. Enhanced registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_user_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_role TEXT DEFAULT 'user'
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    -- Check uniqueness
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users
+    v_user_id := gen_random_uuid();
+    
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, p_role,
+        FALSE, FALSE, FALSE
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'User with this email or phone already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid email or phone format';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 12. Enhanced seller registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_seller_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_username TEXT,
+    p_cnic TEXT,
+    p_business_name TEXT DEFAULT NULL
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    IF p_username IS NULL OR p_username = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Username is required';
+        RETURN;
+    END IF;
+    
+    IF p_cnic IS NULL OR p_cnic = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'CNIC number is required';
+        RETURN;
+    END IF;
+    
+    -- Check user uniqueness (email, phone)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- Check seller uniqueness (username, CNIC)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_seller_uniqueness(p_username, p_cnic);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user and seller profile
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users and public.seller_profiles
+    v_user_id := gen_random_uuid();
+    
+    -- Insert user
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, 'seller',
+        FALSE, FALSE, FALSE
+    );
+    
+    -- Insert seller profile
+    INSERT INTO public.seller_profiles (
+        id, username, business_name, owner_name, owner_cnic, 
+        city, phone, email, is_verified, verification_status
+    ) VALUES (
+        v_user_id, p_username, p_business_name, p_name, p_cnic,
+        p_city, p_phone, p_email, FALSE, 'pending'
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller with this email, phone, username, or CNIC already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid data format provided';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 13. Add comments for documentation
+COMMENT ON FUNCTION public.check_user_uniqueness IS 'Checks if a user email or phone is already registered';
+COMMENT ON FUNCTION public.check_seller_uniqueness IS 'Checks if a seller username or CNIC is already registered';
+COMMENT ON FUNCTION public.register_user_with_validation IS 'Registers a new user with validation and clear error messages';
+COMMENT ON FUNCTION public.register_seller_with_validation IS 'Registers a new seller with validation and clear error messages';
+
+-- =============================================
+-- 12. AUTHENTICATION CONSTRAINTS UPDATE
+-- Adding missing unique constraints and improving validation
+-- =============================================
+
+-- Add unique constraints to users table (excluding NULLs)
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_unique ON public.users (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_phone_unique ON public.users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_guest_id_unique ON public.users (guest_id) WHERE guest_id IS NOT NULL;
+
+-- Add unique constraints to seller_profiles table
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_username_unique ON public.seller_profiles (username);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_cnic_unique ON public.seller_profiles (owner_cnic) WHERE owner_cnic IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_phone_unique ON public.seller_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_email_unique ON public.seller_profiles (email) WHERE email IS NOT NULL;
+
+-- Add format validation constraints
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_cnic_format 
+CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add validation constraints for seller_profiles map URL format
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT valid_map_url_format 
+CHECK (map_url IS NULL OR map_url ~* '^https?://(www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}.*
+CREATE OR REPLACE FUNCTION public.check_user_uniqueness(
+    p_email TEXT DEFAULT NULL,
+    p_phone TEXT DEFAULT NULL,
+    p_existing_user_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if email is already taken by another user
+    IF p_email IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE email = p_email 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Email address is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if phone is already taken by another user
+    IF p_phone IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE phone = p_phone 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Phone number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if CNIC is already taken by another seller
+    -- This would be called separately for seller registration
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 10. Create helper function for checking seller uniqueness
+CREATE OR REPLACE FUNCTION public.check_seller_uniqueness(
+    p_username TEXT,
+    p_cnic TEXT,
+    p_existing_seller_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if username is already taken
+    IF EXISTS (
+        SELECT 1 FROM public.seller_profiles 
+        WHERE username = p_username 
+        AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+    ) THEN
+        RETURN QUERY SELECT FALSE, 'Username is already taken';
+        RETURN;
+    END IF;
+    
+    -- Check if CNIC is already registered
+    IF p_cnic IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.seller_profiles 
+            WHERE owner_cnic = p_cnic 
+            AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'CNIC number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 11. Enhanced registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_user_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_role TEXT DEFAULT 'user'
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    -- Check uniqueness
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users
+    v_user_id := gen_random_uuid();
+    
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, p_role,
+        FALSE, FALSE, FALSE
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'User with this email or phone already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid email or phone format';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 12. Enhanced seller registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_seller_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_username TEXT,
+    p_cnic TEXT,
+    p_business_name TEXT DEFAULT NULL
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    IF p_username IS NULL OR p_username = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Username is required';
+        RETURN;
+    END IF;
+    
+    IF p_cnic IS NULL OR p_cnic = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'CNIC number is required';
+        RETURN;
+    END IF;
+    
+    -- Check user uniqueness (email, phone)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- Check seller uniqueness (username, CNIC)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_seller_uniqueness(p_username, p_cnic);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user and seller profile
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users and public.seller_profiles
+    v_user_id := gen_random_uuid();
+    
+    -- Insert user
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, 'seller',
+        FALSE, FALSE, FALSE
+    );
+    
+    -- Insert seller profile
+    INSERT INTO public.seller_profiles (
+        id, username, business_name, owner_name, owner_cnic, 
+        city, phone, email, is_verified, verification_status
+    ) VALUES (
+        v_user_id, p_username, p_business_name, p_name, p_cnic,
+        p_city, p_phone, p_email, FALSE, 'pending'
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller with this email, phone, username, or CNIC already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid data format provided';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 13. Add comments for documentation
+COMMENT ON FUNCTION public.check_user_uniqueness IS 'Checks if a user email or phone is already registered';
+COMMENT ON FUNCTION public.check_seller_uniqueness IS 'Checks if a seller username or CNIC is already registered';
+COMMENT ON FUNCTION public.register_user_with_validation IS 'Registers a new user with validation and clear error messages';
+COMMENT ON FUNCTION public.register_seller_with_validation IS 'Registers a new seller with validation and clear error messages';
+
+-- =============================================
+-- 12. AUTHENTICATION CONSTRAINTS UPDATE
+-- Adding missing unique constraints and improving validation
+-- =============================================
+
+-- Add unique constraints to users table (excluding NULLs)
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_unique ON public.users (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_phone_unique ON public.users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_guest_id_unique ON public.users (guest_id) WHERE guest_id IS NOT NULL;
+
+-- Add unique constraints to seller_profiles table
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_username_unique ON public.seller_profiles (username);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_cnic_unique ON public.seller_profiles (owner_cnic) WHERE owner_cnic IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_phone_unique ON public.seller_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_email_unique ON public.seller_profiles (email) WHERE email IS NOT NULL;
+
+-- Add format validation constraints
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_cnic_format 
+CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_seller_whatsapp_format ON public.seller_profiles IS 'Validates Pakistani WhatsApp number format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_map_url_format ON public.seller_profiles IS 'Validates map URL format';
+
+-- 9. Create helper function for checking user uniqueness with better error messages
+CREATE OR REPLACE FUNCTION public.check_user_uniqueness(
+    p_email TEXT DEFAULT NULL,
+    p_phone TEXT DEFAULT NULL,
+    p_existing_user_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if email is already taken by another user
+    IF p_email IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE email = p_email 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Email address is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if phone is already taken by another user
+    IF p_phone IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE phone = p_phone 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Phone number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if CNIC is already taken by another seller
+    -- This would be called separately for seller registration
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 10. Create helper function for checking seller uniqueness
+CREATE OR REPLACE FUNCTION public.check_seller_uniqueness(
+    p_username TEXT,
+    p_cnic TEXT,
+    p_existing_seller_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if username is already taken
+    IF EXISTS (
+        SELECT 1 FROM public.seller_profiles 
+        WHERE username = p_username 
+        AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+    ) THEN
+        RETURN QUERY SELECT FALSE, 'Username is already taken';
+        RETURN;
+    END IF;
+    
+    -- Check if CNIC is already registered
+    IF p_cnic IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.seller_profiles 
+            WHERE owner_cnic = p_cnic 
+            AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'CNIC number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 11. Enhanced registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_user_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_role TEXT DEFAULT 'user'
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    -- Check uniqueness
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users
+    v_user_id := gen_random_uuid();
+    
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, p_role,
+        FALSE, FALSE, FALSE
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'User with this email or phone already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid email or phone format';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 12. Enhanced seller registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_seller_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_username TEXT,
+    p_cnic TEXT,
+    p_business_name TEXT DEFAULT NULL
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    IF p_username IS NULL OR p_username = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Username is required';
+        RETURN;
+    END IF;
+    
+    IF p_cnic IS NULL OR p_cnic = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'CNIC number is required';
+        RETURN;
+    END IF;
+    
+    -- Check user uniqueness (email, phone)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- Check seller uniqueness (username, CNIC)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_seller_uniqueness(p_username, p_cnic);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user and seller profile
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users and public.seller_profiles
+    v_user_id := gen_random_uuid();
+    
+    -- Insert user
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, 'seller',
+        FALSE, FALSE, FALSE
+    );
+    
+    -- Insert seller profile
+    INSERT INTO public.seller_profiles (
+        id, username, business_name, owner_name, owner_cnic, 
+        city, phone, email, is_verified, verification_status
+    ) VALUES (
+        v_user_id, p_username, p_business_name, p_name, p_cnic,
+        p_city, p_phone, p_email, FALSE, 'pending'
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller with this email, phone, username, or CNIC already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid data format provided';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 13. Add comments for documentation
+COMMENT ON FUNCTION public.check_user_uniqueness IS 'Checks if a user email or phone is already registered';
+COMMENT ON FUNCTION public.check_seller_uniqueness IS 'Checks if a seller username or CNIC is already registered';
+COMMENT ON FUNCTION public.register_user_with_validation IS 'Registers a new user with validation and clear error messages';
+COMMENT ON FUNCTION public.register_seller_with_validation IS 'Registers a new seller with validation and clear error messages';
+
+-- =============================================
+-- 12. AUTHENTICATION CONSTRAINTS UPDATE
+-- Adding missing unique constraints and improving validation
+-- =============================================
+
+-- Add unique constraints to users table (excluding NULLs)
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_unique ON public.users (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_phone_unique ON public.users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_guest_id_unique ON public.users (guest_id) WHERE guest_id IS NOT NULL;
+
+-- Add unique constraints to seller_profiles table
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_username_unique ON public.seller_profiles (username);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_cnic_unique ON public.seller_profiles (owner_cnic) WHERE owner_cnic IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_phone_unique ON public.seller_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_email_unique ON public.seller_profiles (email) WHERE email IS NOT NULL;
+
+-- Add format validation constraints
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_cnic_format 
+CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- 6. Add validation constraints for seller_profiles email format
+ALTER TABLE public.seller_profiles DROP CONSTRAINT IF EXISTS valid_seller_email_format;
+ALTER TABLE public.seller_profiles ADD CONSTRAINT valid_seller_email_format CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- 7. Add validation constraints for seller_profiles CNIC format
+ALTER TABLE public.seller_profiles DROP CONSTRAINT IF EXISTS valid_cnic;
+ALTER TABLE public.seller_profiles DROP CONSTRAINT IF EXISTS valid_cnic_format;
+ALTER TABLE public.seller_profiles ADD CONSTRAINT valid_cnic_format CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- 8. Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Add validation constraints for seller_profiles WhatsApp format
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT valid_seller_whatsapp_format 
+CHECK (whatsapp IS NULL OR whatsapp ~ '^03[0-9]{2}[0-9]{7}
+CREATE OR REPLACE FUNCTION public.check_user_uniqueness(
+    p_email TEXT DEFAULT NULL,
+    p_phone TEXT DEFAULT NULL,
+    p_existing_user_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if email is already taken by another user
+    IF p_email IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE email = p_email 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Email address is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if phone is already taken by another user
+    IF p_phone IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE phone = p_phone 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Phone number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if CNIC is already taken by another seller
+    -- This would be called separately for seller registration
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 10. Create helper function for checking seller uniqueness
+CREATE OR REPLACE FUNCTION public.check_seller_uniqueness(
+    p_username TEXT,
+    p_cnic TEXT,
+    p_existing_seller_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if username is already taken
+    IF EXISTS (
+        SELECT 1 FROM public.seller_profiles 
+        WHERE username = p_username 
+        AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+    ) THEN
+        RETURN QUERY SELECT FALSE, 'Username is already taken';
+        RETURN;
+    END IF;
+    
+    -- Check if CNIC is already registered
+    IF p_cnic IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.seller_profiles 
+            WHERE owner_cnic = p_cnic 
+            AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'CNIC number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 11. Enhanced registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_user_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_role TEXT DEFAULT 'user'
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    -- Check uniqueness
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users
+    v_user_id := gen_random_uuid();
+    
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, p_role,
+        FALSE, FALSE, FALSE
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'User with this email or phone already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid email or phone format';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 12. Enhanced seller registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_seller_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_username TEXT,
+    p_cnic TEXT,
+    p_business_name TEXT DEFAULT NULL
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    IF p_username IS NULL OR p_username = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Username is required';
+        RETURN;
+    END IF;
+    
+    IF p_cnic IS NULL OR p_cnic = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'CNIC number is required';
+        RETURN;
+    END IF;
+    
+    -- Check user uniqueness (email, phone)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- Check seller uniqueness (username, CNIC)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_seller_uniqueness(p_username, p_cnic);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user and seller profile
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users and public.seller_profiles
+    v_user_id := gen_random_uuid();
+    
+    -- Insert user
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, 'seller',
+        FALSE, FALSE, FALSE
+    );
+    
+    -- Insert seller profile
+    INSERT INTO public.seller_profiles (
+        id, username, business_name, owner_name, owner_cnic, 
+        city, phone, email, is_verified, verification_status
+    ) VALUES (
+        v_user_id, p_username, p_business_name, p_name, p_cnic,
+        p_city, p_phone, p_email, FALSE, 'pending'
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller with this email, phone, username, or CNIC already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid data format provided';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 13. Add comments for documentation
+COMMENT ON FUNCTION public.check_user_uniqueness IS 'Checks if a user email or phone is already registered';
+COMMENT ON FUNCTION public.check_seller_uniqueness IS 'Checks if a seller username or CNIC is already registered';
+COMMENT ON FUNCTION public.register_user_with_validation IS 'Registers a new user with validation and clear error messages';
+COMMENT ON FUNCTION public.register_seller_with_validation IS 'Registers a new seller with validation and clear error messages';
+
+-- =============================================
+-- 12. AUTHENTICATION CONSTRAINTS UPDATE
+-- Adding missing unique constraints and improving validation
+-- =============================================
+
+-- Add unique constraints to users table (excluding NULLs)
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_unique ON public.users (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_phone_unique ON public.users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_guest_id_unique ON public.users (guest_id) WHERE guest_id IS NOT NULL;
+
+-- Add unique constraints to seller_profiles table
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_username_unique ON public.seller_profiles (username);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_cnic_unique ON public.seller_profiles (owner_cnic) WHERE owner_cnic IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_phone_unique ON public.seller_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_email_unique ON public.seller_profiles (email) WHERE email IS NOT NULL;
+
+-- Add format validation constraints
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_cnic_format 
+CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add validation constraints for seller_profiles map URL format
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT valid_map_url_format 
+CHECK (map_url IS NULL OR map_url ~* '^https?://(www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}.*
+CREATE OR REPLACE FUNCTION public.check_user_uniqueness(
+    p_email TEXT DEFAULT NULL,
+    p_phone TEXT DEFAULT NULL,
+    p_existing_user_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if email is already taken by another user
+    IF p_email IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE email = p_email 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Email address is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if phone is already taken by another user
+    IF p_phone IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE phone = p_phone 
+            AND (p_existing_user_id IS NULL OR id != p_existing_user_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'Phone number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    -- Check if CNIC is already taken by another seller
+    -- This would be called separately for seller registration
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 10. Create helper function for checking seller uniqueness
+CREATE OR REPLACE FUNCTION public.check_seller_uniqueness(
+    p_username TEXT,
+    p_cnic TEXT,
+    p_existing_seller_id UUID DEFAULT NULL
+)
+RETURNS TABLE(
+    is_valid BOOLEAN,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+BEGIN
+    -- Check if username is already taken
+    IF EXISTS (
+        SELECT 1 FROM public.seller_profiles 
+        WHERE username = p_username 
+        AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+    ) THEN
+        RETURN QUERY SELECT FALSE, 'Username is already taken';
+        RETURN;
+    END IF;
+    
+    -- Check if CNIC is already registered
+    IF p_cnic IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM public.seller_profiles 
+            WHERE owner_cnic = p_cnic 
+            AND (p_existing_seller_id IS NULL OR id != p_existing_seller_id)
+        ) THEN
+            RETURN QUERY SELECT FALSE, 'CNIC number is already registered';
+            RETURN;
+        END IF;
+    END IF;
+    
+    RETURN QUERY SELECT TRUE, NULL;
+END;
+$;
+
+-- 11. Enhanced registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_user_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_role TEXT DEFAULT 'user'
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    -- Check uniqueness
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users
+    v_user_id := gen_random_uuid();
+    
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, p_role,
+        FALSE, FALSE, FALSE
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'User with this email or phone already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid email or phone format';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 12. Enhanced seller registration function with better error handling
+CREATE OR REPLACE FUNCTION public.register_seller_with_validation(
+    p_email TEXT,
+    p_phone TEXT,
+    p_name TEXT,
+    p_city TEXT,
+    p_username TEXT,
+    p_cnic TEXT,
+    p_business_name TEXT DEFAULT NULL
+)
+RETURNS TABLE(
+    success BOOLEAN,
+    user_id UUID,
+    error_message TEXT
+)
+LANGUAGE plpgsql
+AS $
+DECLARE
+    v_user_id UUID;
+BEGIN
+    -- Validate input
+    IF p_email IS NULL OR p_email = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Email is required';
+        RETURN;
+    END IF;
+    
+    IF p_phone IS NULL OR p_phone = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Phone number is required';
+        RETURN;
+    END IF;
+    
+    IF p_name IS NULL OR p_name = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Name is required';
+        RETURN;
+    END IF;
+    
+    IF p_username IS NULL OR p_username = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Username is required';
+        RETURN;
+    END IF;
+    
+    IF p_cnic IS NULL OR p_cnic = '' THEN
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'CNIC number is required';
+        RETURN;
+    END IF;
+    
+    -- Check user uniqueness (email, phone)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_user_uniqueness(p_email, p_phone);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- Check seller uniqueness (username, CNIC)
+    DECLARE
+        v_is_valid BOOLEAN;
+        v_error_message TEXT;
+    BEGIN
+        SELECT is_valid, error_message 
+        INTO v_is_valid, v_error_message
+        FROM public.check_seller_uniqueness(p_username, p_cnic);
+        
+        IF NOT v_is_valid THEN
+            RETURN QUERY SELECT FALSE, NULL::UUID, v_error_message;
+            RETURN;
+        END IF;
+    END;
+    
+    -- If we get here, create the user and seller profile
+    -- In a real implementation, this would also create the auth.user
+    -- For now, we'll just insert into public.users and public.seller_profiles
+    v_user_id := gen_random_uuid();
+    
+    -- Insert user
+    INSERT INTO public.users (
+        id, email, phone, name, city, role, 
+        email_verified, phone_verified, is_verified
+    ) VALUES (
+        v_user_id, p_email, p_phone, p_name, p_city, 'seller',
+        FALSE, FALSE, FALSE
+    );
+    
+    -- Insert seller profile
+    INSERT INTO public.seller_profiles (
+        id, username, business_name, owner_name, owner_cnic, 
+        city, phone, email, is_verified, verification_status
+    ) VALUES (
+        v_user_id, p_username, p_business_name, p_name, p_cnic,
+        p_city, p_phone, p_email, FALSE, 'pending'
+    );
+    
+    RETURN QUERY SELECT TRUE, v_user_id, NULL;
+    
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle any unique constraint violations that might slip through
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller with this email, phone, username, or CNIC already exists';
+    WHEN check_violation THEN
+        -- Handle validation constraint violations
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Invalid data format provided';
+    WHEN OTHERS THEN
+        -- Handle any other errors
+        RETURN QUERY SELECT FALSE, NULL::UUID, 'Seller registration failed: ' || SQLERRM;
+END;
+$ SECURITY DEFINER;
+
+-- 13. Add comments for documentation
+COMMENT ON FUNCTION public.check_user_uniqueness IS 'Checks if a user email or phone is already registered';
+COMMENT ON FUNCTION public.check_seller_uniqueness IS 'Checks if a seller username or CNIC is already registered';
+COMMENT ON FUNCTION public.register_user_with_validation IS 'Registers a new user with validation and clear error messages';
+COMMENT ON FUNCTION public.register_seller_with_validation IS 'Registers a new seller with validation and clear error messages';
+
+-- =============================================
+-- 12. AUTHENTICATION CONSTRAINTS UPDATE
+-- Adding missing unique constraints and improving validation
+-- =============================================
+
+-- Add unique constraints to users table (excluding NULLs)
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_unique ON public.users (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_phone_unique ON public.users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_users_guest_id_unique ON public.users (guest_id) WHERE guest_id IS NOT NULL;
+
+-- Add unique constraints to seller_profiles table
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_username_unique ON public.seller_profiles (username);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_cnic_unique ON public.seller_profiles (owner_cnic) WHERE owner_cnic IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_phone_unique ON public.seller_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_seller_profiles_email_unique ON public.seller_profiles (email) WHERE email IS NOT NULL;
+
+-- Add format validation constraints
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.users 
+ADD CONSTRAINT IF NOT EXISTS valid_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_phone_format 
+CHECK (phone IS NULL OR phone ~ '^03[0-9]{2}[0-9]{7}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_seller_email_format 
+CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+ALTER TABLE public.seller_profiles 
+ADD CONSTRAINT IF NOT EXISTS valid_cnic_format 
+CHECK (owner_cnic IS NULL OR owner_cnic ~ '^[0-9]{5}-[0-9]{7}-[0-9]{1}
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_phone_format ON public.users IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_email_format ON public.users IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_seller_phone_format ON public.seller_profiles IS 'Validates Pakistani mobile phone format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_seller_email_format ON public.seller_profiles IS 'Validates email format';
+COMMENT ON CONSTRAINT valid_cnic_format ON public.seller_profiles IS 'Validates Pakistani CNIC format (XXXXX-XXXXXXX-X)';
+
+-- Comments for documentation
+COMMENT ON TABLE public.users IS 'Core user management with authentication';
+COMMENT ON TABLE public.event_sessions IS 'Session management without volatile indexes';
+COMMENT ON TABLE public.user_guest_tracking IS 'Tracks guest-to-user relationships';
+COMMENT ON TABLE public.analytics_events IS 'Event tracking with session references';
+COMMENT ON FUNCTION public.get_or_create_session IS 'Creates or retrieves session for analytics';
+COMMENT ON FUNCTION public.calculate_banner_ctr IS 'Calculates click-through rate for banners.';
+COMMENT ON FUNCTION public.get_banner_analytics_summary IS 'Returns summary analytics for banners with filtering options.';
+COMMENT ON FUNCTION public.create_user_profile_after_signup IS 'Creates user profile bypassing RLS for initial signup.';
+COMMENT ON FUNCTION public.create_seller_profile_after_signup IS 'Creates seller profile bypassing RLS for initial signup.';
+
+-- Summary of fixes and improvements
+/*
+This schema is consolidated to provide a clean and robust starting point.
+It includes:
+- All necessary table definitions for users, sellers, analytics, banners, etc.
+- Proper constraints and indexes for data integrity and performance.
+- Comprehensive RLS policies for secure data access.
+- All required Postgres functions, including SECURITY DEFINER functions for initial user/seller profile creation, which explicitly bypass RLS.
+- Grants and ownership settings for functions.
+- Triggers for automatic timestamp updates.
+- Views for aggregated data.
+- Initial data inserts for essential lookup tables (cities) and default configurations (subscription packages).
+
+This setup addresses previous RLS challenges by using SECURITY DEFINER functions for initial profile creation, ensuring a reliable signup flow.
+*/
+);
+
+-- Add comments for documentation
+COMMENT ON CONSTRAINT valid_seller_whatsapp_format ON public.seller_profiles IS 'Validates Pakistani WhatsApp number format (03XX XXXXXXX)';
+COMMENT ON CONSTRAINT valid_map_url_format ON public.seller_profiles IS 'Validates map URL format';
 
 -- 9. Create helper function for checking user uniqueness with better error messages
 CREATE OR REPLACE FUNCTION public.check_user_uniqueness(

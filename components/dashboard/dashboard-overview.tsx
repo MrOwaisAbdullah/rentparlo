@@ -8,13 +8,12 @@ import Link from "next/link";
 import { MetricsCard } from "./metrics-card";
 import { QuickActions } from "./quick-actions";
 import { UsageProgress } from "./usage-progress";
-import { NotificationsPanel } from "./notifications-panel";
 import { PerformanceScoreCard } from "./performance-score-card";
 import { PerformanceRecommendationsCard } from "./performance-recommendations-card";
-import { MobileResponsiveWrapper } from "./mobile-responsive-wrapper";
 import { QuickListingCreator } from "./quick-listing-creator";
 import { CustomAnalyticsReports } from "./custom-analytics-reports";
 import { DashboardOverviewProps, QuickAction } from "@/types/dashboard";
+import { EnhancedUserSubscription } from "@/types";
 import { formatDate, calculatePerformanceScore } from "@/lib/dashboard-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dashboardQueryOptimizer } from "@/lib/dashboard-query-optimizer";
@@ -41,7 +40,6 @@ import {
 const MemoizedMetricsCard = memo(MetricsCard);
 const MemoizedQuickActions = memo(QuickActions);
 const MemoizedUsageProgress = memo(UsageProgress);
-const MemoizedNotificationsPanel = memo(NotificationsPanel);
 
 
 // Optimized activity item component
@@ -122,7 +120,7 @@ export const DashboardOverview = memo(function DashboardOverview({
   recentActivity,
   listings = [],
   categories = [],
-}: DashboardOverviewProps) {
+}: DashboardOverviewProps & { subscription: EnhancedUserSubscription }) {
   const isMobile = useIsMobile();
   const { calculateMetrics } = useMemoizedCalculations();
   const { fetchWithCache } = useOptimizedDataFetching();
@@ -276,7 +274,11 @@ export const DashboardOverview = memo(function DashboardOverview({
         const duration = performance.now() - startTime;
         performanceTracker.recordResponseTime(duration);
       } catch (error) {
-        console.error("Error loading enhanced metrics:", error);
+        console.error("Error loading enhanced metrics:", {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          sellerId: sellerData.id
+        });
       } finally {
         setIsLoading(false);
       }
@@ -583,7 +585,7 @@ export const DashboardOverview = memo(function DashboardOverview({
       </Card>
 
       {/* Quick Actions, Notifications, Performance Score, and Recommendations */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -613,10 +615,6 @@ export const DashboardOverview = memo(function DashboardOverview({
             </Button>
           </CardContent>
         </Card>
-        <MemoizedNotificationsPanel
-          sellerData={sellerData}
-          subscription={subscription}
-        />
         <PerformanceScoreCard
           analytics={displayMetrics}
           sellerData={sellerData}

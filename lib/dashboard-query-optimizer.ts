@@ -47,16 +47,30 @@ export class DashboardQueryOptimizer {
   /**
    * Optimized seller metrics query with caching
    */
-  async getSellerMetrics(
-    sellerId: string,
-    options: QueryOptions = {}
-  ): Promise<DashboardMetrics> {
+  async getSellerMetrics(sellerId: string, options: QueryOptions = {}): Promise<DashboardMetrics> {
     const {
       useCache = true,
       cacheTTL = 5 * 60 * 1000, // 5 minutes
     } = options;
 
     const cacheKey = `seller_metrics:${sellerId}`;
+
+    // Validate sellerId is a proper UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(sellerId)) {
+      console.warn("Invalid sellerId format (not a UUID):", sellerId);
+      // Return empty metrics for invalid UUIDs to avoid database errors
+      return {
+        totalListings: 0,
+        activeListings: 0,
+        totalViews: 0,
+        totalContacts: 0,
+        conversionRate: 0,
+        responseRate: 0,
+        avgRating: 0,
+        tierPoints: 0,
+      };
+    }
 
     // Try cache first
     if (useCache) {
