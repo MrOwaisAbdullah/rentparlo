@@ -179,7 +179,6 @@ export default async function ListingPage({ params }: ListingPageProps) {
             currentUser={user}
           />
         </Suspense>
-        <ClientRetryButton />
       </div>
     );
   } catch (error) {

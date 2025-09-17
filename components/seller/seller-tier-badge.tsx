@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Crown, Award, Star, Trophy, Gem } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -18,8 +17,8 @@ interface SellerTierBadgeProps {
 const tierConfigs = {
   basic: {
     label: 'Basic',
-    icon: Star,
-    color: 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200',
+    emoji: '⭐',
+    color: 'bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200',
     gradient: 'from-gray-100 to-gray-200',
     description: 'New seller getting started',
     pointsRange: '0 - 499 points',
@@ -27,8 +26,8 @@ const tierConfigs = {
   },
   bronze: {
     label: 'Bronze',
-    icon: Award,
-    color: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200',
+    emoji: '🥉',
+    color: 'bg-orange-100 text-orange-900 border-orange-300 hover:bg-orange-200',
     gradient: 'from-orange-100 to-orange-200',
     description: 'Active seller with good performance',
     pointsRange: '500 - 1,499 points',
@@ -36,8 +35,8 @@ const tierConfigs = {
   },
   silver: {
     label: 'Silver',
-    icon: Award,
-    color: 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200',
+    emoji: '🥈',
+    color: 'bg-slate-100 text-slate-900 border-slate-400 hover:bg-slate-200',
     gradient: 'from-slate-100 to-slate-200',
     description: 'Experienced seller with great reviews',
     pointsRange: '1,500 - 4,999 points',
@@ -45,8 +44,8 @@ const tierConfigs = {
   },
   gold: {
     label: 'Gold',
-    icon: Crown,
-    color: 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200',
+    emoji: '🥇',
+    color: 'bg-yellow-100 text-yellow-900 border-yellow-300 hover:bg-yellow-200',
     gradient: 'from-yellow-100 to-yellow-200',
     description: 'Top performer with excellent service',
     pointsRange: '5,000 - 14,999 points',
@@ -54,8 +53,8 @@ const tierConfigs = {
   },
   platinum: {
     label: 'Platinum',
-    icon: Trophy,
-    color: 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200',
+    emoji: '👑',
+    color: 'bg-purple-100 text-purple-900 border-purple-300 hover:bg-purple-200',
     gradient: 'from-purple-100 to-purple-200',
     description: 'Premium seller with outstanding reputation',
     pointsRange: '15,000 - 49,999 points',
@@ -63,8 +62,8 @@ const tierConfigs = {
   },
   diamond: {
     label: 'Diamond',
-    icon: Gem,
-    color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200',
+    emoji: '💎',
+    color: 'bg-blue-100 text-blue-900 border-blue-300 hover:bg-blue-200',
     gradient: 'from-blue-100 via-blue-200 to-blue-300',
     description: 'Elite seller with exceptional performance',
     pointsRange: '50,000+ points',
@@ -75,17 +74,14 @@ const tierConfigs = {
 const sizeConfigs = {
   sm: {
     badge: 'text-xs px-2 py-1',
-    icon: 'w-3 h-3',
     points: 'text-xs ml-1'
   },
   md: {
     badge: 'text-sm px-3 py-1.5',
-    icon: 'w-4 h-4',
     points: 'text-sm ml-2'
   },
   lg: {
     badge: 'text-base px-4 py-2',
-    icon: 'w-5 h-5',
     points: 'text-base ml-2'
   }
 };
@@ -100,7 +96,6 @@ export function SellerTierBadge({
 }: SellerTierBadgeProps) {
   const config = tierConfigs[tier];
   const sizeConfig = sizeConfigs[size];
-  const IconComponent = config.icon;
 
   // Calculate progress to next tier
   const getNextTierProgress = () => {
@@ -110,21 +105,27 @@ export function SellerTierBadge({
       silver: { current: 1500, next: 5000 },
       gold: { current: 5000, next: 15000 },
       platinum: { current: 15000, next: 50000 },
-      diamond: { current: 50000, next: null }
+      diamond: { current: 50000, next: 100000 } // Set a high next threshold for diamond
     };
 
     const threshold = thresholds[tier];
-    if (!threshold.next) return null;
+    if (!threshold) return null;
 
-    const progress = ((points - threshold.current) / (threshold.next - threshold.current)) * 100;
+    const progress = threshold.next 
+      ? ((points - threshold.current) / (threshold.next - threshold.current)) * 100
+      : 100; // For diamond tier, show 100% progress
+      
     return {
       progress: Math.min(100, Math.max(0, progress)),
-      pointsToNext: threshold.next - points,
-      nextTier: Object.keys(thresholds)[Object.keys(thresholds).indexOf(tier) + 1]
+      pointsToNext: threshold.next ? threshold.next - points : 0,
+      nextTier: Object.keys(thresholds)[Object.keys(thresholds).indexOf(tier) + 1] || null
     };
   };
 
   const progressInfo = getNextTierProgress();
+
+  // Special handling for new sellers with 0 points
+  const isNewSeller = points === 0 && tier === 'basic';
 
   if (variant === 'compact') {
     return (
@@ -135,32 +136,53 @@ export function SellerTierBadge({
               className={cn(
                 config.color,
                 sizeConfig.badge,
-                'cursor-help transition-colors',
+                'cursor-help transition-colors !text-gray-900',
                 className
               )}
             >
-              <IconComponent className={sizeConfig.icon} />
+              <span className="mr-1">{config.emoji}</span>
+              {config.label}
               {showPoints && (
-                <span className={sizeConfig.points}>{points.toLocaleString()}</span>
+                <span className={cn(sizeConfig.points, '!text-gray-900')}>{points.toLocaleString()}</span>
               )}
             </Badge>
           </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs">
-            <div className="space-y-2">
-              <div className="font-semibold">{config.label} Seller</div>
+          <TooltipContent side="top" className="max-w-xs bg-background border border-muted">
+            <div className="space-y-3">
+              <div className="font-semibold !text-gray-900">{config.label} Seller</div>
               <div className="text-sm text-muted-foreground">{config.description}</div>
-              <div className="text-xs">
-                <div>{points.toLocaleString()} points ({config.pointsRange})</div>
-                {progressInfo && (
-                  <div className="mt-1">
-                    {progressInfo.pointsToNext > 0 ? (
-                      <span>{progressInfo.pointsToNext.toLocaleString()} points to {progressInfo.nextTier}</span>
-                    ) : (
-                      <span>Maximum tier achieved!</span>
-                    )}
+              
+              {isNewSeller ? (
+                <div className="text-xs space-y-2">
+                  <div>
+                    <div className="font-medium !text-gray-900">Welcome! 👋</div>
+                    <div className="!text-gray-800">Start earning points by:</div>
+                    <ul className="list-disc list-inside mt-1 space-y-1 !text-gray-800">
+                      <li>Getting profile views</li>
+                      <li>Receiving contact requests</li>
+                      <li>Making sales</li>
+                      <li>Getting good reviews</li>
+                    </ul>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <div className="font-medium !text-gray-900">Next Milestone:</div>
+                    <div className="!text-gray-800">Earn 500 points to reach Bronze tier</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs">
+                  <div className="!text-gray-800">{points.toLocaleString()} points ({config.pointsRange})</div>
+                  {progressInfo && progressInfo.nextTier && (
+                    <div className="mt-1">
+                      {progressInfo.pointsToNext > 0 ? (
+                        <span className="!text-gray-800">{progressInfo.pointsToNext.toLocaleString()} points to {progressInfo.nextTier}</span>
+                      ) : (
+                        <span className="!text-gray-800">Maximum tier achieved!</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </TooltipContent>
         </Tooltip>
@@ -177,55 +199,104 @@ export function SellerTierBadge({
               className={cn(
                 config.color,
                 sizeConfig.badge,
-                'cursor-help transition-colors font-medium',
+                'cursor-help transition-colors font-medium !text-gray-900',
                 `bg-gradient-to-r ${config.gradient}`
               )}
             >
-              <IconComponent className={cn(sizeConfig.icon, 'mr-1')} />
+              <span className="mr-1">{config.emoji}</span>
               {config.label}
               {showPoints && (
-                <span className={sizeConfig.points}>
+                <span className={cn(sizeConfig.points, '!text-gray-900')}>
                   ({points.toLocaleString()})
                 </span>
               )}
             </Badge>
           </div>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-sm">
-          <div className="space-y-3">
+        <TooltipContent side="bottom" className="max-w-sm bg-background border border-muted">
+          <div className="space-y-4">
             <div>
-              <div className="font-semibold text-base">{config.label} Seller</div>
+              <div className="font-semibold text-base !text-gray-900">{config.label} Seller</div>
               <div className="text-sm text-muted-foreground">{config.description}</div>
             </div>
             
-            <div>
-              <div className="text-sm font-medium mb-1">Current Points</div>
-              <div className="text-sm">{points.toLocaleString()} points</div>
-              <div className="text-xs text-muted-foreground">{config.pointsRange}</div>
-            </div>
-
-            {progressInfo && progressInfo.pointsToNext > 0 && (
-              <div>
-                <div className="text-sm font-medium mb-1">Progress to Next Tier</div>
-                <div className="w-full bg-muted rounded-full h-2 mb-1">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300" 
-                    style={{ width: `${progressInfo.progress}%` }}
-                  />
+            {isNewSeller ? (
+              <div className="space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="font-medium !text-blue-900">🚀 Getting Started</div>
+                  <div className="text-sm !text-blue-800 mt-1">
+                    Welcome to RentParlo! Start building your seller reputation by:
+                  </div>
+                  <ul className="text-sm !text-blue-800 list-disc list-inside mt-2 space-y-1">
+                    <li>Completing your seller profile</li>
+                    <li>Adding quality listings with good photos</li>
+                    <li>Responding quickly to customer inquiries</li>
+                    <li>Providing excellent service to earn reviews</li>
+                  </ul>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {progressInfo.pointsToNext.toLocaleString()} points to {progressInfo.nextTier}
+                
+                <div>
+                  <div className="text-sm font-medium mb-2 !text-gray-900">How Tier Points Work</div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p className="!text-gray-800">• Profile views: 10 points each</p>
+                    <p className="!text-gray-800">• Contact requests: 20 points each</p>
+                    <p className="!text-gray-800">• Successful rentals: 50 points each</p>
+                    <p className="!text-gray-800">• Positive reviews: 30 points each</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium mb-2 !text-gray-900">Your First Goal</div>
+                  <div className="text-sm !text-gray-800">Earn 500 points to reach Bronze tier</div>
+                  <div className="w-full bg-muted rounded-full h-2 mt-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: '0%' }}
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    0 / 500 points
+                  </div>
                 </div>
               </div>
+            ) : (
+              <>
+                <div>
+                  <div className="text-sm font-medium mb-1 !text-gray-900">Current Points</div>
+                  <div className="text-sm !text-gray-800">{points.toLocaleString()} points</div>
+                  <div className="text-xs text-muted-foreground">{config.pointsRange}</div>
+                </div>
+
+                {progressInfo && progressInfo.nextTier && progressInfo.pointsToNext > 0 && (
+                  <div>
+                    <div className="text-sm font-medium mb-1 !text-gray-900">Progress to Next Tier</div>
+                    <div className="w-full bg-muted rounded-full h-2 mb-1">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${progressInfo.progress}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {progressInfo.pointsToNext.toLocaleString()} points to {progressInfo.nextTier}
+                    </div>
+                  </div>
+                )}
+
+                {progressInfo && progressInfo.nextTier === null && (
+                  <div className="text-sm !text-green-800 font-medium">
+                    Congratulations! You've reached the highest tier.
+                  </div>
+                )}
+              </>
             )}
 
             <div>
-              <div className="text-sm font-medium mb-2">Tier Benefits</div>
+              <div className="text-sm font-medium mb-2 !text-gray-900">Tier Benefits</div>
               <ul className="text-xs space-y-1">
                 {config.benefits.map((benefit, index) => (
                   <li key={index} className="flex items-start gap-1">
-                    <span className="text-green-500 mt-0.5">•</span>
-                    <span>{benefit}</span>
+                    <span className="!text-green-700 mt-0.5">•</span>
+                    <span className="!text-gray-800">{benefit}</span>
                   </li>
                 ))}
               </ul>
@@ -260,12 +331,12 @@ export function TierProgressBar({
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex justify-between text-sm">
-        <span className="capitalize">{currentTier}</span>
-        <span className="capitalize">{tiers[currentIndex + 1]}</span>
+        <span className="capitalize !text-gray-900">{currentTier}</span>
+        <span className="capitalize !text-gray-900">{tiers[currentIndex + 1]}</span>
       </div>
       <div className="w-full bg-muted rounded-full h-2">
         <div 
-          className="bg-primary h-2 rounded-full transition-all duration-300" 
+          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
           style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
         />
       </div>

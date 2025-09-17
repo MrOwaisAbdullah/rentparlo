@@ -357,7 +357,7 @@ export function ListingCard({
               </div>
               <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                <span className="text-xs text-gray-600">4.8</span>
+                <span className="text-xs text-gray-600">{listing?.seller?.profile?.customer_rating?.toFixed(1) || 'N/A'} ({listing?.seller?.profile?.total_reviews || 0} reviews)</span>
               </div>
             </div>
             

@@ -1045,3 +1045,47 @@ export async function getListingsBySeller(sellerId: string): Promise<Listing[]> 
     const listings = await client.fetch(query, params);
     return listings;
 }
+
+export async function getListingsBySellerId(sellerId: string): Promise<Listing[]> {
+  const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+    _id,
+    _createdAt,
+    title,
+    slug,
+    description,
+    price,
+    pricePerHour,
+    priceWeekly,
+    priceMonthly,
+    priceType,
+    category->{
+      _id,
+      title,
+      slug
+    },
+    images[]{
+      asset->{
+        url,
+        metadata {
+          lqip
+        }
+      }
+    },
+    location,
+    condition,
+    availability,
+    specifications,
+    rentalRules,
+    status,
+    supabaseId,
+    isFeatured,
+    isVerified,
+    published,
+    seo,
+    tags,
+    badges
+  }`;
+  const params = { sellerId };
+  const listings = await client.fetch(query, params);
+  return listings;
+}

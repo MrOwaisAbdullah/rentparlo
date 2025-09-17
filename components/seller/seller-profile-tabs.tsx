@@ -17,17 +17,17 @@ export function SellerProfileTabs({
 }: SellerProfileTabsProps) {
   return (
     <Tabs defaultValue={defaultTab} className={className}>
-      <TabsList className="grid w-full grid-cols-2 bg-muted/50 rounded-full p-1">
+      <TabsList className="grid w-full grid-cols-2 bg-white rounded-md p-1 h-14">
         <TabsTrigger 
           value="products" 
-          className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium"
+          className="rounded-md data-[state=active]:bg-primary cursor-pointer data-[state=active]:text-primary-foreground font-medium py-3"
         >
           <Package className="w-4 h-4 mr-2" />
           Products
         </TabsTrigger>
         <TabsTrigger 
           value="about" 
-          className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium"
+          className="rounded-md data-[state=active]:bg-primary cursor-pointer data-[state=active]:text-primary-foreground font-medium py-3"
         >
           <User className="w-4 h-4 mr-2" />
           About Us

@@ -21,7 +21,8 @@ import {
   getBlogPosts,
   getBlogPostBySlug,
   getHomepageBanners,
-  getListingReviews
+  getListingReviews,
+  getListingsBySellerId
 } from './sanity-queries'
 import {
   getUserById,
@@ -434,19 +435,8 @@ export async function getCompleteSellerProfile(username: string) {
     if (!seller) return null;
 
     // Get seller's listings from Sanity
-    const listings = await searchListings({
-      query: '',
-      category: '',
-      city: '',
-      condition: '',
-      minPrice: 0,
-      maxPrice: 0,
-      offset: 0,
-      limit: 50
-    });
-
-    // Filter listings by seller
-    const sellerListings = listings.filter(listing => listing.supabaseId === seller.id);
+    const sellerListings = await getListingsBySellerId(seller.id);
+    console.log('Seller listings:', sellerListings);
 
     // Get seller analytics
     const analytics = await getSellerAnalytics(seller.id);

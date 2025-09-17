@@ -194,7 +194,7 @@ export function ReviewFormModal({
               <FormField
                 control={form.control}
                 name="images"
-                render={({ field: { onChange, ...props } }) => (
+                render={({ field: { onChange, value, ...props } }) => (
                   <FormItem>
                     <FormLabel>Images (Optional)</FormLabel>
                     <FormControl>

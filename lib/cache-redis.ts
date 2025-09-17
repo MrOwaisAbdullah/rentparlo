@@ -27,6 +27,7 @@ function getRedisClient(): any | null {
   
   // If REDIS_URL is not provided, return null (use in-memory only)
   if (!process.env.REDIS_URL) {
+    console.log('[CACHE_INFO] REDIS_URL environment variable not set. Using in-memory cache only.');
     return null;
   }
 
@@ -108,6 +109,7 @@ function getRedisClient(): any | null {
     return globalRedisClient;
   } catch (error) {
     console.error('[CACHE_ERROR] Failed to create Redis client:', error);
+    console.error('[CACHE_ERROR] Redis URL:', process.env.REDIS_URL);
     return null;
   }
 }

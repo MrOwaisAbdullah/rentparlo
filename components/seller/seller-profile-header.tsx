@@ -117,13 +117,13 @@ export function SellerProfileHeader({ seller, className }: SellerProfileHeaderPr
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-bold text-yellow-600">
-                  4.8
+                  {seller.profile.customer_rating ? seller.profile.customer_rating.toFixed(1) : 'N/A'}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Rating</div>
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-bold text-green-600">
-                  2h
+                  {seller.profile.response_time_avg ? `${Math.round(seller.profile.response_time_avg / 60)}h` : '< 1h'}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Response</div>
               </div>

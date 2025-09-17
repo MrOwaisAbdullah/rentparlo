@@ -357,7 +357,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
             <div className="relative">
-              <div className="aspect-[16/9] sm:aspect-[21/9] relative overflow-hidden rounded-lg bg-muted">
+              <div className="aspect-[4/3] h-96 sm:h-auto sm:aspect-[21/9] relative overflow-hidden rounded-lg bg-muted">
                 {listing.images && listing.images.length > 0 ? (
                   <Image
                     src={listing.images[currentImageIndex]?.asset?.url || "/placeholder.svg"}
@@ -608,7 +608,7 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                     </Link>
 
                     {/* Seller Stats */}
-                    <div className="grid grid-cols-2 gap-4 text-center text-sm">
+                    <div className="grid grid-cols-3 gap-4 text-center text-sm">
                       <div>
                         <div className="font-semibold text-primary">{listing.seller?.listingCount || 0}</div>
                         <div className="text-muted-foreground">Listings</div>
@@ -616,6 +616,10 @@ export function ListingDetailContent({ listing, similarListings = [], reviews = 
                       <div>
                         <div className="font-semibold text-green-600">{formatResponseTime()}</div>
                         <div className="text-muted-foreground">Response Time</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-yellow-500">{listing.seller?.profile?.customer_rating?.toFixed(1) || 'N/A'}</div>
+                        <div className="text-muted-foreground">({listing.seller?.profile?.total_reviews || 0} reviews)</div>
                       </div>
                     </div>
 

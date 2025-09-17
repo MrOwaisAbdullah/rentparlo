@@ -62,7 +62,6 @@ export function AnalyticsExport({
     includeOverview: true,
     includeTrends: true,
     includeListings: true,
-    includeGeographic: true,
     includeDevices: true,
     includeConversions: true,
     format: "csv",
@@ -174,19 +173,6 @@ export function AnalyticsExport({
           avg_time_on_page: listing.avgTimeOnPage,
           created_date: listing.createdAt,
           last_activity: listing.lastActivity,
-        });
-      });
-    }
-
-    if (options.includeGeographic && data.geographic) {
-      console.log("Adding geographic data:", data.geographic.length, "records");
-      data.geographic.forEach((geo) => {
-        exportData.push({
-          section: "Geographic Analytics",
-          city: geo.city,
-          views: geo.views,
-          contacts: geo.contacts,
-          percentage: geo.percentage,
         });
       });
     }
@@ -474,7 +460,7 @@ export function AnalyticsExport({
 
   const getSelectedOptionsCount = () => {
     return Object.values(exportOptions).filter(
-      (value, index) => index < 6 && value === true
+      (value, index) => index < 5 && value === true
     ).length;
   };
 
@@ -593,27 +579,6 @@ export function AnalyticsExport({
                   Listing Performance ({analyticsData.listings?.length ||
                     0}{" "}
                   listings)
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="geographic"
-                  checked={exportOptions.includeGeographic}
-                  onCheckedChange={(checked) =>
-                    setExportOptions({
-                      ...exportOptions,
-                      includeGeographic: checked as boolean,
-                    })
-                  }
-                />
-                <Label
-                  htmlFor="geographic"
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Geographic Data ({analyticsData.geographic?.length || 0}{" "}
-                  cities)
                 </Label>
               </div>
 

@@ -54,7 +54,6 @@ describe("AnalyticsDashboard Component", () => {
     expect(screen.getByText("Analytics Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Overview")).toBeInTheDocument();
     expect(screen.getByText("Trends")).toBeInTheDocument();
-    expect(screen.getByText("Geographic Performance")).toBeInTheDocument();
     expect(screen.getByText("Device Analytics")).toBeInTheDocument();
   });
 
@@ -96,13 +95,6 @@ describe("AnalyticsDashboard Component", () => {
 
     expect(screen.getByTestId("chart-line")).toBeInTheDocument();
     expect(screen.getByText("Views & Contacts Trend")).toBeInTheDocument();
-  });
-
-  it("should display geographic performance chart", () => {
-    render(<AnalyticsDashboard {...defaultProps} />);
-
-    expect(screen.getByTestId("chart-bar")).toBeInTheDocument();
-    expect(screen.getByText("Performance by City")).toBeInTheDocument();
   });
 
   it("should show device analytics pie chart", () => {

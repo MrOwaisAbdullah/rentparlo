@@ -32,7 +32,6 @@ import { ListingPerformance } from "./listing-performance";
 import {
   TrendChart,
   ConversionFunnel,
-  GeographicHeatmap,
   DeviceBreakdown,
 } from "./advanced-charts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +44,7 @@ export function AnalyticsDashboard({
 }: AnalyticsDashboardProps) {
   const isMobile = useIsMobile();
   const [activeView, setActiveView] = useState<
-    "overview" | "listings" | "geographic" | "devices"
+    "overview" | "listings" | "devices"
   >("overview");
 
   const handleTimeRangePresetChange = (preset: string) => {
@@ -221,7 +220,7 @@ export function AnalyticsDashboard({
         aria-describedby="dashboard-description"
       >
         <TabsList
-          className={`grid w-full ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}
+          className={`grid w-full ${isMobile ? "grid-cols-2" : "grid-cols-3"}`}
           role="tablist"
           aria-label="Analytics dashboard sections"
         >
@@ -251,63 +250,20 @@ export function AnalyticsDashboard({
               Listings
             </span>
           </TabsTrigger>
-          {!isMobile && (
-            <>
-              <TabsTrigger
-                value="geographic"
-                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
-                role="tab"
-                aria-controls="geographic-panel"
-                aria-selected={activeView === "geographic"}
-                id="geographic-tab"
-              >
-                <MapPin className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Geographic</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="devices"
-                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
-                role="tab"
-                aria-controls="devices-panel"
-                aria-selected={activeView === "devices"}
-                id="devices-tab"
-              >
-                <Smartphone className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Devices</span>
-              </TabsTrigger>
-            </>
-          )}
+          <TabsTrigger
+            value="devices"
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
+            role="tab"
+            aria-controls="devices-panel"
+            aria-selected={activeView === "devices"}
+            id="devices-tab"
+          >
+            <Smartphone className="h-4 w-4" aria-hidden="true" />
+            <span className={isMobile ? "text-xs" : "hidden sm:inline"}>
+              Devices
+            </span>
+          </TabsTrigger>
         </TabsList>
-
-        {/* Mobile-specific secondary tabs */}
-        {isMobile && (
-          <div className="mt-2">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger
-                value="geographic"
-                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
-                role="tab"
-                aria-controls="geographic-panel"
-                aria-selected={activeView === "geographic"}
-                id="geographic-mobile-tab"
-              >
-                <MapPin className="h-4 w-4" aria-hidden="true" />
-                <span className="text-xs">Geographic</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="devices"
-                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm"
-                role="tab"
-                aria-controls="devices-panel"
-                aria-selected={activeView === "devices"}
-                id="devices-mobile-tab"
-              >
-                <Smartphone className="h-4 w-4" aria-hidden="true" />
-                <span className="text-xs">Devices</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        )}
 
         {/* Overview Tab */}
         <TabsContent
@@ -456,30 +412,6 @@ export function AnalyticsDashboard({
             />
           </div>
           <ListingPerformance listings={data.listings} loading={loading} />
-        </TabsContent>
-
-        {/* Geographic Analytics Tab */}
-        <TabsContent
-          value="geographic"
-          className={isMobile ? "space-y-4" : "space-y-6"}
-          role="tabpanel"
-          id="geographic-panel"
-          aria-labelledby="geographic-tab"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Geographic Performance</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Performance breakdown by location
-              </p>
-            </CardHeader>
-            <CardContent>
-              <GeographicHeatmap
-                data={data.geographic}
-                height={isMobile ? 300 : 400}
-              />
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Device Analytics Tab */}

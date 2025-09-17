@@ -22,7 +22,6 @@ export {
   TrendChart,
   ConversionFunnel,
   PerformanceComparison,
-  GeographicHeatmap,
   DeviceBreakdown,
 } from "./advanced-charts";
 

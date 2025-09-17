@@ -52,10 +52,6 @@ const mockAnalyticsData: AnalyticsData = {
       lastActivity: "2024-01-30",
     },
   ],
-  geographic: [
-    { city: "Karachi", views: 800, contacts: 40, percentage: 53.3 },
-    { city: "Lahore", views: 700, contacts: 35, percentage: 46.7 },
-  ],
   devices: [
     { device: "mobile", views: 900, contacts: 45, percentage: 60.0 },
     { device: "desktop", views: 600, contacts: 30, percentage: 40.0 },
@@ -199,7 +195,6 @@ describe("Export Utility Functions", () => {
         includeOverview: true,
         includeTrends: false,
         includeListings: false,
-        includeGeographic: false,
         includeDevices: false,
       });
 
