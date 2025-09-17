@@ -5,8 +5,8 @@
  * Comprehensive collection of GROQ queries for fetching data from Sanity CMS
  */
 
-import { client, sanityWriteClient } from './sanity'
-import { Listing, Category, BlogPost, Review, AdBanner } from '@/types'
+import { client, sanityWriteClient } from "./sanity";
+import { Listing, Category, BlogPost, Review, AdBanner } from "@/types";
 
 /**
  * =====================================================
@@ -33,7 +33,7 @@ export const CATEGORIES_QUERY = `
     },
     order
   }
-`
+`;
 
 // Get category by slug with listings count
 export const CATEGORY_BY_SLUG_QUERY = `
@@ -55,7 +55,7 @@ export const CATEGORY_BY_SLUG_QUERY = `
     order,
     "listingCount": count(*[_type == "listing" && category._ref == ^._id && status == "active"])
   }
-`
+`;
 
 // Get popular categories with listing counts
 export const POPULAR_CATEGORIES_QUERY = `
@@ -72,7 +72,7 @@ export const POPULAR_CATEGORIES_QUERY = `
     order,
     "listingCount": count(*[_type == "listing" && category._ref == ^._id && status == "active"])
   } | order(listingCount desc)[0...8]
-`
+`;
 
 /**
  * =====================================================
@@ -118,7 +118,7 @@ export const LISTINGS_QUERY = `
     seo,
     tags
   }
-`
+`;
 
 // Get listing by ID with full details
 export const LISTING_BY_ID_QUERY = `
@@ -162,7 +162,7 @@ export const LISTING_BY_ID_QUERY = `
     createdAt,
     _updatedAt
   }
-`
+`;
 
 // Get listing by slug with full details
 export const LISTING_BY_SLUG_QUERY = `
@@ -202,7 +202,7 @@ export const LISTING_BY_SLUG_QUERY = `
     isVerified,
     supabaseId
   }
-`
+`;
 
 // Get featured listings
 export const FEATURED_LISTINGS_QUERY = `
@@ -233,7 +233,7 @@ export const FEATURED_LISTINGS_QUERY = `
     isFeatured,
     isVerified
   }
-`
+`;
 
 // Get listings by category
 export const LISTINGS_BY_CATEGORY_QUERY = `
@@ -275,7 +275,7 @@ export const LISTINGS_BY_CATEGORY_QUERY = `
     views,
     contactClicks
   }
-`
+`;
 
 // Get listings by Supabase user ID (seller's listings)
 export const LISTINGS_BY_SELLER_QUERY = `
@@ -307,7 +307,7 @@ export const LISTINGS_BY_SELLER_QUERY = `
     isVerified,
     status
   }
-`
+`;
 
 // Search listings with filters (without pagination)
 export const SEARCH_LISTINGS_QUERY_NO_PAGINATION = `
@@ -349,7 +349,7 @@ export const SEARCH_LISTINGS_QUERY_NO_PAGINATION = `
     isFeatured,
     supabaseId
   }
-`
+`;
 
 // Search listings with filters (with pagination)
 export const SEARCH_LISTINGS_QUERY = `
@@ -391,7 +391,7 @@ export const SEARCH_LISTINGS_QUERY = `
     isFeatured,
     supabaseId
   }
-`
+`;
 
 // Get all listings by seller ID (regardless of status)
 export const ALL_SELLER_LISTINGS_QUERY = `
@@ -411,7 +411,7 @@ export const ALL_SELLER_LISTINGS_QUERY = `
     },
     isFeatured
   }
-`
+`;
 
 // Get listings by seller ID
 export const SELLER_LISTINGS_QUERY = `
@@ -431,7 +431,7 @@ export const SELLER_LISTINGS_QUERY = `
     },
     isFeatured
   }
-`
+`;
 
 // Search listings count query (for pagination)
 export const SEARCH_LISTINGS_COUNT_QUERY = `
@@ -445,7 +445,7 @@ export const SEARCH_LISTINGS_COUNT_QUERY = `
     && ($maxPrice == 0 || price <= $maxPrice)
     && ($sellerId == "" || supabaseId == $sellerId)
   ])
-`
+`;
 
 // Get similar listings (same category, different listing)
 export const SIMILAR_LISTINGS_QUERY = `
@@ -487,7 +487,7 @@ export const SIMILAR_LISTINGS_QUERY = `
     views,
     contactClicks
   }
-`
+`;
 
 /**
  * =====================================================
@@ -526,7 +526,7 @@ export const BLOG_POSTS_QUERY = `
     featured,
     language
   }
-`
+`;
 
 // Get blog post by slug
 export const BLOG_POST_BY_SLUG_QUERY = `
@@ -576,7 +576,7 @@ export const BLOG_POST_BY_SLUG_QUERY = `
     featured,
     language
   }
-`
+`;
 
 // Get featured blog posts
 export const FEATURED_BLOG_POSTS_QUERY = `
@@ -601,7 +601,7 @@ export const FEATURED_BLOG_POSTS_QUERY = `
     publishedAt,
     language
   }
-`
+`;
 
 // Get recent blog posts
 export const RECENT_BLOG_POSTS_QUERY = `
@@ -619,7 +619,7 @@ export const RECENT_BLOG_POSTS_QUERY = `
     publishedAt,
     readingTime
   }
-`
+`;
 
 /**
  * =====================================================
@@ -649,7 +649,7 @@ export const HOMEPAGE_BANNERS_QUERY = `
     order,
     active
   }
-`
+`;
 
 /**
  * =====================================================
@@ -679,7 +679,7 @@ export const LISTING_REVIEWS_QUERY = `
       is_verified
     }
   }
-`
+`;
 
 // Get recent reviews (for homepage or testimonials)
 export const RECENT_REVIEWS_QUERY = `
@@ -701,7 +701,7 @@ export const RECENT_REVIEWS_QUERY = `
     },
     supabaseUserId
   }
-`
+`;
 
 /**
  * =====================================================
@@ -737,7 +737,7 @@ export const AD_BANNERS_BY_PLACEMENT_QUERY = `
     },
     targetUserType
   }
-`
+`;
 
 /**
  * =====================================================
@@ -747,71 +747,79 @@ export const AD_BANNERS_BY_PLACEMENT_QUERY = `
 
 // Helper function to fetch categories
 export async function getCategories(): Promise<Category[]> {
-  return await client.fetch(CATEGORIES_QUERY)
+  return await client.fetch(CATEGORIES_QUERY);
 }
 
 // Helper function to fetch featured listings
 export async function getFeaturedListings(): Promise<Listing[]> {
-  return await client.fetch(FEATURED_LISTINGS_QUERY)
+  return await client.fetch(FEATURED_LISTINGS_QUERY);
 }
 
 // Helper function to fetch listing by ID
 export async function getListingById(id: string): Promise<Listing | null> {
-  return await client.fetch(LISTING_BY_ID_QUERY, { id })
+  return await client.fetch(LISTING_BY_ID_QUERY, { id });
 }
 
 // Helper function to fetch listing by slug
-export async function getListingBySlug(slug: string, userId?: string): Promise<Listing | null> {
-  return await client.fetch(LISTING_BY_SLUG_QUERY, { slug, userId })
+export async function getListingBySlug(
+  slug: string,
+  userId?: string
+): Promise<Listing | null> {
+  return await client.fetch(LISTING_BY_SLUG_QUERY, { slug, userId });
 }
 
 // Helper function to fetch listings by category
-export async function getListingsByCategory(categoryId: string): Promise<Listing[]> {
-  return await client.fetch(LISTINGS_BY_CATEGORY_QUERY, { categoryId })
+export async function getListingsByCategory(
+  categoryId: string
+): Promise<Listing[]> {
+  return await client.fetch(LISTINGS_BY_CATEGORY_QUERY, { categoryId });
 }
 
 // Helper function to search listings
 export async function searchListings(params: {
-  query?: string
-  category?: string
-  city?: string
-  area?: string
-  condition?: string | string[]
-  minPrice?: number
-  maxPrice?: number
-  offset?: number
-  limit?: number
-  sellerId?: string
+  query?: string;
+  category?: string;
+  city?: string;
+  area?: string;
+  condition?: string | string[];
+  minPrice?: number;
+  maxPrice?: number;
+  offset?: number;
+  limit?: number;
+  sellerId?: string;
 }): Promise<Listing[]> {
   const {
-    query: searchQuery = '',
-    category = '',
-    city = '',
-    area = '',
-    condition: conditionParam = '',
+    query: searchQuery = "",
+    category = "",
+    city = "",
+    area = "",
+    condition: conditionParam = "",
     minPrice = 0,
     maxPrice = 0,
     offset = 0,
     limit = 20,
-    sellerId = ''
-  } = params
+    sellerId = "",
+  } = params;
 
   // Handle condition parameter - ensure it's never null
-  const condition = conditionParam ?? '';
+  const condition = conditionParam ?? "";
 
   // If sellerId is provided, still use the main search query but with seller filter
   // Handle condition parameter - if it's an array or comma-separated string, make multiple queries
-  if (Array.isArray(condition) || (typeof condition === 'string' && condition.includes(','))) {
-    const conditions = Array.isArray(condition) 
-      ? condition 
-      : condition.split(',').filter(Boolean);
-    
-    console.log('Multiple conditions detected:', conditions);
-    
+  if (
+    Array.isArray(condition) ||
+    (typeof condition === "string" && condition.includes(","))
+  ) {
+    const conditions = Array.isArray(condition)
+      ? condition
+      : condition.split(",").filter(Boolean);
+
+    console.log("Multiple conditions detected:", conditions);
+
     // Make separate queries for each condition and combine results
     const allResults: Listing[] = [];
     const uniqueListings = new Map<string, Listing>();
-    
+
     for (const cond of conditions) {
       const queryParams = {
         searchQuery,
@@ -823,32 +831,36 @@ export async function searchListings(params: {
         maxPrice,
         sellerId,
         offset: 0,
-        limit: 1000 // Get enough results to handle pagination after combining
+        limit: 1000, // Get enough results to handle pagination after combining
       };
-      
-      console.log('Executing search query with params:', queryParams);
-      
+
+      console.log("Executing search query with params:", queryParams);
+
       const results = await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
-      console.log(`Found ${results.length} results for condition: ${cond.trim()}`);
-      
+      console.log(
+        `Found ${results.length} results for condition: ${cond.trim()}`
+      );
+
       // Add to unique listings map to avoid duplicates
-      results.forEach(listing => {
+      results.forEach((listing) => {
         uniqueListings.set(listing._id, listing);
       });
     }
-    
+
     // Convert map back to array and apply pagination
     const combinedResults = Array.from(uniqueListings.values());
-    
+
     console.log(`Combined results count: ${combinedResults.length}`);
-    
+
     // Sort by featured and creation date (same as original query)
     combinedResults.sort((a, b) => {
       if (a.isFeatured && !b.isFeatured) return -1;
       if (!a.isFeatured && b.isFeatured) return 1;
-      return new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime();
+      return (
+        new Date(b._createdAt).getTime() - new Date(a._createdAt).getTime()
+      );
     });
-    
+
     // Apply pagination with the actual offset and limit
     const paginatedResults = combinedResults.slice(offset, offset + limit);
     console.log(`Returning ${paginatedResults.length} paginated results`);
@@ -865,9 +877,9 @@ export async function searchListings(params: {
       maxPrice,
       sellerId,
       offset,
-      limit
+      limit,
     };
-    
+
     const results = await client.fetch(SEARCH_LISTINGS_QUERY, queryParams);
     return results;
   }
@@ -875,42 +887,45 @@ export async function searchListings(params: {
 
 // Helper function to get count of search results
 export async function searchListingsCount(params: {
-  query?: string
-  category?: string
-  city?: string
-  area?: string
-  condition?: string | string[]
-  minPrice?: number
-  maxPrice?: number
-  sellerId?: string
+  query?: string;
+  category?: string;
+  city?: string;
+  area?: string;
+  condition?: string | string[];
+  minPrice?: number;
+  maxPrice?: number;
+  sellerId?: string;
 }): Promise<number> {
   const {
-    query: searchQuery = '',
-    category = '',
-    city = '',
-    area = '',
-    condition: conditionParam = '',
+    query: searchQuery = "",
+    category = "",
+    city = "",
+    area = "",
+    condition: conditionParam = "",
     minPrice = 0,
     maxPrice = 0,
-    sellerId = ''
-  } = params
+    sellerId = "",
+  } = params;
 
-  console.log('searchListingsCount called with params:', params);
+  console.log("searchListingsCount called with params:", params);
 
   // Handle condition parameter - ensure it's never null
-  const condition = conditionParam ?? '';
+  const condition = conditionParam ?? "";
 
   // Handle condition parameter - if it's an array or comma-separated string, make multiple queries
-  if (Array.isArray(condition) || (typeof condition === 'string' && condition.includes(','))) {
-    const conditions = Array.isArray(condition) 
-      ? condition 
-      : condition.split(',').filter(Boolean);
-    
-    console.log('Multiple conditions detected in count function:', conditions);
-    
+  if (
+    Array.isArray(condition) ||
+    (typeof condition === "string" && condition.includes(","))
+  ) {
+    const conditions = Array.isArray(condition)
+      ? condition
+      : condition.split(",").filter(Boolean);
+
+    console.log("Multiple conditions detected in count function:", conditions);
+
     // Make separate queries for each condition and count unique results
     const uniqueListingIds = new Set<string>();
-    
+
     for (const cond of conditions) {
       const queryParams = {
         searchQuery,
@@ -920,22 +935,24 @@ export async function searchListingsCount(params: {
         condition: cond.trim(),
         minPrice,
         maxPrice,
-        sellerId
+        sellerId,
       };
-      
-      console.log('Executing count query with params:', queryParams);
-      
+
+      console.log("Executing count query with params:", queryParams);
+
       // Get actual listings to count unique ones
       const listings = await client.fetch(SEARCH_LISTINGS_QUERY, {
-        ...queryParams
+        ...queryParams,
       });
-      
-      console.log(`Found ${listings.length} listings for condition: ${cond.trim()}`);
-      
+
+      console.log(
+        `Found ${listings.length} listings for condition: ${cond.trim()}`
+      );
+
       // Add listing IDs to set to ensure uniqueness
-      listings.forEach(listing => uniqueListingIds.add(listing._id));
+      listings.forEach((listing) => uniqueListingIds.add(listing._id));
     }
-    
+
     console.log(`Total unique listings count: ${uniqueListingIds.size}`);
     return uniqueListingIds.size;
   } else {
@@ -948,12 +965,16 @@ export async function searchListingsCount(params: {
       condition: Array.isArray(condition) ? condition[0] : condition,
       minPrice,
       maxPrice,
-      sellerId
+      sellerId,
     };
-    
-    console.log('Executing single count query with params:', queryParams);
-    console.log('Count query will filter by sellerId:', sellerId, 'with condition ($sellerId == "" || supabaseId == $sellerId)');
-    
+
+    console.log("Executing single count query with params:", queryParams);
+    console.log(
+      "Count query will filter by sellerId:",
+      sellerId,
+      'with condition ($sellerId == "" || supabaseId == $sellerId)'
+    );
+
     const count = await client.fetch(SEARCH_LISTINGS_COUNT_QUERY, queryParams);
     console.log(`Found ${count} listings for single condition`);
     return count;
@@ -962,44 +983,55 @@ export async function searchListingsCount(params: {
 
 // Helper function to fetch blog posts
 export async function getBlogPosts(): Promise<BlogPost[]> {
-  return await client.fetch(BLOG_POSTS_QUERY)
+  return await client.fetch(BLOG_POSTS_QUERY);
 }
 
 // Helper function to fetch blog post by slug
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-  return await client.fetch(BLOG_POST_BY_SLUG_QUERY, { slug })
+export async function getBlogPostBySlug(
+  slug: string
+): Promise<BlogPost | null> {
+  return await client.fetch(BLOG_POST_BY_SLUG_QUERY, { slug });
 }
 
 // Helper function to fetch homepage banners
 export async function getHomepageBanners() {
-  return await client.fetch(HOMEPAGE_BANNERS_QUERY)
+  return await client.fetch(HOMEPAGE_BANNERS_QUERY);
 }
 
 // Helper function to fetch reviews for a listing
 export async function getListingReviews(listingId: string): Promise<Review[]> {
-  return await client.fetch(LISTING_REVIEWS_QUERY, { listingId })
+  return await client.fetch(LISTING_REVIEWS_QUERY, { listingId });
 }
 
 // Helper function to fetch similar listings
-export async function getSimilarListings(listingId: string, categoryTitle: string, limit: number = 4): Promise<Listing[]> {
+export async function getSimilarListings(
+  listingId: string,
+  categoryTitle: string,
+  limit: number = 4
+): Promise<Listing[]> {
   // First we need to get the category ID from the title
-  const category = await client.fetch(`*[_type == "category" && title == $categoryTitle][0]`, { categoryTitle });
+  const category = await client.fetch(
+    `*[_type == "category" && title == $categoryTitle][0]`,
+    { categoryTitle }
+  );
   if (!category) return [];
-  
-  return await client.fetch(SIMILAR_LISTINGS_QUERY, { 
-    categoryId: category._id, 
-    listingId 
+
+  return await client.fetch(SIMILAR_LISTINGS_QUERY, {
+    categoryId: category._id,
+    listingId,
   });
 }
 
 // Helper function to fetch category by slug
-export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  return await client.fetch(CATEGORY_BY_SLUG_QUERY, { slug })
+export async function getCategoryBySlug(
+  slug: string
+): Promise<Category | null> {
+  return await client.fetch(CATEGORY_BY_SLUG_QUERY, { slug });
 }
 
 // Helper function to fetch ad banners by placement
 export async function getAdBannersByPlacement(placement: string) {
-  return await client.fetch(AD_BANNERS_BY_PLACEMENT_QUERY, { placement })
+  return await client.fetch(AD_BANNERS_BY_PLACEMENT_QUERY, { placement });
 }
 
 /**
@@ -1011,30 +1043,27 @@ export async function getAdBannersByPlacement(placement: string) {
 // Helper function to create a new listing
 export async function createListing(listingData: any) {
   return await sanityWriteClient.create({
-    _type: 'listing',
-    ...listingData
-  })
+    _type: "listing",
+    ...listingData,
+  });
 }
 
 // Helper function to create a review
 export async function createReview(reviewData: any) {
   return await sanityWriteClient.create({
-    _type: 'review',
-    ...reviewData
-  })
+    _type: "review",
+    ...reviewData,
+  });
 }
 
 // Helper function to update listing
 export async function updateListing(listingId: string, updates: any) {
-  return await sanityWriteClient
-    .patch(listingId)
-    .set(updates)
-    .commit()
+  return await sanityWriteClient.patch(listingId).set(updates).commit();
 }
 
 // Helper function to delete listing
 export async function deleteListing(listingId: string) {
-  return await sanityWriteClient.delete(listingId)
+  return await sanityWriteClient.delete(listingId);
 }
 
 /**
@@ -1049,7 +1078,7 @@ export const ALL_LISTING_SLUGS_QUERY = `
     "slug": slug.current,
     _updatedAt
   }
-`
+`;
 
 // Get all blog post slugs for sitemap generation
 export const ALL_BLOG_SLUGS_QUERY = `
@@ -1057,7 +1086,7 @@ export const ALL_BLOG_SLUGS_QUERY = `
     "slug": slug.current,
     _updatedAt
   }
-`
+`;
 
 // Get all category slugs for sitemap generation
 export const ALL_CATEGORY_SLUGS_QUERY = `
@@ -1065,24 +1094,26 @@ export const ALL_CATEGORY_SLUGS_QUERY = `
     "slug": slug.current,
     _updatedAt
   }
-`
+`;
 
 // Helper functions for sitemap generation
 export async function getAllListingSlugs() {
-  return await client.fetch(ALL_LISTING_SLUGS_QUERY)
+  return await client.fetch(ALL_LISTING_SLUGS_QUERY);
 }
 
 export async function getAllBlogSlugs() {
-  return await client.fetch(ALL_BLOG_SLUGS_QUERY)
+  return await client.fetch(ALL_BLOG_SLUGS_QUERY);
 }
 
 export async function getAllCategorySlugs() {
-  return await client.fetch(ALL_CATEGORY_SLUGS_QUERY)
+  return await client.fetch(ALL_CATEGORY_SLUGS_QUERY);
 }
 
 // Helper function to fetch listings by seller ID
-export async function getListingsBySeller(sellerId: string): Promise<Listing[]> {
-    const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+export async function getListingsBySeller(
+  sellerId: string
+): Promise<Listing[]> {
+  const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
         _id,
         title,
         slug,
@@ -1092,14 +1123,16 @@ export async function getListingsBySeller(sellerId: string): Promise<Listing[]> 
         badges,
         "imageUrl": images[0].asset->url
     }`;
-    const params = { sellerId };
-    const listings = await client.fetch(query, params);
-    return listings;
+  const params = { sellerId };
+  const listings = await client.fetch(query, params);
+  return listings;
 }
 
 // Get all listings by seller ID (including pending, active, expired, etc.)
-export async function getAllListingsBySeller(sellerId: string): Promise<Listing[]> {
-    const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
+export async function getAllListingsBySeller(
+  sellerId: string
+): Promise<Listing[]> {
+  const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
         _id,
         _createdAt,
         title,
@@ -1115,12 +1148,14 @@ export async function getAllListingsBySeller(sellerId: string): Promise<Listing[
         },
         isFeatured
     }`;
-    const params = { sellerId };
-    const listings = await client.fetch(query, params);
-    return listings;
+  const params = { sellerId };
+  const listings = await client.fetch(query, params);
+  return listings;
 }
 
-export async function getListingsBySellerId(sellerId: string): Promise<Listing[]> {
+export async function getListingsBySellerId(
+  sellerId: string
+): Promise<Listing[]> {
   const query = `*[_type == "listing" && supabaseId == $sellerId] | order(_createdAt desc) {
     _id,
     _createdAt,
@@ -1162,4 +1197,31 @@ export async function getListingsBySellerId(sellerId: string): Promise<Listing[]
   const params = { sellerId };
   const listings = await client.fetch(query, params);
   return listings;
+}
+
+// Helper function to get seller listing count from Sanity
+export async function getSellerListingCount(sellerId: string): Promise<{
+  totalListings: number;
+  activeListings: number;
+}> {
+  try {
+    // Get total listings count (all statuses)
+    const totalCountQuery = `count(*[_type == "listing" && supabaseId == $sellerId])`;
+    const totalCount = await client.fetch(totalCountQuery, { sellerId });
+
+    // Get active listings count (only active and published)
+    const activeCountQuery = `count(*[_type == "listing" && supabaseId == $sellerId && status == "active" && published == true])`;
+    const activeCount = await client.fetch(activeCountQuery, { sellerId });
+
+    return {
+      totalListings: totalCount || 0,
+      activeListings: activeCount || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching seller listing count from Sanity:", error);
+    return {
+      totalListings: 0,
+      activeListings: 0,
+    };
+  }
 }

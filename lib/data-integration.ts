@@ -36,6 +36,7 @@ import {
   getHomepageBanners,
   getListingReviews,
   getListingsBySellerId,
+  getSellerListingCount,
 } from "./sanity-queries";
 import {
   getUserById,
@@ -152,6 +153,15 @@ export async function getEnhancedListingBySlug(
           sellerProfile = await getSellerProfile(seller.id);
           console.log("Seller profile data:", sellerProfile); // Debugging
 
+          // Get accurate listing count from Sanity
+          const listingCounts = await getSellerListingCount(seller.id);
+          console.log("Seller listing counts from Sanity:", listingCounts); // Debugging
+
+          // Update existing seller profile with accurate listing count
+          if (sellerProfile) {
+            sellerProfile.listing_count = listingCounts.activeListings;
+          }
+
           // If no seller profile exists, but user is a seller, create a minimal one
           if (!sellerProfile && seller.role === "seller") {
             console.log("Creating minimal seller profile for seller user");
@@ -172,7 +182,7 @@ export async function getEnhancedListingBySlug(
               },
               created_at: seller.created_at || new Date().toISOString(),
               updated_at: seller.created_at || new Date().toISOString(),
-              listing_count: 0,
+              listing_count: listingCounts.activeListings,
               is_top_seller: false,
             };
           }
@@ -198,7 +208,7 @@ export async function getEnhancedListingBySlug(
               avatar_url: seller.profile_image_url || null, // Add avatar_url from user's profile_image_url
               created_at: seller.created_at || new Date().toISOString(),
               updated_at: seller.created_at || new Date().toISOString(),
-              listing_count: 0,
+              listing_count: listingCounts.activeListings,
               is_top_seller: false,
             };
           }
@@ -223,7 +233,7 @@ export async function getEnhancedListingBySlug(
               avatar_url: null, // No profile image available for fallback
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              listing_count: 0,
+              listing_count: listingCounts.activeListings,
               is_top_seller: false,
             },
           };
@@ -267,7 +277,7 @@ export async function getEnhancedListingBySlug(
               avatar_url: null, // No profile image available for fallback
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              listing_count: 0,
+              listing_count: 0, // Default value for error case
               is_top_seller: false,
             },
           };

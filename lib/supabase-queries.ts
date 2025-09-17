@@ -1177,13 +1177,16 @@ export async function trackAnalyticsEvent(
 ): Promise<boolean> {
   try {
     // Validate input data
-    if (!eventData || typeof eventData !== 'object') {
+    if (!eventData || typeof eventData !== "object") {
       console.warn("Invalid eventData provided to trackAnalyticsEvent");
       return false;
     }
 
     // Log the incoming event data for debugging (before processing)
-    console.log("Tracking analytics event with data:", JSON.stringify(eventData, null, 2));
+    console.log(
+      "Tracking analytics event with data:",
+      JSON.stringify(eventData, null, 2)
+    );
 
     const supabase = await createClient(); // Use server client for proper authentication
 
@@ -1216,12 +1219,12 @@ export async function trackAnalyticsEvent(
         if (sessionError) {
           console.warn("Session creation error:", sessionError);
           // Log more details about the session error
-          if (sessionError && typeof sessionError === 'object') {
+          if (sessionError && typeof sessionError === "object") {
             console.warn("Session error details:", {
-              message: (sessionError as any).message || 'No message',
-              code: (sessionError as any).code || 'No code',
-              hint: (sessionError as any).hint || 'No hint',
-              details: (sessionError as any).details || 'No details'
+              message: (sessionError as any).message || "No message",
+              code: (sessionError as any).code || "No code",
+              hint: (sessionError as any).hint || "No hint",
+              details: (sessionError as any).details || "No details",
             });
           }
         } else if (session) {
@@ -1256,12 +1259,12 @@ export async function trackAnalyticsEvent(
         if (userError) {
           console.warn("User verification error:", userError);
           // Log more details about the user verification error
-          if (userError && typeof userError === 'object') {
+          if (userError && typeof userError === "object") {
             console.warn("User verification error details:", {
-              message: (userError as any).message || 'No message',
-              code: (userError as any).code || 'No code',
-              hint: (userError as any).hint || 'No hint',
-              details: (userError as any).details || 'No details'
+              message: (userError as any).message || "No message",
+              code: (userError as any).code || "No code",
+              hint: (userError as any).hint || "No hint",
+              details: (userError as any).details || "No details",
             });
           }
           // User doesn't exist, nullify the user_id
@@ -1303,47 +1306,60 @@ export async function trackAnalyticsEvent(
     };
 
     // Remove undefined properties
-    Object.keys(insertData).forEach(key => {
+    Object.keys(insertData).forEach((key) => {
       if (insertData[key] === undefined) {
         delete insertData[key];
       }
     });
 
-    console.log("Inserting analytics event with data:", JSON.stringify(insertData, null, 2));
-    
+    console.log(
+      "Inserting analytics event with data:",
+      JSON.stringify(insertData, null, 2)
+    );
+
     // Validate that session_ref is a valid UUID if provided
-    if (insertData.session_ref && typeof insertData.session_ref === 'string') {
+    if (insertData.session_ref && typeof insertData.session_ref === "string") {
       // Simple UUID validation regex
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(insertData.session_ref)) {
-        console.warn("Invalid session_ref format (not a UUID):", insertData.session_ref);
+        console.warn(
+          "Invalid session_ref format (not a UUID):",
+          insertData.session_ref
+        );
         // Set to null to avoid database error
         insertData.session_ref = null;
       }
     }
-    
+
     // Additional validation for other fields
-    if (insertData.user_id && typeof insertData.user_id === 'string') {
+    if (insertData.user_id && typeof insertData.user_id === "string") {
       // Simple UUID validation for user_id
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(insertData.user_id)) {
-        console.warn("Invalid user_id format (not a UUID):", insertData.user_id);
+        console.warn(
+          "Invalid user_id format (not a UUID):",
+          insertData.user_id
+        );
         // Set to null to avoid database error
         insertData.user_id = null;
       }
     }
 
-    const { error, data } = await supabase.from("analytics_events").insert(insertData);
+    const { error, data } = await supabase
+      .from("analytics_events")
+      .insert(insertData);
 
     if (error) {
       console.error("Error tracking analytics event:", error);
       // More robust error logging
-      if (error && typeof error === 'object') {
+      if (error && typeof error === "object") {
         console.error("Error details:", {
-          message: (error as any).message || 'No message',
-          code: (error as any).code || 'No code',
-          hint: (error as any).hint || 'No hint',
-          details: (error as any).details || 'No details'
+          message: (error as any).message || "No message",
+          code: (error as any).code || "No code",
+          hint: (error as any).hint || "No hint",
+          details: (error as any).details || "No details",
         });
       }
       return false;
@@ -1536,6 +1552,34 @@ export async function getSellerAnalytics(
   };
 }
 
+// Get accurate seller listing count from database
+export async function getSellerListingCount(sellerId: string): Promise<{
+  totalListings: number;
+  activeListings: number;
+}> {
+  const supabase = await createClient();
+
+  try {
+    const { data: listingCounts, error } = await supabase.rpc(
+      "get_seller_listing_counts",
+      { seller_id: sellerId }
+    );
+
+    if (error) {
+      console.error("Error fetching seller listing counts:", error);
+      return { totalListings: 0, activeListings: 0 };
+    }
+
+    return {
+      totalListings: listingCounts?.total_listings || 0,
+      activeListings: listingCounts?.active_listings || 0,
+    };
+  } catch (error) {
+    console.error("Error in getSellerListingCount:", error);
+    return { totalListings: 0, activeListings: 0 };
+  }
+}
+
 // Get analytics for date range
 export async function getAnalyticsForDateRange(
   startDate: string,
@@ -1605,9 +1649,11 @@ export async function getSubscriptionPackageByName(
     .single();
 
   // If no exact match, try case-insensitive match
-  if (error && error.code === 'PGRST116') {
-    console.log(`No exact match found for package name: ${name}, trying case-insensitive search`);
-    
+  if (error && error.code === "PGRST116") {
+    console.log(
+      `No exact match found for package name: ${name}, trying case-insensitive search`
+    );
+
     const { data: fuzzyData, error: fuzzyError } = await supabase
       .from("subscription_packages")
       .select("*")
@@ -1615,21 +1661,21 @@ export async function getSubscriptionPackageByName(
       .eq("is_active", true)
       .limit(1)
       .single();
-      
+
     if (!fuzzyError && fuzzyData) {
       console.log(`Found package with case-insensitive match:`, fuzzyData);
       return fuzzyData;
     }
-    
+
     // If still no match, try to get all packages to see what's available
     const { data: allPackages, error: allError } = await supabase
       .from("subscription_packages")
       .select("*")
       .eq("is_active", true);
-      
+
     if (!allError && allPackages) {
       console.log("Available packages in database:", allPackages);
-      
+
       // If no packages exist at all, we might need to seed them
       if (allPackages.length === 0) {
         console.log("No packages found in database");
