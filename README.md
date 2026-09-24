@@ -165,7 +165,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, please open an issue on GitHub or contact our development team at tech@rentparlo.pk.
+For support, please open an issue on GitHub or contact our development team at mrowaisabdullah@gmail.com
 
 ---
 
